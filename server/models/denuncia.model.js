@@ -1,0 +1,121 @@
+import { DataTypes } from "sequelize";
+import sequelize from "../config/db.js";
+
+const Denuncia = sequelize.define('denuncia', {
+    idDenuncia: {
+        type: DataTypes.STRING(25),
+        primaryKey: true,
+    },
+    fechaDenuncia: {
+        type: DataTypes.DATEONLY,
+        allowNull: false,
+    },
+    interes: {
+        type: DataTypes.TINYINT,
+        allowNull: true,
+    },
+    aprehendido: {
+        type: DataTypes.TINYINT,
+        allowNull: false,
+    },
+    medida: {
+        type: DataTypes.TINYINT,
+        allowNull: false,
+    },
+    seguro: {
+        type: DataTypes.TINYINT,
+        allowNull: true,
+    },
+    elementoSustraido: {
+        type: DataTypes.STRING(256),
+        allowNull: true,
+    },
+    fechaDelito: {
+        type: DataTypes.DATEONLY,
+        allowNull: false,
+    },
+    fiscalia: {
+        type: DataTypes.STRING(100),
+        allowNull: false
+    },
+    tipoArmaId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        references: {
+            model: 'tipoArma',
+            key: 'idTipoArma'
+        }
+    },
+    movilidadId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        references: {
+            model: 'movilidad',
+            key: 'idMovilidad'
+        }
+    },
+    autorId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        references: {
+            model: 'autor',
+            key: 'idAutor'
+        }
+    },
+    victima: {
+        type: DataTypes.TINYINT,
+        allowNull: true,
+    },
+    especializacionId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        references: {
+            model: 'especializacion',
+            key: 'idEspecializacion'
+        }
+    },
+    comisariaId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        references: {
+            model: 'comisaria',
+            key: 'idComisaria'
+        }
+    },
+    ubicacionId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        references: {
+            model: 'ubicacion',
+            key: 'idUbicacion'
+        }
+    },
+    submodalidadId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        references: {
+            model: 'submodalidad',
+            key: 'idSubmodalidad'
+        }
+    },
+    isClassificated: {
+        type: DataTypes.TINYINT,
+        allowNull: false
+    }
+}, {tableName: 'denuncia', timestamps: false});
+
+export default Denuncia;
