@@ -10,6 +10,10 @@ const Denuncia = sequelize.define('denuncia', {
         type: DataTypes.DATEONLY,
         allowNull: false,
     },
+    dniDenunciante: {
+        type: DataTypes.INTEGER,
+        allowNull: true
+    },
     interes: {
         type: DataTypes.TINYINT,
         allowNull: true,
@@ -33,6 +37,10 @@ const Denuncia = sequelize.define('denuncia', {
     fechaDelito: {
         type: DataTypes.DATEONLY,
         allowNull: false,
+    },
+    horaDelito: {
+        type: DataTypes.TIME,
+        allowNull: false
     },
     fiscalia: {
         type: DataTypes.STRING(100),

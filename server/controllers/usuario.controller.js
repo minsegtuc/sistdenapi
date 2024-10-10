@@ -30,13 +30,13 @@ const login = async (req, res) => {
                     rol: usuario.rolId,
                     foto: usuario.userFoto
                 }, process.env.JWT_SECRET, {
-                    expiresIn: '2h'
+                    expiresIn: '5h'
                 });
 
                 res.cookie('auth_token', token, {
                     secure: process.env.NODE_ENV === 'production',
                     sameSite: 'Strict',
-                    maxAge: 7200000
+                    maxAge: 18000000
                 })
 
                 const log = {

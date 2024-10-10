@@ -7,6 +7,7 @@ import TipoArma from "../models/tipoArma.model.js"
 import Movilidad from "../models/movilidad.model.js"
 import Autor from "../models/autor.model.js"
 import Especializacion from "../models/especializacion.model.js"
+import Localidad from "../models/localidad.model.js"
 import { registrarLog } from "../helpers/logHelpers.js";
 
 const getAllDenuncias = async (req, res) => {
@@ -37,7 +38,27 @@ const getAllDenuncias = async (req, res) => {
 const getDenunciaById = async (req, res) => {
     const { id } = req.params;
     try {
-        const denuncia = await Denuncia.findByPk(id);
+        const denuncia = await Denuncia.findByPk(id, {
+            include: [
+                {
+                    model: Ubicacion,
+                    include: [
+                        { model: Localidad }
+                    ]
+                },
+                { model: TipoArma },
+                { model: Movilidad },
+                { model: Autor },
+                { model: Especializacion },
+                {
+                    model: Submodalidad,
+                    include: [
+                        { model: Modalidad },
+                        { model: TipoDelito }
+                    ]
+                }
+            ],
+        });
         res.status(200).json(denuncia);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -49,12 +70,14 @@ const createDenuncia = async (req, res) => {
         const denuncia = await Denuncia.create({
             idDenuncia: req.body.idDenuncia,
             fechaDenuncia: req.body.fechaDenuncia,
+            dniDenunciante: req.body.dniDenunciante,
             interes: req.body.interes,
             aprehendido: req.body.aprehendido,
             medida: req.body.medida,
             seguro: req.body.seguro,
             elementoSustraido: req.body.elementoSustraido,
             fechaDelito: req.body.fechaDelito,
+            horaDelito: req.body.horaDelito,
             fiscalia: req.body.fiscalia,
             tipoArmaId: req.body.tipoArmaId,
             movilidadId: req.body.movilidadId,
@@ -79,22 +102,17 @@ const updateDenuncia = async (req, res) => {
     const { id } = req.params;
     try {
         const denuncia = await Denuncia.update({
-            fechaDenuncia: req.body.fechaDenuncia,
-            interes: req.body.interes,
-            aprehendido: req.body.aprehendido,
-            medida: req.body.medida,
-            seguro: req.body.seguro,
-            elementoSustraido: req.body.elementoSustraido,
-            fechaDelito: req.body.fechaDelito,
-            fiscalia: req.body.fiscalia,
-            tipoArmaId: req.body.tipoArmaId,
+            submodalidadId: req.body.submodalidadId,
+            modalidadId: req.body.modalidadId,
+            especializacionId: req.body.especializacionId,
             movilidadId: req.body.movilidadId,
             autorId: req.body.autorId,
+            seguro: req.body.seguro,
+            tipoArmaId: req.body.tipoArmaId,
             victima: req.body.victima,
-            especializacionId: req.body.especializacionId,
-            comisariaId: req.body.comisariaId,
-            ubicacionId: req.body.ubicacionId,
-            submodalidadId: req.body.submodalidadId,
+            elementoSustraido: req.body.elementoSustraido,
+            interes: req.body.interes,
+            dniDenunciante: req.body.dniDenunciante,
             isClassificated: req.body.isClassificated
         }, {
             where: {
@@ -127,4 +145,17 @@ const deleteDenuncia = async (req, res) => {
     }
 }
 
-export { getAllDenuncias, getDenunciaById, createDenuncia, updateDenuncia, deleteDenuncia };
+const countDenunciasSC = async (req, res) => {
+    try {
+        const amount = await Denuncia.count({
+            where: {
+                isClassificated: 0
+            }
+        });
+        res.status(200).json({amount})
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+export { getAllDenuncias, getDenunciaById, createDenuncia, updateDenuncia, deleteDenuncia, countDenunciasSC };
