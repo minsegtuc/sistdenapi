@@ -6,6 +6,8 @@ import cookieParser from 'cookie-parser';
 import { Log, Usuario, Rol, Departamento, Localidad, Ubicacion, Comisaria, UnidadRegional, TipoDelito, Submodalidad, Modalidad, TipoArma, Autor, Movilidad, Especializacion, Denuncia } from './models/index.model.js';
 import routes from './routes/index.routes.js';
 import cors from 'cors';
+import https from 'https';
+import fs from 'fs'
 
 dotenv.config();
 
@@ -13,10 +15,15 @@ const app = express();
 const PORT = process.env.PORT || 3005;
 
 const corsOptions = {
-    origin: 'http://localhost:5173',
+    origin: 'https://srv555183.hstgr.cloud',
     methods: ['GET', 'POST', 'PUT', 'OPTIONS','DELETE'],
     credentials: true,
 };
+
+const options = {
+    key: fs.readFileSync('/etc/letsencrypt/live/srv555183.hstgr.cloud/privkey.pem'),
+    cert: fs.readFileSync('/etc/letsencrypt/live/srv555183.hstgr.cloud/fullchain.pem')
+}
 
 app.use(cors(corsOptions));
 app.use(cookieParser());
@@ -31,8 +38,8 @@ sequelize.authenticate()
         return sequelize.sync({ alter: true });
     })
     .then(() => {
-        app.listen(PORT, () => {
-            console.log(`Server is running on http://localhost:${PORT}`);
+        https.createServer(options, app).listen(PORT, () => {
+            console.log(`Server on port ${PORT}`);
         });
     })
     .catch((error) => {
