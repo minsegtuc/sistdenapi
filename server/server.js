@@ -14,8 +14,16 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3005;
 
+const allowedOrigins = ['https://srv555183.hstgr.cloud', 'http://localhost:5173'];
+
 const corsOptions = {
-    origin: 'https://srv555183.hstgr.cloud',
+    origin: function (origin, callback) {
+        if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     methods: ['GET', 'POST', 'PUT', 'OPTIONS', 'DELETE'],
     credentials: true,
 };
