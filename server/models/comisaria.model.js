@@ -27,6 +27,8 @@ const Comisaria = sequelize.define('Comisaria', {
     unidadRegionalId: {
         type: DataTypes.INTEGER,
         allowNull: false,
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
         references: {
             model: 'unidadRegional',
             key: 'idUnidadRegional'

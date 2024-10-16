@@ -7,7 +7,7 @@ import { Log, Usuario, Rol, Departamento, Localidad, Ubicacion, Comisaria, Unida
 import routes from './routes/index.routes.js';
 import cors from 'cors';
 import https from 'https';
-import fs from 'fs'
+import fs from 'fs';
 
 dotenv.config();
 
@@ -16,7 +16,7 @@ const PORT = process.env.PORT || 3005;
 
 const corsOptions = {
     origin: 'https://srv555183.hstgr.cloud',
-    methods: ['GET', 'POST', 'PUT', 'OPTIONS','DELETE'],
+    methods: ['GET', 'POST', 'PUT', 'OPTIONS', 'DELETE'],
     credentials: true,
 };
 
@@ -41,6 +41,9 @@ sequelize.authenticate()
         https.createServer(options, app).listen(PORT, () => {
             console.log(`Server on port ${PORT}`);
         });
+        // app.listen(PORT, () => {
+        //     console.log(`Server is running on http://localhost:${PORT}`);
+        // })
     })
     .catch((error) => {
         console.error('Unable to connect to the database:', error);
