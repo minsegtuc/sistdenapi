@@ -26,6 +26,7 @@ const corsOptions = {
     },
     methods: ['GET', 'POST', 'PUT', 'OPTIONS', 'DELETE'],
     credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization']
 };
 
 const options = {
@@ -34,6 +35,7 @@ const options = {
 }
 
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(cookieParser());
 app.use(morgan('dev'));
 app.use(express.json());
