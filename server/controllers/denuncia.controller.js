@@ -9,6 +9,7 @@ import Autor from "../models/autor.model.js"
 import Especializacion from "../models/especializacion.model.js"
 import Localidad from "../models/localidad.model.js"
 import { registrarLog } from "../helpers/logHelpers.js";
+import { Op } from "sequelize";
 
 const getAllDenuncias = async (req, res) => {
     try {
@@ -61,6 +62,74 @@ const getDenunciaById = async (req, res) => {
         });
         res.status(200).json(denuncia);
     } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+const getAllLike = async (req, res) => {
+    const id = req.body.denunciaSearch
+    try {
+        let denuncias;
+        if(!id){
+            denuncias = await Denuncia.findAll({
+                include: [
+                    { model: Ubicacion },
+                    { model: TipoArma },
+                    { model: Movilidad },
+                    { model: Autor },
+                    { model: Especializacion },
+                    {
+                        model: Submodalidad,
+                        include: [
+                            { model: Modalidad },
+                            { model: TipoDelito }
+                        ]
+                    }
+                ],    
+            });
+        }else{
+            denuncias = await Denuncia.findAll({
+                where: {
+                    idDenuncia: {
+                        [Op.like]: `%${id}%`
+                    }
+                },
+                include: [
+                    { model: Ubicacion },
+                    { model: TipoArma },
+                    { model: Movilidad },
+                    { model: Autor },
+                    { model: Especializacion },
+                    {
+                        model: Submodalidad,
+                        include: [
+                            { model: Modalidad },
+                            { model: TipoDelito }
+                        ]
+                    }
+                ],
+    
+            });
+        }
+        res.status(200).json({ denuncias });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+const getDuplicadas = async (req, res) => {
+    const ids = req.body.denunciasVerificar
+    try {
+        const duplicadas = await Denuncia.findAll({
+            where: {
+                idDenuncia: {
+                    [Op.in] : ids,
+                }
+            }
+        })
+        res.status(200).json({duplicadas})
+    } catch (error) {
+        console.log("Error en la consulta: " , error)
         res.status(500).json({ message: error.message });
     }
 }
@@ -158,4 +227,4 @@ const countDenunciasSC = async (req, res) => {
     }
 }
 
-export { getAllDenuncias, getDenunciaById, createDenuncia, updateDenuncia, deleteDenuncia, countDenunciasSC };
+export { getAllDenuncias, getDenunciaById, createDenuncia, updateDenuncia, deleteDenuncia, countDenunciasSC, getDuplicadas, getAllLike };
