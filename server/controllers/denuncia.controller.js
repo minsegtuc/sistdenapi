@@ -8,6 +8,7 @@ import Movilidad from "../models/movilidad.model.js"
 import Autor from "../models/autor.model.js"
 import Especializacion from "../models/especializacion.model.js"
 import Localidad from "../models/localidad.model.js"
+import Comisaria from "../models/comisaria.model.js"
 import { registrarLog } from "../helpers/logHelpers.js";
 import { Op } from "sequelize";
 
@@ -26,7 +27,8 @@ const getAllDenuncias = async (req, res) => {
                         { model: Modalidad },
                         { model: TipoDelito }
                     ]
-                }
+                },
+                {model: Comisaria}
             ],
 
         });
@@ -57,7 +59,8 @@ const getDenunciaById = async (req, res) => {
                         { model: Modalidad },
                         { model: TipoDelito }
                     ]
-                }
+                },
+                {model: Comisaria}
             ],
         });
         res.status(200).json(denuncia);
@@ -84,7 +87,8 @@ const getAllLike = async (req, res) => {
                             { model: Modalidad },
                             { model: TipoDelito }
                         ]
-                    }
+                    },
+                    {model: Comisaria}
                 ],    
             });
         }else{
@@ -106,7 +110,8 @@ const getAllLike = async (req, res) => {
                             { model: Modalidad },
                             { model: TipoDelito }
                         ]
-                    }
+                    },
+                    {model: Comisaria}
                 ],
     
             });

@@ -19,6 +19,20 @@ const getLocalidadById = async (req, res) => {
     }
 }
 
+const getLocalidadByName = async (req, res) => {
+    const { name } = req.params;
+    try {
+        const localidad = await Localidad.findAll({
+            where: {
+                descripcion: name
+            }
+        });
+        res.status(200).json(localidad);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
 const createLocalidad = async (req, res) => {
     try {
         const localidad = await Localidad.create({
@@ -63,5 +77,5 @@ const deleteLocalidad = async (req, res) => {
     }
 }
 
-export { getAllLocalidades, getLocalidadById, createLocalidad, updateLocalidad, deleteLocalidad };
+export { getAllLocalidades, getLocalidadById, createLocalidad, updateLocalidad, deleteLocalidad, getLocalidadByName };
 

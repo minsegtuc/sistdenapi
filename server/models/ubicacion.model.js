@@ -9,11 +9,11 @@ const Ubicacion = sequelize.define('Ubicacion', {
     },
     latitud: {
         type: DataTypes.DOUBLE,
-        allowNull: false
+        allowNull: true
     },
     longitud: {
         type: DataTypes.DOUBLE,
-        allowNull: false
+        allowNull: true
     },
     domicilio: {
         type: DataTypes.STRING(100),

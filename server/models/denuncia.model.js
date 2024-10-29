@@ -20,11 +20,11 @@ const Denuncia = sequelize.define('denuncia', {
     },
     aprehendido: {
         type: DataTypes.TINYINT,
-        allowNull: false,
+        allowNull: true,
     },
     medida: {
         type: DataTypes.TINYINT,
-        allowNull: false,
+        allowNull: true,
     },
     seguro: {
         type: DataTypes.TINYINT,
@@ -92,7 +92,7 @@ const Denuncia = sequelize.define('denuncia', {
     },
     comisariaId: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true,
         onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
         references: {

@@ -22,11 +22,11 @@ const getUbicacionById = async (req, res) => {
 const createUbicacion = async (req, res) => {
     try {
         const ubicacion = await Ubicacion.create({
-            idUbicacion: req.body.idUbicacion,
             latitud: req.body.latitud,
             longitud: req.body.longitud,
             domicilio: req.body.domicilio,
-            poligono: req.body.poligono
+            poligono: req.body.poligono,
+            localidadId: req.body.localidadId
         });
         res.status(201).json(ubicacion);
     } catch (error) {

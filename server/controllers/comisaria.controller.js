@@ -20,6 +20,21 @@ const getComisariaById = async (req, res) => {
     }
 }
 
+const getComisariaByName = async (req, res) => {
+    const { name } = req.params;
+    try {
+        const comisaria = await Comisaria.findAll({
+            where: {
+                descripcion: name
+            }
+        });
+
+        res.status(200).json(comisaria);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
 const createComisaria = async (req, res) => {
     try {
         const comisaria = await Comisaria.create({
@@ -79,4 +94,4 @@ const deleteComisaria = async (req, res) => {
     }
 }
 
-export { getAllComisarias, getComisariaById, createComisaria, updateComisaria, deleteComisaria };
+export { getAllComisarias, getComisariaById, createComisaria, updateComisaria, deleteComisaria, getComisariaByName };
