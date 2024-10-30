@@ -19,6 +19,21 @@ const getSubmodalidadById = async (req, res) => {
     }
 }
 
+const getSubmodalidadByName = async (req, res) => {
+    const { name } = req.params;
+    try {
+        const submodalidad = await Submodalidad.findOne({
+            where: {
+                descripcion: name
+            }
+        });
+        res.status(200).json(submodalidad);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+
 const createSubmodalidad = async (req, res) => {
     try {
         const submodalidad = await Submodalidad.create({
@@ -66,4 +81,4 @@ const deleteSubmodalidad = async (req, res) => {
     }
 }
 
-export { getAllSubmodalidades, getSubmodalidadById, createSubmodalidad, updateSubmodalidad, deleteSubmodalidad };
+export { getAllSubmodalidades, getSubmodalidadById, createSubmodalidad, updateSubmodalidad, deleteSubmodalidad, getSubmodalidadByName };

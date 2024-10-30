@@ -10,7 +10,11 @@ const Departamento = sequelize.define('Departamento', {
     descripcion: {
         type: DataTypes.STRING(100),
         allowNull: false
+    },
+    cantidad: {
+        type: DataTypes.INTEGER,
+        allowNull: true
     }
-}, {tableName: 'departamento', timestamps: false});
+}, { tableName: 'departamento', timestamps: false });
 
 export default Departamento;
