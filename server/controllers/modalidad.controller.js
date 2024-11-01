@@ -24,6 +24,7 @@ const createModalidad = async (req, res) => {
         const modalidad = await Modalidad.create({
             idModalidad: req.body.idModalidad,
             descripcion: req.body.descripcion,
+            tipoDelitoId: req.body.tipoDelitoId
         });
         res.status(201).json(modalidad);
     }

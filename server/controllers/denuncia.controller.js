@@ -24,11 +24,11 @@ const getAllDenuncias = async (req, res) => {
                 {
                     model: Submodalidad,
                     include: [
-                        { model: Modalidad },
-                        { model: TipoDelito }
+                        { model: Modalidad }
                     ]
                 },
-                {model: Comisaria}
+                {model: Comisaria},
+                { model: TipoDelito }
             ],
 
         });
@@ -56,11 +56,11 @@ const getDenunciaById = async (req, res) => {
                 {
                     model: Submodalidad,
                     include: [
-                        { model: Modalidad },
-                        { model: TipoDelito }
+                        { model: Modalidad }
                     ]
                 },
-                {model: Comisaria}
+                {model: Comisaria},                
+                { model: TipoDelito }
             ],
         });
         res.status(200).json(denuncia);
@@ -84,11 +84,11 @@ const getAllLike = async (req, res) => {
                     {
                         model: Submodalidad,
                         include: [
-                            { model: Modalidad },
-                            { model: TipoDelito }
+                            { model: Modalidad }
                         ]
                     },
-                    {model: Comisaria}
+                    {model: Comisaria},                    
+                    { model: TipoDelito }
                 ],    
             });
         }else{
@@ -108,10 +108,10 @@ const getAllLike = async (req, res) => {
                         model: Submodalidad,
                         include: [
                             { model: Modalidad },
-                            { model: TipoDelito }
                         ]
                     },
-                    {model: Comisaria}
+                    {model: Comisaria},
+                    {model: TipoDelito}
                 ],
     
             });
@@ -161,7 +161,8 @@ const createDenuncia = async (req, res) => {
             comisariaId: req.body.comisariaId,
             ubicacionId: req.body.ubicacionId,
             submodalidadId: req.body.submodalidadId,
-            isClassificated: 0
+            tipoDelitoId: req.body.tipoDelitoId,
+            isClassificated: req.body.isClassificated
         });
 
         await registrarLog('CREATE', `DENUNCIA ${denuncia.idDenuncia} CREADA`, req.userId);

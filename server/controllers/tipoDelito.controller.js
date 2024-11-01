@@ -19,6 +19,20 @@ const getTipoDelitoById = async (req, res) => {
     }
 }
 
+const getTipoDelitoByName = async (req, res) => {
+    const { name } = req.params;
+    try {
+        const tipoDelito = await TipoDelito.findOne({
+            where: {
+                descripcion: name
+            }
+        });
+        res.status(200).json(tipoDelito);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
 const createTipoDelito = async (req, res) => {
     try {
         const tipoDelito = await TipoDelito.create({
@@ -61,4 +75,4 @@ const deleteTipoDelito = async (req, res) => {
     }
 }
 
-export { getAllTipoDelitos, getTipoDelitoById, createTipoDelito, updateTipoDelito, deleteTipoDelito };
+export { getAllTipoDelitos, getTipoDelitoById, createTipoDelito, updateTipoDelito, deleteTipoDelito, getTipoDelitoByName };

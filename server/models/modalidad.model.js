@@ -11,7 +11,15 @@ const Modalidad = sequelize.define('modalidad', {
     descripcion: {
         type: DataTypes.STRING(45),
         allowNull: false
-    }
+    },
+    tipoDelitoId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: 'tipoDelito',
+            key: 'idTipoDelito'
+        }
+    },
 }, {tableName: 'modalidad', timestamps: false});
 
 export default Modalidad;

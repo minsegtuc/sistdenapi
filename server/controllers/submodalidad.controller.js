@@ -39,7 +39,6 @@ const createSubmodalidad = async (req, res) => {
         const submodalidad = await Submodalidad.create({
             idSubmodalidad: req.body.idSubmodalidad,
             descripcion: req.body.descripcion,
-            tipoDelitoId: req.body.tipoDelitoId,
             modalidadId: req.body.modalidadId
         });
         res.status(201).json(submodalidad);
@@ -54,7 +53,6 @@ const updateSubmodalidad = async (req, res) => {
     try {
         const submodalidad = await Submodalidad.update({
             descripcion: req.body.descripcion,
-            tipoDelitoId: req.body.tipoDelitoId,
             modalidadId: req.body.modalidadId
         }, {
             where: {

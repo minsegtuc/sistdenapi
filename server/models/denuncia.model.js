@@ -120,6 +120,16 @@ const Denuncia = sequelize.define('denuncia', {
             key: 'idSubmodalidad'
         }
     },
+    tipoDelitoId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        references: {
+            model: 'tipoDelito',
+            key: 'idTipoDelito'
+        }
+    },
     isClassificated: {
         type: DataTypes.TINYINT,
         allowNull: false

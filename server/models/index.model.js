@@ -85,16 +85,6 @@ UnidadRegional.belongsTo(Ubicacion, {
     targetKey: 'idUbicacion'
 });
 
-//Tipo de delito puede tener muchas submodalidades
-TipoDelito.hasMany(Submodalidad, {
-    foreignKey: 'tipoDelitoId',
-    sourceKey: 'idTipoDelito'
-})
-Submodalidad.belongsTo(TipoDelito, {
-    foreignKey: 'tipoDelitoId',
-    targetKey: 'idTipoDelito'
-})
-
 //Una modalidad puede tener muchas submodalidades
 Modalidad.hasMany(Submodalidad, {
     foreignKey: 'modalidadId',
@@ -175,15 +165,23 @@ Denuncia.belongsTo(Especializacion, {
     targetKey: 'idEspecializacion'
 })
 
-//Una victima puede tener muchas denuncias
-// Victima.hasMany(Denuncia, {
-//     foreignKey: 'victimaId',
-//     sourceKey: 'idVictima'
-// })
-// Denuncia.belongsTo(Victima, {
-//     foreignKey: 'victimaId',
-//     targetKey: 'idVictima'
-// })
+TipoDelito.hasMany(Denuncia, {
+    foreignKey: 'tipoDelitoId',
+    sourceKey: 'idTipoDelito'
+})
+Denuncia.belongsTo(TipoDelito, {
+    foreignKey: 'tipoDelitoId',
+    targetKey: 'idTipoDelito'
+})
+
+TipoDelito.hasMany(Modalidad, {
+    foreignKey: 'tipoDelitoId',
+    sourceKey: 'idTipoDelito'
+})
+Modalidad.belongsTo(TipoDelito, {
+    foreignKey: 'tipoDelitoId',
+    targetKey: 'idTipoDelito'
+})
 
 export { Log, Usuario, Rol, Departamento, Localidad, Ubicacion, Comisaria, UnidadRegional, TipoDelito, Submodalidad, Modalidad, TipoArma, Autor, Movilidad, Especializacion, Denuncia };
 
