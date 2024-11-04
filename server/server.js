@@ -29,10 +29,10 @@ const corsOptions = {
     allowedHeaders: ['Content-Type', 'Authorization']
 };
 
-const options = {
-    key: fs.readFileSync('/etc/letsencrypt/live/srv555183.hstgr.cloud/privkey.pem'),
-    cert: fs.readFileSync('/etc/letsencrypt/live/srv555183.hstgr.cloud/fullchain.pem')
-}
+// const options = {
+//     key: fs.readFileSync('/etc/letsencrypt/live/srv555183.hstgr.cloud/privkey.pem'),
+//     cert: fs.readFileSync('/etc/letsencrypt/live/srv555183.hstgr.cloud/fullchain.pem')
+// }
 
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
@@ -48,12 +48,12 @@ sequelize.authenticate()
         return sequelize.sync({ alter: true });
     })
     .then(() => {
-        https.createServer(options, app).listen(PORT, () => {
-            console.log(`Server on port ${PORT}`);
-        });
-        // app.listen(PORT, () => {
-        //     console.log(`Server is running on http://localhost:${PORT}`);
-        // })
+        // https.createServer(options, app).listen(PORT, () => {
+        //     console.log(`Server on port ${PORT}`);
+        // });
+        app.listen(PORT, () => {
+            console.log(`Server is running on http://localhost:${PORT}`);
+        })
     })
     .catch((error) => {
         console.error('Unable to connect to the database:', error);

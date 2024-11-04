@@ -27,7 +27,7 @@ const getAllDenuncias = async (req, res) => {
                         { model: Modalidad }
                     ]
                 },
-                {model: Comisaria},
+                { model: Comisaria },
                 { model: TipoDelito }
             ],
 
@@ -59,10 +59,17 @@ const getDenunciaById = async (req, res) => {
                         { model: Modalidad }
                     ]
                 },
-                {model: Comisaria},                
+                { model: Comisaria },
                 { model: TipoDelito }
             ],
         });
+
+        res.cookie('denuncia', id, {
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'Strict',
+            maxAge: 18000000
+        })
+
         res.status(200).json(denuncia);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -73,7 +80,7 @@ const getAllLike = async (req, res) => {
     const id = req.body.denunciaSearch
     try {
         let denuncias;
-        if(!id){
+        if (!id) {
             denuncias = await Denuncia.findAll({
                 include: [
                     { model: Ubicacion },
@@ -87,11 +94,11 @@ const getAllLike = async (req, res) => {
                             { model: Modalidad }
                         ]
                     },
-                    {model: Comisaria},                    
+                    { model: Comisaria },
                     { model: TipoDelito }
-                ],    
+                ],
             });
-        }else{
+        } else {
             denuncias = await Denuncia.findAll({
                 where: {
                     idDenuncia: {
@@ -110,10 +117,10 @@ const getAllLike = async (req, res) => {
                             { model: Modalidad },
                         ]
                     },
-                    {model: Comisaria},
-                    {model: TipoDelito}
+                    { model: Comisaria },
+                    { model: TipoDelito }
                 ],
-    
+
             });
         }
         res.status(200).json({ denuncias });
@@ -128,13 +135,13 @@ const getDuplicadas = async (req, res) => {
         const duplicadas = await Denuncia.findAll({
             where: {
                 idDenuncia: {
-                    [Op.in] : ids,
+                    [Op.in]: ids,
                 }
             }
         })
-        res.status(200).json({duplicadas})
+        res.status(200).json({ duplicadas })
     } catch (error) {
-        console.log("Error en la consulta: " , error)
+        console.log("Error en la consulta: ", error)
         res.status(500).json({ message: error.message });
     }
 }
@@ -227,7 +234,7 @@ const countDenunciasSC = async (req, res) => {
                 isClassificated: 0
             }
         });
-        res.status(200).json({amount})
+        res.status(200).json({ amount })
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

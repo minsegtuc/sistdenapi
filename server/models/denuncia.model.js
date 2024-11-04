@@ -31,7 +31,7 @@ const Denuncia = sequelize.define('denuncia', {
         allowNull: true,
     },
     elementoSustraido: {
-        type: DataTypes.STRING(256),
+        type: DataTypes.STRING(512),
         allowNull: true,
     },
     fechaDelito: {
