@@ -23,6 +23,10 @@ const Ubicacion = sequelize.define('Ubicacion', {
         type: DataTypes.STRING(100),
         allowNull: true
     },
+    estado: {
+        type: DataTypes.INTEGER,
+        allowNull: true
+    },
     localidadId: {
         type: DataTypes.INTEGER,
         allowNull: true,

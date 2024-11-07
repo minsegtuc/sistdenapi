@@ -11,6 +11,7 @@ import Localidad from "../models/localidad.model.js"
 import Comisaria from "../models/comisaria.model.js"
 import { registrarLog } from "../helpers/logHelpers.js";
 import { Op } from "sequelize";
+import sequelize from "../config/db.js";
 
 const getAllDenuncias = async (req, res) => {
     try {
@@ -129,6 +130,62 @@ const getAllLike = async (req, res) => {
     }
 }
 
+const getAllRegional = async (req, res) => {
+    const reg = req.body.reg ? Number(req.body.reg) : undefined;
+    console.log("Regional: ", reg)
+    try {
+        let denuncias;
+        if (!reg) {
+            denuncias = await Denuncia.findAll({
+                include: [
+                    { model: Ubicacion },
+                    { model: TipoArma },
+                    { model: Movilidad },
+                    { model: Autor },
+                    { model: Especializacion },
+                    {
+                        model: Submodalidad,
+                        include: [
+                            { model: Modalidad }
+                        ]
+                    },
+                    {
+                        model: Comisaria,
+                    },
+                    { model: TipoDelito }
+                ],
+            });
+        } else {
+            denuncias = await Denuncia.findAll({
+                include: [
+                    { model: Ubicacion },
+                    { model: TipoArma },
+                    { model: Movilidad },
+                    { model: Autor },
+                    { model: Especializacion },
+                    {
+                        model: Submodalidad,
+                        include: [
+                            { model: Modalidad },
+                        ]
+                    },
+                    {
+                        model: Comisaria,
+                        where: {
+                            unidadRegionalId: reg
+                        }
+                    },
+                    { model: TipoDelito }
+                ],
+
+            });
+        }
+        res.status(200).json({ denuncias });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
 const getDuplicadas = async (req, res) => {
     const ids = req.body.denunciasVerificar
     try {
@@ -147,36 +204,92 @@ const getDuplicadas = async (req, res) => {
 }
 
 const createDenuncia = async (req, res) => {
+    const errores = []
+    const { denuncias } = req.body
+
+    console.log("Denuncias a cargar: ", denuncias)
+    let denunciasCargadas = 0;
+    let denunciasNoCargadas = 0
+    const transaccion = await sequelize.transaction();
+
     try {
-        const denuncia = await Denuncia.create({
-            idDenuncia: req.body.idDenuncia,
-            fechaDenuncia: req.body.fechaDenuncia,
-            dniDenunciante: req.body.dniDenunciante,
-            interes: req.body.interes,
-            aprehendido: req.body.aprehendido,
-            medida: req.body.medida,
-            seguro: req.body.seguro,
-            elementoSustraido: req.body.elementoSustraido,
-            fechaDelito: req.body.fechaDelito,
-            horaDelito: req.body.horaDelito,
-            fiscalia: req.body.fiscalia,
-            tipoArmaId: req.body.tipoArmaId,
-            movilidadId: req.body.movilidadId,
-            autorId: req.body.autorId,
-            victima: req.body.victima,
-            especializacionId: req.body.especializacionId,
-            comisariaId: req.body.comisariaId,
-            ubicacionId: req.body.ubicacionId,
-            submodalidadId: req.body.submodalidadId,
-            tipoDelitoId: req.body.tipoDelitoId,
-            isClassificated: req.body.isClassificated
-        });
+        for (const denunciaData of denuncias) {
+            console.log("DenunciaData: ", denunciaData)
+            let ubicacion;
+            try {
+                ubicacion = await Ubicacion.create({
+                    latitud: denunciaData.latitud,
+                    longitud: denunciaData.longitud,
+                    domicilio: denunciaData.domicilio,
+                    poligono: denunciaData.poligono,
+                    localidadId: denunciaData.localidadId,
+                    estado: denunciaData.estado
+                }, { transaccion });
 
-        await registrarLog('CREATE', `DENUNCIA ${denuncia.idDenuncia} CREADA`, req.userId);
+                const denuncia = await Denuncia.create({
+                    idDenuncia: denunciaData.idDenuncia,
+                    fechaDenuncia: denunciaData.fechaDenuncia,
+                    dniDenunciante: denunciaData.dniDenunciante,
+                    interes: denunciaData.interes,
+                    aprehendido: denunciaData.aprehendido,
+                    medida: denunciaData.medida,
+                    seguro: denunciaData.seguro,
+                    elementoSustraido: denunciaData.elementoSustraido,
+                    fechaDelito: denunciaData.fechaDelito,
+                    horaDelito: denunciaData.horaDelito,
+                    fiscalia: denunciaData.fiscalia,
+                    tipoArmaId: denunciaData.tipoArmaId,
+                    movilidadId: denunciaData.movilidadId,
+                    autorId: denunciaData.autorId,
+                    victima: denunciaData.victima,
+                    especializacionId: denunciaData.especializacionId,
+                    comisariaId: denunciaData.comisariaId,
+                    ubicacionId: ubicacion.idUbicacion,
+                    submodalidadId: denunciaData.submodalidadId,
+                    tipoDelitoId: denunciaData.tipoDelitoId,
+                    isClassificated: denunciaData.isClassificated
+                }, transaccion);
 
-        res.status(201).json(denuncia);
+                await registrarLog('CREATE', `DENUNCIA ${denuncia.idDenuncia} CREADA`, req.userId);
+                denunciasCargadas += 1;
+            } catch (error) {
+                errores.push({
+                    denuncia: denunciaData,
+                    error: error.message
+                });
+
+                await registrarLog('ERROR', `Fallo al crear denuncia ${denunciaData.idDenuncia}: ${error.message}`, req.userId);
+                denunciasNoCargadas += 1;
+            }
+        }
+
+        if (errores.length > 0) {
+            await transaccion.rollback();
+            console.log("Transacción revertida debido a errores en algunos registros.");
+            res.status(400).json({
+                message: "Transacción revertida: algunas denuncias fallaron",
+                denunciasCargadas,
+                denunciasNoCargadas,
+                errores
+            });
+        } else {
+            await transaccion.commit();
+            res.status(201).json({
+                message: "Lote de denuncias cargado con éxito",
+                denunciasCargadas,
+                denunciasNoCargadas,
+                errores
+            });
+        }
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        await transaccion.rollback();
+        await registrarLog('ERROR', `Error inesperado durante la transacción: ${error.message}`, req.userId);
+        res.status(500).json({
+            message: "Error en la carga del lote de denuncias",
+            denunciasCargadas,
+            denunciasNoCargadas: denuncias.length - denunciasCargadas,
+            error: error.message
+        });
     }
 }
 
@@ -240,4 +353,4 @@ const countDenunciasSC = async (req, res) => {
     }
 }
 
-export { getAllDenuncias, getDenunciaById, createDenuncia, updateDenuncia, deleteDenuncia, countDenunciasSC, getDuplicadas, getAllLike };
+export { getAllDenuncias, getDenunciaById, createDenuncia, updateDenuncia, deleteDenuncia, countDenunciasSC, getDuplicadas, getAllLike, getAllRegional };
