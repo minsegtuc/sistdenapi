@@ -3,11 +3,14 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import sequelize from './config/db.js';
 import cookieParser from 'cookie-parser';
+import { socketConfiguration } from './sockets/socketConfig.js'
 import { Log, Usuario, Rol, Departamento, Localidad, Ubicacion, Comisaria, UnidadRegional, TipoDelito, Submodalidad, Modalidad, TipoArma, Autor, Movilidad, Especializacion, Denuncia } from './models/index.model.js';
 import routes from './routes/index.routes.js';
 import cors from 'cors';
+import http from 'http'
 import https from 'https';
 import fs from 'fs';
+import { Server } from 'socket.io';
 
 dotenv.config();
 
@@ -29,17 +32,11 @@ const corsOptions = {
     allowedHeaders: ['Content-Type', 'Authorization']
 };
 
-const options = {
-    key: fs.readFileSync('/etc/letsencrypt/live/srv555183.hstgr.cloud/privkey.pem'),
-    cert: fs.readFileSync('/etc/letsencrypt/live/srv555183.hstgr.cloud/fullchain.pem')
-}
-
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(cookieParser());
 app.use(morgan('dev'));
 app.use(express.json());
-
 app.use('/api', routes);
 
 sequelize.authenticate()
@@ -47,13 +44,41 @@ sequelize.authenticate()
         console.log('Connection has been established successfully.');
         return sequelize.sync({ alter: true });
     })
-    .then(() => {
-        https.createServer(options, app).listen(PORT, () => {
+    .then(() => {       
+        let server;
+        let io;
+
+        if (process.env.NODE_ENV === 'production') {
+            // Configuración de HTTPS para producción
+            const options = {
+                key: fs.readFileSync('/etc/letsencrypt/live/srv555183.hstgr.cloud/privkey.pem'),
+                cert: fs.readFileSync('/etc/letsencrypt/live/srv555183.hstgr.cloud/fullchain.pem')
+            };
+            server = https.createServer(options, app);
+            io = new Server(server, {
+                cors: {
+                    origin: allowedOrigins,
+                    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+                    credentials: true,
+                },
+            });
+        } else {
+            // Configuración de HTTP para desarrollo
+            server = http.createServer(app);
+            io = new Server(server, {
+                cors: {
+                    origin: allowedOrigins,
+                    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+                    credentials: true,
+                },
+            });
+        }
+
+        socketConfiguration(io)
+
+        server.listen(PORT, () => {
             console.log(`Server on port ${PORT}`);
-        });
-        // app.listen(PORT, () => {
-        //     console.log(`Server is running on http://localhost:${PORT}`);
-        // })
+        })
     })
     .catch((error) => {
         console.error('Unable to connect to the database:', error);

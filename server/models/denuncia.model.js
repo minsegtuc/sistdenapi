@@ -133,6 +133,10 @@ const Denuncia = sequelize.define('denuncia', {
     isClassificated: {
         type: DataTypes.TINYINT,
         allowNull: false
+    },
+    trabajando: {
+        type: DataTypes.STRING(50),
+        allowNull: true
     }
 }, {tableName: 'denuncia', timestamps: false});
 

@@ -12,6 +12,7 @@ import Comisaria from "../models/comisaria.model.js"
 import { registrarLog } from "../helpers/logHelpers.js";
 import { Op } from "sequelize";
 import sequelize from "../config/db.js";
+import { wss } from "../sockets/socketConfig.js";
 
 const getAllDenuncias = async (req, res) => {
     try {
@@ -203,6 +204,34 @@ const getDuplicadas = async (req, res) => {
     }
 }
 
+const denunciaTrabajando = async (req, res) => {
+    try {
+        const denuncia = await Denuncia.update({
+            trabajando: req.body.user
+        }, {
+            where: {
+                idDenuncia: req.body.denunciaid
+            }
+        }).then(() => {
+            wss.clients.forEach(client => {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.send(JSON.stringify({
+                        type: 'denuncia_trabajando',
+                        denunciaId: req.body.denunciaid,
+                        usuarioId: req.body.user
+                    }));
+                }
+            });
+        })
+
+        await registrarLog('UPDATE', `DENUNCIA ${req.body.denunciaid} ACTUALIZADA`, req.userId);
+
+        res.status(200).json(denuncia)
+    } catch (error) {
+        res.status(500).json({ message: error.message })
+    }
+}
+
 const createDenuncia = async (req, res) => {
     const errores = []
     const { denuncias } = req.body
@@ -353,4 +382,4 @@ const countDenunciasSC = async (req, res) => {
     }
 }
 
-export { getAllDenuncias, getDenunciaById, createDenuncia, updateDenuncia, deleteDenuncia, countDenunciasSC, getDuplicadas, getAllLike, getAllRegional };
+export { getAllDenuncias, getDenunciaById, createDenuncia, updateDenuncia, deleteDenuncia, countDenunciasSC, getDuplicadas, getAllLike, getAllRegional, denunciaTrabajando };
