@@ -10,6 +10,12 @@ export const socketConfiguration = (io) => {
             socket.broadcast.emit('denuncia_en_vista', { denunciaId, userId });
         });
 
+        socket.on('leave_denuncia', ({ denunciaId }) => {
+            socket.broadcast.emit('denuncia_en_vista', {
+                denunciaId,
+            });
+        });
+
         socket.on('disconnect', () => {
             console.log('Usuario desconectado:', socket.id);
         });
