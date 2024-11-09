@@ -49,7 +49,6 @@ sequelize.authenticate()
         let io;
 
         if (process.env.NODE_ENV === 'production') {
-            // Configuración de HTTPS para producción
             const options = {
                 key: fs.readFileSync('/etc/letsencrypt/live/srv555183.hstgr.cloud/privkey.pem'),
                 cert: fs.readFileSync('/etc/letsencrypt/live/srv555183.hstgr.cloud/fullchain.pem')
@@ -63,7 +62,6 @@ sequelize.authenticate()
                 },
             });
         } else {
-            // Configuración de HTTP para desarrollo
             server = http.createServer(app);
             io = new Server(server, {
                 cors: {
