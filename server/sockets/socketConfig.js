@@ -25,14 +25,20 @@ export const socketConfiguration = (io) => {
         socket.on('leave_denuncia', async ({ denunciaId }) => {
             console.log("Denuncia leave: ", denunciaId)
             try {
-                await Denuncia.update({ trabajando: null }, {
-                    where: { idDenuncia: denunciaId }
-                })
-                socket.broadcast.emit('denuncia_en_vista', { denunciaId, userId: null });
+                userSocketMap.delete(socket.id);
 
-                userSocketMap.delete(socket.id)
+                const stillViewing = Array.from(userSocketMap.values()).some(
+                    (data) => data.denunciaId === denunciaId
+                );
+
+                if (!stillViewing) {
+                    await Denuncia.update({ trabajando: null }, {
+                        where: { idDenuncia: denunciaId }
+                    });
+                    socket.broadcast.emit('denuncia_en_vista', { denunciaId, userId: null });
+                }
             } catch (error) {
-                console.log("Error actualizando el usuario trabajando: ", error)
+                console.log("Error actualizando el usuario trabajando: ", error);
             }
         });
 
@@ -41,24 +47,19 @@ export const socketConfiguration = (io) => {
 
             const userData = userSocketMap.get(socket.id)
             if (userData) {
-                const { userId, denunciaId } = userData;
+                const { denunciaId } = userData;
 
                 userSocketMap.delete(socket.id);
 
                 const stillViewing = Array.from(userSocketMap.values()).some(
-                    (data) => data.userId === userId && data.denunciaId === denunciaId
+                    (data) => data.denunciaId === denunciaId
                 );
 
                 if (!stillViewing) {
-                    try {
-                        await Denuncia.update({ trabajando: null }, {
-                            where: { idDenuncia: denunciaId }
-                        })
-
-                        socket.broadcast.emit('denuncia_en_vista', { denunciaId, userId: null });
-                    } catch (error) {
-                        console.log("Error al liberar la denuncia")
-                    }
+                    await Denuncia.update({ trabajando: null }, {
+                        where: { idDenuncia: denunciaId }
+                    });
+                    socket.broadcast.emit('denuncia_en_vista', { denunciaId, userId: null });
                 }
             }
         });
