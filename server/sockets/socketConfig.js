@@ -9,59 +9,57 @@ export const socketConfiguration = (io) => {
         console.log('Usuario conectado:', socket.id);
 
         socket.on('view_denuncia', async ({ denunciaId, userId }) => {
+            if (!activeDenuncias.has(denunciaId)) {
+                activeDenuncias.set(denunciaId, []);
+            }
+            activeDenuncias.get(denunciaId).push(socket.id);
+
             try {
-
-                userSocketMap.set(socket.id, { userId, denunciaId })
-
-                await Denuncia.update({ trabajando: userId }, {
-                    where: { idDenuncia: denunciaId }
-                })
-                socket.broadcast.emit('denuncia_en_vista', { denunciaId, userId });
+                if (activeDenuncias.get(denunciaId).length === 1) {
+                    await Denuncia.update({ trabajando: userId }, {
+                        where: { idDenuncia: denunciaId }
+                    });
+                    socket.broadcast.emit('denuncia_en_vista', { denunciaId, userId });
+                }
             } catch (error) {
                 console.log("Error actualizando el usuario trabajando: ", error)
             }
         });
 
         socket.on('leave_denuncia', async ({ denunciaId }) => {
-            console.log("Denuncia leave: ", denunciaId)
-            try {
-                userSocketMap.delete(socket.id);
-
-                const stillViewing = Array.from(userSocketMap.values()).some(
-                    (data) => data.denunciaId === denunciaId
-                );
-
-                if (!stillViewing) {
+            if (activeDenuncias.has(denunciaId)) {
+                const socketsViewing = activeDenuncias.get(denunciaId).filter(id => id !== socket.id);
+                if (socketsViewing.length === 0) {
                     await Denuncia.update({ trabajando: null }, {
                         where: { idDenuncia: denunciaId }
                     });
                     socket.broadcast.emit('denuncia_en_vista', { denunciaId, userId: null });
+                    activeDenuncias.delete(denunciaId);
+                } else {
+                    activeDenuncias.set(denunciaId, socketsViewing);
                 }
-            } catch (error) {
-                console.log("Error actualizando el usuario trabajando: ", error);
             }
         });
 
         socket.on('disconnect', async () => {
             console.log('Usuario desconectado:', socket.id);
 
-            const userData = userSocketMap.get(socket.id)
-            if (userData) {
-                const { denunciaId } = userData;
+            activeDenuncias.forEach(async (sockets, denunciaId) => {
+                if (sockets.includes(socket.id)) {
+                    const remainingSockets = sockets.filter(id => id !== socket.id);
 
-                userSocketMap.delete(socket.id);
-
-                const stillViewing = Array.from(userSocketMap.values()).some(
-                    (data) => data.denunciaId === denunciaId
-                );
-
-                if (!stillViewing) {
-                    await Denuncia.update({ trabajando: null }, {
-                        where: { idDenuncia: denunciaId }
-                    });
-                    socket.broadcast.emit('denuncia_en_vista', { denunciaId, userId: null });
+                    if (remainingSockets.length === 0) {
+                        await Denuncia.update({ trabajando: null }, {
+                            where: { idDenuncia: denunciaId }
+                        });
+                        socket.broadcast.emit('denuncia_en_vista', { denunciaId, userId: null });
+                        activeDenuncias.delete(denunciaId);
+                    } else {
+                        activeDenuncias.set(denunciaId, remainingSockets);
+                    }
                 }
-            }
+            });
+            console.log('Usuario desconectado:', socket.id);
         });
     });
 }
