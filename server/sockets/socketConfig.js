@@ -2,12 +2,17 @@ import Denuncia from "../models/denuncia.model.js";
 
 let wss;
 
+const userSocketMap = new Map()
+
 export const socketConfiguration = (io) => {
     io.on('connection', (socket) => {
         console.log('Usuario conectado:', socket.id);
 
         socket.on('view_denuncia', async ({ denunciaId, userId }) => {
             try {
+
+                userSocketMap.set(socket.id, {userId, denunciaId})
+
                 await Denuncia.update({ trabajando: userId }, {
                     where: { idDenuncia: denunciaId }
                 })
@@ -24,13 +29,32 @@ export const socketConfiguration = (io) => {
                     where: { idDenuncia: denunciaId }
                 })
                 socket.broadcast.emit('denuncia_en_vista', { denunciaId, userId: null });
+
+                userSocketMap.delete(socket.id)
             } catch (error) {
                 console.log("Error actualizando el usuario trabajando: " , error)
             }
         });
 
-        socket.on('disconnect', () => {
+        socket.on('disconnect', async () => {
             console.log('Usuario desconectado:', socket.id);
+
+            const userData = userSocketMap.get(socket.id)
+            if(userData){
+                const {userId, denunciaId} = userData;
+
+                try {
+                    await Denuncia.update({ trabajando: null }, {
+                        where: { idDenuncia: denunciaId }
+                    })
+
+                    socket.broadcast.emit('denuncia_en_vista', { denunciaId, userId: null });
+                } catch (error) {
+                    console.log("Error al liberar la denuncia")
+                }
+
+                userSocketMap.delete(socket.id);
+            }
         });
     });
 }
