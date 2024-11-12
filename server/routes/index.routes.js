@@ -16,9 +16,11 @@ import UnidadRegionalRutas from './unidadRegional.routes.js';
 import UsuarioRutas from './usuario.routes.js';
 import verifyToken from '../middleware/jwt.js';
 import VerifyToken from '../controllers/verifytoken.controller.js';
+import Working from './working.routes.js'
 import express from 'express';
 
 const router = express.Router();
+router.use('/working', verifyToken, Working);
 router.use('/autor', verifyToken, AutorRutas);
 router.use('/comisaria', verifyToken, ComisariaRutas);
 router.use('/departamento', verifyToken, DepartamentoRutas);

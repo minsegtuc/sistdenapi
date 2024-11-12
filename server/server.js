@@ -57,7 +57,7 @@ sequelize.authenticate()
             io = new Server(server, {
                 cors: {
                     origin: allowedOrigins,
-                    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+                    methods: ['GET', 'POST', 'PUT', 'DELETE','UPDATE','PATCH'],
                     credentials: true,
                 },
             });
