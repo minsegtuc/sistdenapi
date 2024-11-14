@@ -36,7 +36,7 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(cookieParser());
 app.use(morgan('dev'));
-app.use(express.json());
+app.use(express.json({ limit: '25mb' }));
 app.use('/api', routes);
 
 sequelize.authenticate()

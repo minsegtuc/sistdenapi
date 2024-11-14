@@ -17,6 +17,7 @@ import UsuarioRutas from './usuario.routes.js';
 import verifyToken from '../middleware/jwt.js';
 import VerifyToken from '../controllers/verifytoken.controller.js';
 import Working from './working.routes.js'
+import Scrap from './scrap.routes.js'
 import express from 'express';
 
 const router = express.Router();
@@ -37,6 +38,8 @@ router.use('/tipoDelito', verifyToken, TipoDelitoRutas);
 router.use('/ubicacion', verifyToken, UbicacionRutas);
 router.use('/unidadRegional', verifyToken, UnidadRegionalRutas);
 router.use('/usuario', UsuarioRutas);
+router.use('/scrap', Scrap)
 router.get('/verifyToken', verifyToken, VerifyToken);
+
 
 export default router;
