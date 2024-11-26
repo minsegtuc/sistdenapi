@@ -329,6 +329,8 @@ const updateDenuncia = async (req, res) => {
             submodalidadId: req.body.submodalidadId,
             modalidadId: req.body.modalidadId,
             especializacionId: req.body.especializacionId,
+            aprehendido: req.body.aprehendido,
+            medida: req.body.medida,
             movilidadId: req.body.movilidadId,
             autorId: req.body.autorId,
             seguro: req.body.seguro,
@@ -337,6 +339,7 @@ const updateDenuncia = async (req, res) => {
             elementoSustraido: req.body.elementoSustraido,
             interes: req.body.interes,
             dniDenunciante: req.body.dniDenunciante,
+            tipoDelitoId: req.body.tipoDelitoId,
             isClassificated: req.body.isClassificated
         }, {
             where: {

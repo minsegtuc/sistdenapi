@@ -98,11 +98,7 @@ const getAllUsers = async (req, res) => {
 const getUserById = async (req, res) => {
     const { id } = req.params;
     try {
-        const usuario = await Usuario.findByPk(id, {
-            attributes: {
-                exclude: ['contraseña']
-            }
-        });
+        const usuario = await Usuario.findByPk(id);
         await registrarLog("Listar", `Se ha listado el usuario ${usuario.nombre} ${usuario.apellido}`, req.userId);
         res.status(200).json(usuario);
     } catch (error) {
@@ -147,6 +143,9 @@ const createUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
     const { id } = req.params;
+    if (req.body.contraseña) {
+        req.body.contraseña = bcrypt.hashSync(req.body.contraseña, 10);
+    }
     try {
         const usuario = await Usuario.update({
             dni: req.body.dni,

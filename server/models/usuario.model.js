@@ -56,7 +56,10 @@ const Usuario = sequelize.define('Usuario', {
             usuario.contraseña = bcrypt.hashSync(usuario.contraseña, 10);
         },
         beforeUpdate: (usuario) => {
-            usuario.contraseña = bcrypt.hashSync(usuario.contraseña, 10);
+            if (usuario.changed('contraseña')) {
+                usuario.contraseña = bcrypt.hashSync(usuario.contraseña, 10);
+                console.log('Contraseña encriptada:', usuario.contraseña);
+            }
         },
     }
 })

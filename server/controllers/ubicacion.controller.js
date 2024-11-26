@@ -41,7 +41,8 @@ const updateUbicacion = async (req, res) => {
             latitud: req.body.latitud,
             longitud: req.body.longitud,
             domicilio: req.body.domicilio,
-            poligono: req.body.poligono
+            poligono: req.body.poligono, 
+            estado: req.body.estado
         }, {
             where: {
                 idUbicacion: id
