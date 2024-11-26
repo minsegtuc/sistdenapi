@@ -2,7 +2,7 @@ import express from 'express';
 import { getAllDenuncias, getDenunciaById, createDenuncia, updateDenuncia, deleteDenuncia, countDenunciasSC, getDuplicadas, getAllLike, getAllRegional, denunciaTrabajando } from '../controllers/denuncia.controller.js';
 
 const router = express.Router();
-router.get('/denuncia', getAllDenuncias);
+router.get('/denuncia/:clasificada', getAllDenuncias);
 router.get('/denuncia/:id', getDenunciaById);
 router.post('/duplicadas', getDuplicadas)
 router.post('/denuncia', createDenuncia);

@@ -15,6 +15,8 @@ import sequelize from "../config/db.js";
 import { wss } from "../sockets/socketConfig.js";
 
 const getAllDenuncias = async (req, res) => {
+    const {clasificada} = req.params
+    console.log(clasificada)
     try {
         const denuncias = await Denuncia.findAll({
             include: [
@@ -32,6 +34,9 @@ const getAllDenuncias = async (req, res) => {
                 { model: Comisaria },
                 { model: TipoDelito }
             ],
+            where:{
+                isClassificated: clasificada
+            }
 
         });
         res.status(200).json(denuncias);
@@ -105,7 +110,8 @@ const getAllLike = async (req, res) => {
                 where: {
                     idDenuncia: {
                         [Op.like]: `%${id}%`
-                    }
+                    },
+                    isClassificated: 1
                 },
                 include: [
                     { model: Ubicacion },
@@ -155,6 +161,9 @@ const getAllRegional = async (req, res) => {
                     },
                     { model: TipoDelito }
                 ],
+                where: {
+                    isClassificated: 0
+                }
             });
         } else {
             denuncias = await Denuncia.findAll({
@@ -178,6 +187,9 @@ const getAllRegional = async (req, res) => {
                     },
                     { model: TipoDelito }
                 ],
+                where: {
+                    isClassificated: 0
+                }
 
             });
         }
