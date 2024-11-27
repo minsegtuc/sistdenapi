@@ -25,9 +25,10 @@ const getScrapping = async (req, res) => {
 
 
     try {
-        const { data } = await axios.get(datosMPF.url, { httpsAgent: agent, headers: { Cookie: `PHPSESSID=${datosMPF.cookie}` } });
+        const { data } = await axios.get(datosMPF.url, { headers: { Cookie: `PHPSESSID=${datosMPF.cookie}` } });
         const $ = cheerio.load(data)
 
+        console.log("Data: " , data)
         const items = [];
 
         const texto = $($('.content')).text()
