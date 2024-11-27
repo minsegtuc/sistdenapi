@@ -7,25 +7,20 @@ const getScrapping = async (req, res) => {
     const { datosMPF } = req.body
     console.log("DatosMPF: ", datosMPF)
 
-    let agent;
-
-    if (process.env.NODE_ENV === 'production') {
-        agent = new https.Agent({
+    const agent = new https.Agent({
+        family: 4,
+        rejectUnauthorized: process.env.NODE_ENV === 'production',
+        ...(process.env.NODE_ENV === 'production' && {
             ca: [
                 fs.readFileSync('/etc/letsencrypt/live/srv555183.hstgr.cloud/fullchain.pem'), 
                 fs.readFileSync('/etc/letsencrypt/live/srv555183.hstgr.cloud/privkey.pem')
-            ],
-            rejectUnauthorized: true
-        });
-    } else {
-        agent = new https.Agent({
-            rejectUnauthorized: false
-        });
-    }
+            ]
+        })
+    });
 
 
     try {
-        const { data } = await axios.get(datosMPF.url, { headers: { Cookie: `PHPSESSID=${datosMPF.cookie}` } });
+        const { data } = await axios.get(datosMPF.url, { httpsAgent: agent, headers: { Cookie: `PHPSESSID=${datosMPF.cookie}`,'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36' } });
         const $ = cheerio.load(data)
 
         console.log("Data: " , data)
