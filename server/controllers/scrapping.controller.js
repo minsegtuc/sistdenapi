@@ -1,6 +1,7 @@
 import axios from "axios"
 import * as cheerio from "cheerio"
 import https from 'https'
+import fs from 'fs';
 
 const getScrapping = async (req, res) => {
     const { datosMPF } = req.body
