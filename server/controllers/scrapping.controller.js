@@ -6,9 +6,20 @@ const getScrapping = async (req, res) => {
     const { datosMPF } = req.body
     console.log("DatosMPF: ", datosMPF)
 
-    const agent = new https.Agent({
-        rejectUnauthorized: true
-    });
+    let agent;
+
+    if(process.env.NODE_ENV === 'production'){
+        agent = new https.Agent({
+            ca: fs.readFileSync('/etc/letsencrypt/live/srv555183.hstgr.cloud/fullchain.pem'), 
+            rejectUnauthorized: true
+        });
+    }else{
+        agent = new https.Agent({
+            rejectUnauthorized: false
+        });
+    }
+
+    
     try {
         const { data } = await axios.get(datosMPF.url, { httpsAgent: agent, headers: { Cookie: `PHPSESSID=${datosMPF.cookie}` } });
         const $ = cheerio.load(data)
