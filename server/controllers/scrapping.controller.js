@@ -31,6 +31,8 @@ const getScrapping = async (req, res) => {
 
         items.push(texto);
 
+        console.log("Informacion: " , items)
+
         res.status(200).json(items)
     } catch (error) {
         console.log(error)
