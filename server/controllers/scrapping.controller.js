@@ -7,7 +7,7 @@ const getScrapping = async (req, res) => {
     console.log("DatosMPF: ", datosMPF)
 
     const agent = new https.Agent({
-        rejectUnauthorized: false
+        rejectUnauthorized: true
     });
     try {
         const { data } = await axios.get(datosMPF.url, { httpsAgent: agent, headers: { Cookie: `PHPSESSID=${datosMPF.cookie}` } });
