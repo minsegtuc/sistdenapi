@@ -29,7 +29,7 @@ const getScrapping = async (req, res) => {
             });
         }
 
-        await page.goto(datosMPF.url, { waitUntil: 'networkidle0' });
+        await page.goto(datosMPF.url, { waitUntil: 'domcontentloaded', timeout: 60000 });
 
         const extractedText = await page.evaluate(() => {
             const fullText = document.body.innerText;
