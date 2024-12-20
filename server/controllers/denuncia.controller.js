@@ -10,12 +10,12 @@ import Especializacion from "../models/especializacion.model.js"
 import Localidad from "../models/localidad.model.js"
 import Comisaria from "../models/comisaria.model.js"
 import { registrarLog } from "../helpers/logHelpers.js";
-import { Op } from "sequelize";
+import { Op, fn, col, literal } from "sequelize";
 import sequelize from "../config/db.js";
 import { wss } from "../sockets/socketConfig.js";
 
 const getAllDenuncias = async (req, res) => {
-    const {clasificada} = req.params
+    const { clasificada } = req.params
     console.log(clasificada)
     try {
         const denuncias = await Denuncia.findAll({
@@ -34,7 +34,7 @@ const getAllDenuncias = async (req, res) => {
                 { model: Comisaria },
                 { model: TipoDelito }
             ],
-            where:{
+            where: {
                 isClassificated: clasificada
             }
 
@@ -85,9 +85,13 @@ const getDenunciaById = async (req, res) => {
 
 const getAllLike = async (req, res) => {
     const id = req.body.denunciaSearch
+    const page = parseInt(req.query.page) || 0;
+    const limit = parseInt(req.query.limit) || 100;
+    const offset = page * limit;
     try {
-        let denuncias;
+        let denuncias, total;
         if (!id) {
+            total = await Denuncia.count();
             denuncias = await Denuncia.findAll({
                 include: [
                     { model: Ubicacion },
@@ -104,6 +108,18 @@ const getAllLike = async (req, res) => {
                     { model: Comisaria },
                     { model: TipoDelito }
                 ],
+                limit,
+                offset,
+                where: {
+                    isClassificated: 1
+                }
+            });
+
+            return res.status(200).json({
+                denuncias,
+                total,
+                page,
+                totalPages: Math.ceil(total / limit),
             });
         } else {
             denuncias = await Denuncia.findAll({
@@ -128,71 +144,64 @@ const getAllLike = async (req, res) => {
                     { model: Comisaria },
                     { model: TipoDelito }
                 ],
-
+                limit,
+                offset
             });
+            res.status(200).json({ denuncias });
         }
-        res.status(200).json({ denuncias });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 }
 
 const getAllRegional = async (req, res) => {
-    const reg = req.body.reg ? Number(req.body.reg) : undefined;
-    console.log("Regional: ", reg)
+    const { regional, interes, propiedad } = req.body;
+    console.log("Regional: ", req.body.regional)
+    console.log("Interes: ", req.body.interes)
+    console.log("Propiedad: ", req.body.propiedad)
     try {
-        let denuncias;
-        if (!reg) {
-            denuncias = await Denuncia.findAll({
+        const whereConditions = {
+            isClassificated: 0
+        };
+        if (interes === 1) {
+            whereConditions.interes = interes;
+        }
+
+        if (propiedad === 1) {
+            whereConditions.especializacionId = propiedad;
+        }
+
+        const includeModels = [
+            { model: Ubicacion },
+            { model: TipoArma },
+            { model: Movilidad },
+            { model: Autor },
+            { model: Especializacion },
+            {
+                model: Submodalidad,
                 include: [
-                    { model: Ubicacion },
-                    { model: TipoArma },
-                    { model: Movilidad },
-                    { model: Autor },
-                    { model: Especializacion },
-                    {
-                        model: Submodalidad,
-                        include: [
-                            { model: Modalidad }
-                        ]
-                    },
-                    {
-                        model: Comisaria,
-                    },
-                    { model: TipoDelito }
-                ],
+                    { model: Modalidad }
+                ]
+            },
+            { model: TipoDelito }
+        ];
+
+        if (regional) {
+            includeModels.push({
+                model: Comisaria,
                 where: {
-                    isClassificated: 0
+                    unidadRegionalId: regional
                 }
             });
         } else {
-            denuncias = await Denuncia.findAll({
-                include: [
-                    { model: Ubicacion },
-                    { model: TipoArma },
-                    { model: Movilidad },
-                    { model: Autor },
-                    { model: Especializacion },
-                    {
-                        model: Submodalidad,
-                        include: [
-                            { model: Modalidad },
-                        ]
-                    },
-                    {
-                        model: Comisaria,
-                        where: {
-                            unidadRegionalId: reg
-                        }
-                    },
-                    { model: TipoDelito }
-                ],
-                where: {
-                    isClassificated: 0
-                }
-
-            });
+            includeModels.push({ model: Comisaria });
         }
+
+        const denuncias = await Denuncia.findAll({
+            include: includeModels,
+            where: whereConditions
+        });
+
         res.status(200).json({ denuncias });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -397,4 +406,261 @@ const countDenunciasSC = async (req, res) => {
     }
 }
 
-export { getAllDenuncias, getDenunciaById, createDenuncia, updateDenuncia, deleteDenuncia, countDenunciasSC, getDuplicadas, getAllLike, getAllRegional, denunciaTrabajando };
+const getDenunciaReciente = async (req, res) => {
+    try {
+        const denunciaReciente = await Denuncia.findOne({
+            attributes: ['fechaDenuncia'],
+            order: [['fechaDenuncia', 'DESC']],
+            where: {
+                isClassificated: 1
+            }
+        })
+        res.status(200).json(denunciaReciente)
+    } catch (error) {
+        res.status(500).json({ message: error.message })
+    }
+}
+
+const getTotalDenuncias = async (req, res) => {
+    const { desde, hasta } = req.query
+    try {
+        const totalDenunciasClasificadas = await Denuncia.count({
+            where: {
+                isClassificated: 1,
+                fechaDenuncia: {
+                    [Op.gte]: desde,
+                    [Op.lte]: hasta
+                }
+            }
+        })
+        res.status(200).json(totalDenunciasClasificadas)
+    } catch (error) {
+        res.status(500).json({ message: error.message })
+    }
+}
+
+const getTotalInteres = async (req, res) => {
+    const { desde, hasta } = req.query
+    try {
+        const totalDenunciasInteres = await Denuncia.count({
+            where: {
+                isClassificated: 1,
+                interes: 1,
+                fechaDenuncia: {
+                    [Op.gte]: desde,
+                    [Op.lte]: hasta
+                }
+            }
+        })
+        res.status(200).json(totalDenunciasInteres)
+    } catch (error) {
+        res.status(500).json({ message: error.message })
+    }
+}
+
+const getInteresTotalGrafica = async (req, res) => {
+    const { desde, hasta } = req.query
+    try {
+        const interestotal = await Denuncia.findAll({
+            attributes: [
+                [fn('YEAR', col('fechaDenuncia')), 'anio'],
+                [fn('MONTH', col('fechaDenuncia')), 'mes'],
+                [fn('COUNT', col('*')), 'cantidad_total'],
+                [
+                    fn(
+                        'SUM',
+                        literal("CASE WHEN interes = 1 THEN 1 ELSE 0 END")
+                    ),
+                    'cantidad_interes',
+                ],
+            ],
+            where: {
+                isClassificated: 1,
+                fechaDenuncia: {
+                    [Op.gte]: desde,
+                    [Op.lte]: hasta
+                }
+            },
+            group: [fn('YEAR', col('fechaDenuncia')), fn('MONTH', col('fechaDenuncia'))],
+            order: [
+                [fn('YEAR', col('fechaDenuncia')), 'ASC'],
+                [fn('MONTH', col('fechaDenuncia')), 'ASC'],
+            ],
+        })
+
+        const data = interestotal.map(item => ({
+            anio: item.get('anio'),
+            mes: item.get('mes'),
+            cantidad_total: item.get('cantidad_total'),
+            cantidad_interes: item.get('cantidad_interes'),
+        }));
+
+        res.status(200).json(data)
+    } catch (error) {
+        res.status(500).json({ message: error.message })
+    }
+}
+
+const getDelitoGrafica = async (req, res) => {
+    const { desde, hasta } = req.query
+    try {
+        const delito = await Denuncia.findAll({
+            attributes: [
+                [fn('YEAR', col('fechaDenuncia')), 'anio'],
+                [fn('MONTH', col('fechaDenuncia')), 'mes'],
+                [fn('COUNT', col('*')), 'cantidad_total'],
+                [
+                    fn(
+                        'SUM',
+                        literal("CASE WHEN tipoDelitoId = 52 THEN 1 ELSE 0 END")
+                    ),
+                    'cantidad_robo',
+                ],
+                [
+                    fn(
+                        'SUM',
+                        literal("CASE WHEN tipoDelitoId = 51 THEN 1 ELSE 0 END")
+                    ),
+                    'cantidad_arma',
+                ],
+                [
+                    fn(
+                        'SUM',
+                        literal("CASE WHEN tipoDelitoId = 36 THEN 1 ELSE 0 END")
+                    ),
+                    'cantidad_hurto',
+                ],
+            ],
+            where: {
+                isClassificated: 1,
+                interes: 1,
+                fechaDenuncia: {
+                    [Op.gte]: desde,
+                    [Op.lte]: hasta
+                }
+            },
+            group: [fn('YEAR', col('fechaDenuncia')), fn('MONTH', col('fechaDenuncia'))],
+            order: [
+                [fn('YEAR', col('fechaDenuncia')), 'ASC'],
+                [fn('MONTH', col('fechaDenuncia')), 'ASC'],
+            ],
+        })
+
+        const data = delito.map(item => ({
+            anio: item.get('anio'),
+            mes: item.get('mes'),
+            cantidad_total: item.get('cantidad_total'),
+            cantidad_robo: item.get('cantidad_robo'),
+            cantidad_arma: item.get('cantidad_arma'),
+            cantidad_hurto: item.get('cantidad_hurto'),
+        }));
+
+        res.status(200).json(data)
+    } catch (error) {
+        res.status(500).json({ message: error.message })
+    }
+}
+
+const getTablaInteres = async (req, res) => {
+    const { mes, anio } = req.query
+    try {
+        const tablaInteres = await Denuncia.findAll({
+            attributes: [
+                [fn('YEAR', col('fechaDenuncia')), 'anio'],
+                [fn('MONTH', col('fechaDenuncia')), 'mes'],
+                [
+                    fn(
+                        'SUM',
+                        literal("CASE WHEN tipoDelitoId = 52 THEN 1 ELSE 0 END")
+                    ),
+                    'cantidad_robo',
+                ],
+                [
+                    fn(
+                        'SUM',
+                        literal("CASE WHEN tipoDelitoId = 51 THEN 1 ELSE 0 END")
+                    ),
+                    'cantidad_arma',
+                ],
+                [
+                    fn(
+                        'SUM',
+                        literal("CASE WHEN tipoDelitoId = 36 THEN 1 ELSE 0 END")
+                    ),
+                    'cantidad_hurto',
+                ],
+            ],
+            where: {
+                [Op.and]: [
+                    sequelize.where(fn('MONTH', col('fechaDenuncia')), mes),
+                    { interes: 1 },
+                    { isClassificated: 1 },
+                    sequelize.where(fn('YEAR', col('fechaDenuncia')), {
+                        [Op.in]: [anio, anio - 1]
+                    })
+                ]
+            },
+            group: [fn('YEAR', col('fechaDenuncia')), fn('MONTH', col('fechaDenuncia'))],
+            order: [
+                [fn('YEAR', col('fechaDenuncia')), 'ASC'],
+                [fn('MONTH', col('fechaDenuncia')), 'ASC'],
+            ],
+        })
+        res.status(200).json(tablaInteres)
+    } catch (error) {
+        res.status(500).json({ message: error.message })        
+    }
+}
+
+const getTablaMensual = async (req, res) => {
+    const { mes, anio } = req.query
+    try {
+        const tablaInteres = await Denuncia.findAll({
+            attributes: [
+                [fn('YEAR', col('fechaDenuncia')), 'anio'],
+                [fn('MONTH', col('fechaDenuncia')), 'mes'],
+                [
+                    fn(
+                        'SUM',
+                        literal("CASE WHEN tipoDelitoId = 52 THEN 1 ELSE 0 END")
+                    ),
+                    'cantidad_robo',
+                ],
+                [
+                    fn(
+                        'SUM',
+                        literal("CASE WHEN tipoDelitoId = 51 THEN 1 ELSE 0 END")
+                    ),
+                    'cantidad_arma',
+                ],
+                [
+                    fn(
+                        'SUM',
+                        literal("CASE WHEN tipoDelitoId = 36 THEN 1 ELSE 0 END")
+                    ),
+                    'cantidad_hurto',
+                ],
+            ],
+            where: {
+                [Op.and]: [
+                    sequelize.where(fn('YEAR', col('fechaDenuncia')), anio),
+                    { interes: 1 },
+                    { isClassificated: 1 },
+                    sequelize.where(fn('MONTH', col('fechaDenuncia')), {
+                        [Op.in]: [mes, mes - 1]
+                    })
+                ]
+            },
+            group: [fn('YEAR', col('fechaDenuncia')), fn('MONTH', col('fechaDenuncia'))],
+            order: [
+                [fn('YEAR', col('fechaDenuncia')), 'ASC'],
+                [fn('MONTH', col('fechaDenuncia')), 'ASC'],
+            ],
+        })
+        res.status(200).json(tablaInteres)
+    } catch (error) {
+        res.status(500).json({ message: error.message })        
+    }
+}
+
+export { getAllDenuncias, getDenunciaById, createDenuncia, updateDenuncia, deleteDenuncia, countDenunciasSC, getDuplicadas, getAllLike, getAllRegional, denunciaTrabajando, getDenunciaReciente, getTotalDenuncias, getTotalInteres, getInteresTotalGrafica, getDelitoGrafica, getTablaInteres, getTablaMensual };
