@@ -43,7 +43,7 @@ const Denuncia = sequelize.define('denuncia', {
         allowNull: false
     },
     fiscalia: {
-        type: DataTypes.STRING(100),
+        type: DataTypes.STRING(256),
         allowNull: false
     },
     tipoArmaId: {

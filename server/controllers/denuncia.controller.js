@@ -9,6 +9,7 @@ import Autor from "../models/autor.model.js"
 import Especializacion from "../models/especializacion.model.js"
 import Localidad from "../models/localidad.model.js"
 import Comisaria from "../models/comisaria.model.js"
+import UnidadRegional from "../models/unidadRegional.model.js"
 import { registrarLog } from "../helpers/logHelpers.js";
 import { Op, fn, col, literal } from "sequelize";
 import sequelize from "../config/db.js";
@@ -84,35 +85,61 @@ const getDenunciaById = async (req, res) => {
 }
 
 const getAllLike = async (req, res) => {
+    const { regional, interes, propiedad } = req.body;
     const id = req.body.denunciaSearch
     const page = parseInt(req.query.page) || 0;
     const limit = parseInt(req.query.limit) || 100;
     const offset = page * limit;
     try {
         let denuncias, total;
-        if (!id) {
-            total = await Denuncia.count();
-            denuncias = await Denuncia.findAll({
-                include: [
-                    { model: Ubicacion },
-                    { model: TipoArma },
-                    { model: Movilidad },
-                    { model: Autor },
-                    { model: Especializacion },
-                    {
-                        model: Submodalidad,
-                        include: [
-                            { model: Modalidad }
-                        ]
-                    },
-                    { model: Comisaria },
-                    { model: TipoDelito }
-                ],
+        const whereConditions = {
+            isClassificated: 1
+        };
+        if (interes === 1) {
+            whereConditions.interes = interes;
+        }
+
+        if (propiedad === 1) {
+            whereConditions.especializacionId = propiedad;
+        }
+
+        if (!id) {            
+            const includeModels = [
+                { model: Ubicacion },
+                { model: TipoArma },
+                { model: Movilidad },
+                { model: Autor },
+                { model: Especializacion },
+                {
+                    model: Submodalidad,
+                    include: [
+                        { model: Modalidad },
+                    ]
+                },
+                { model: TipoDelito }
+            ]
+
+            if (regional) {
+                includeModels.push({
+                    model: Comisaria,
+                    where: {
+                        unidadRegionalId: regional
+                    }
+                });
+            } else {
+                includeModels.push({ model: Comisaria });
+            }
+
+            total = await Denuncia.count({
+                where: whereConditions,
+                include: regional ? [{ model: Comisaria, where: { unidadRegionalId: regional } }] : []
+            });
+
+            const denuncias = await Denuncia.findAll({
+                include: includeModels,
+                where: whereConditions,
                 limit,
-                offset,
-                where: {
-                    isClassificated: 1
-                }
+                offset
             });
 
             return res.status(200).json({
@@ -147,7 +174,22 @@ const getAllLike = async (req, res) => {
                 limit,
                 offset
             });
-            res.status(200).json({ denuncias });
+
+            total = await Denuncia.count({
+                where: {
+                    idDenuncia: {
+                        [Op.like]: `%${id}%`
+                    },
+                    isClassificated: 1
+                }
+            });
+            
+            return res.status(200).json({
+                denuncias,
+                total,
+                page,
+                totalPages: Math.ceil(total / limit)
+            });
         }
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -156,9 +198,9 @@ const getAllLike = async (req, res) => {
 
 const getAllRegional = async (req, res) => {
     const { regional, interes, propiedad } = req.body;
-    console.log("Regional: ", req.body.regional)
-    console.log("Interes: ", req.body.interes)
-    console.log("Propiedad: ", req.body.propiedad)
+    // console.log("Regional: ", req.body.regional)
+    // console.log("Interes: ", req.body.interes)
+    // console.log("Propiedad: ", req.body.propiedad)
     try {
         const whereConditions = {
             isClassificated: 0
@@ -412,8 +454,16 @@ const getDenunciaReciente = async (req, res) => {
             attributes: ['fechaDenuncia'],
             order: [['fechaDenuncia', 'DESC']],
             where: {
-                isClassificated: 1
-            }
+                isClassificated: 1,
+            },
+            include: [
+                {
+                    model: Comisaria,
+                    include: [
+                        { model: UnidadRegional }
+                    ]
+                }
+            ]
         })
         res.status(200).json(denunciaReciente)
     } catch (error) {
@@ -608,7 +658,7 @@ const getTablaInteres = async (req, res) => {
         })
         res.status(200).json(tablaInteres)
     } catch (error) {
-        res.status(500).json({ message: error.message })        
+        res.status(500).json({ message: error.message })
     }
 }
 
@@ -659,7 +709,7 @@ const getTablaMensual = async (req, res) => {
         })
         res.status(200).json(tablaInteres)
     } catch (error) {
-        res.status(500).json({ message: error.message })        
+        res.status(500).json({ message: error.message })
     }
 }
 
