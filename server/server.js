@@ -42,7 +42,7 @@ app.use('/api', routes);
 sequelize.authenticate()
     .then(() => {
         console.log('Connection has been established successfully.');
-        return sequelize.sync({ alter: true });
+        return sequelize.sync({});
     })
     .then(() => {       
         let server;

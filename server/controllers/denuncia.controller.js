@@ -473,6 +473,14 @@ const getDenunciaReciente = async (req, res) => {
 
 const getTotalDenuncias = async (req, res) => {
     const { desde, hasta } = req.query
+
+    // try {
+    //     let query = 
+    // } catch (error) {
+        
+    // }
+
+
     try {
         const totalDenunciasClasificadas = await Denuncia.count({
             where: {
