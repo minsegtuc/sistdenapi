@@ -103,7 +103,7 @@ const getAllLike = async (req, res) => {
             whereConditions.especializacionId = propiedad;
         }
 
-        if (!id) {            
+        if (!id) {
             const includeModels = [
                 { model: Ubicacion },
                 { model: TipoArma },
@@ -183,7 +183,7 @@ const getAllLike = async (req, res) => {
                     isClassificated: 1
                 }
             });
-            
+
             return res.status(200).json({
                 denuncias,
                 total,
@@ -386,35 +386,101 @@ const createDenuncia = async (req, res) => {
 }
 
 const updateDenuncia = async (req, res) => {
-    const { id } = req.params;
+    const errores = [];
+    const { denuncias } = req.body;
+
+    console.log("Denuncias a actualizar: ", denuncias);
+    let denunciasActualizadas = 0;
+    let denunciasNoActualizadas = 0;
+    const transaccion = await sequelize.transaction();
+
     try {
-        const denuncia = await Denuncia.update({
-            submodalidadId: req.body.submodalidadId,
-            modalidadId: req.body.modalidadId,
-            especializacionId: req.body.especializacionId,
-            aprehendido: req.body.aprehendido,
-            medida: req.body.medida,
-            movilidadId: req.body.movilidadId,
-            autorId: req.body.autorId,
-            seguro: req.body.seguro,
-            tipoArmaId: req.body.tipoArmaId,
-            victima: req.body.victima,
-            elementoSustraido: req.body.elementoSustraido,
-            interes: req.body.interes,
-            dniDenunciante: req.body.dniDenunciante,
-            tipoDelitoId: req.body.tipoDelitoId,
-            isClassificated: req.body.isClassificated
-        }, {
-            where: {
-                idDenuncia: id
+        for (const denunciaData of denuncias) {
+            console.log("DenunciaData: ", denunciaData);
+            let denuncia;
+            try {
+                denuncia = await Denuncia.findByPk(denunciaData.idDenuncia, { transaction: transaccion });
+
+                if (!denuncia) {
+                    throw new Error(`Denuncia con ID ${denunciaData.idDenuncia} no encontrada`);
+                }
+
+                await denuncia.update({
+                    fechaDenuncia: denunciaData.fechaDenuncia,
+                    dniDenunciante: denunciaData.dniDenunciante,
+                    interes: denunciaData.interes,
+                    aprehendido: denunciaData.aprehendido,
+                    medida: denunciaData.medida,
+                    seguro: denunciaData.seguro,
+                    elementoSustraido: denunciaData.elementoSustraido,
+                    fechaDelito: denunciaData.fechaDelito,
+                    horaDelito: denunciaData.horaDelito,
+                    fiscalia: denunciaData.fiscalia,
+                    tipoArmaId: denunciaData.tipoArmaId,
+                    movilidadId: denunciaData.movilidadId,
+                    autorId: denunciaData.autorId,
+                    victima: denunciaData.victima,
+                    especializacionId: denunciaData.especializacionId,
+                    comisariaId: denunciaData.comisariaId,
+                    submodalidadId: denunciaData.submodalidadId,
+                    tipoDelitoId: denunciaData.tipoDelitoId,
+                    isClassificated: denunciaData.isClassificated
+                }, { transaction: transaccion });
+
+                if (denunciaData.ubicacion) {
+                    await Ubicacion.update({
+                        latitud: denunciaData.ubicacion.latitud,
+                        longitud: denunciaData.ubicacion.longitud,
+                        domicilio: denunciaData.ubicacion.domicilio,
+                        poligono: denunciaData.ubicacion.poligono,
+                        localidadId: denunciaData.ubicacion.localidadId,
+                        estado: denunciaData.ubicacion.estado
+                    }, {
+                        where: { idUbicacion: denuncia.ubicacionId },
+                        transaction: transaccion
+                    });
+                }
+
+                await registrarLog('UPDATE', `DENUNCIA ${denuncia.idDenuncia} ACTUALIZADA`, req.userId);
+                denunciasActualizadas += 1;
+            } catch (error) {
+                errores.push({
+                    denuncia: denunciaData,
+                    error: error.message
+                });
+
+                await registrarLog('ERROR', `Fallo al actualizar denuncia ${denunciaData.idDenuncia}: ${error.message}`, req.userId);
+                denunciasNoActualizadas += 1;
             }
-        });
+        }
 
-        await registrarLog('UPDATE', `DENUNCIA ${id} ACTUALIZADA`, req.userId);
-
-        res.status(200).json(denuncia)
+        if (errores.length > 0) {
+            await transaccion.rollback();
+            console.log("Transacción revertida debido a errores en algunas actualizaciones.");
+            res.status(400).json({
+                message: "Transacción revertida: algunas denuncias fallaron al actualizarse",
+                denunciasActualizadas,
+                denunciasNoActualizadas,
+                errores
+            });
+        } else {
+            await transaccion.commit();
+            res.status(200).json({
+                message: "Lote de denuncias actualizado con éxito",
+                denunciasActualizadas,
+                denunciasNoActualizadas,
+                errores
+            });
+        }
     } catch (error) {
-        res.status(500).json({ message: error.message })
+        await transaccion.rollback();
+        await registrarLog('ERROR', `Error inesperado durante la transacción: ${error.message}`, req.userId);
+        res.status(500).json({
+            message: "Error en la actualización del lote de denuncias",
+            denunciasActualizadas,
+            denunciasNoActualizadas: denuncias.length - denunciasActualizadas,
+            error: error.message
+        });
     }
 }
 
@@ -477,7 +543,7 @@ const getTotalDenuncias = async (req, res) => {
     // try {
     //     let query = 
     // } catch (error) {
-        
+
     // }
 
 

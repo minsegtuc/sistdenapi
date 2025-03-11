@@ -17,7 +17,7 @@ router.post('/denuncia', createDenuncia);
 router.post('/trabajando', denunciaTrabajando);
 router.post('/denuncialike', getAllLike);
 router.post('/regional', getAllRegional);
-router.put('/denuncia/:id', updateDenuncia);
+router.put('/update', updateDenuncia);
 router.delete('/denuncia/:id', deleteDenuncia);
 
 export default router;
