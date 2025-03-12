@@ -339,7 +339,8 @@ const createDenuncia = async (req, res) => {
                     ubicacionId: ubicacion.idUbicacion,
                     submodalidadId: denunciaData.submodalidadId,
                     tipoDelitoId: denunciaData.tipoDelitoId,
-                    isClassificated: denunciaData.isClassificated
+                    isClassificated: denunciaData.isClassificated,
+                    relato: denunciaData.relato
                 }, transaccion);
 
                 await registrarLog('CREATE', `DENUNCIA ${denuncia.idDenuncia} CREADA`, req.userId);
@@ -424,7 +425,8 @@ const updateDenuncia = async (req, res) => {
                     comisariaId: denunciaData.comisariaId,
                     submodalidadId: denunciaData.submodalidadId,
                     tipoDelitoId: denunciaData.tipoDelitoId,
-                    isClassificated: denunciaData.isClassificated
+                    isClassificated: denunciaData.isClassificated,
+                    relato: denunciaData.relato
                 }, { transaction: transaccion });
 
                 if (denunciaData.ubicacion) {

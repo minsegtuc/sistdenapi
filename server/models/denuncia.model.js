@@ -137,6 +137,10 @@ const Denuncia = sequelize.define('denuncia', {
     trabajando: {
         type: DataTypes.STRING(50),
         allowNull: true
+    },
+    relato: {
+        type: DataTypes.STRING(10000),
+        allowNull: true
     }
 }, {tableName: 'denuncia', timestamps: false});
 
