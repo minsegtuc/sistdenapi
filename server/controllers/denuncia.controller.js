@@ -11,7 +11,7 @@ import Localidad from "../models/localidad.model.js"
 import Comisaria from "../models/comisaria.model.js"
 import UnidadRegional from "../models/unidadRegional.model.js"
 import { registrarLog } from "../helpers/logHelpers.js";
-import { Op, fn, col, literal } from "sequelize";
+import { Op, fn, col, literal, Sequelize } from "sequelize";
 import sequelize from "../config/db.js";
 import { wss } from "../sockets/socketConfig.js";
 
@@ -85,7 +85,7 @@ const getDenunciaById = async (req, res) => {
 }
 
 const getAllLike = async (req, res) => {
-    const { regional, interes, propiedad } = req.body;
+    const { regional, interes, propiedad, año } = req.body;
     const id = req.body.denunciaSearch
     const page = parseInt(req.query.page) || 0;
     const limit = parseInt(req.query.limit) || 100;
@@ -101,6 +101,12 @@ const getAllLike = async (req, res) => {
 
         if (propiedad === 1) {
             whereConditions.especializacionId = propiedad;
+        }
+
+        if (año) {
+            whereConditions.fechaDenuncia = {
+                [Op.between]: [`${año}-01-01`, `${año}-12-31`]
+            }
         }
 
         if (!id) {
@@ -197,7 +203,7 @@ const getAllLike = async (req, res) => {
 }
 
 const getAllRegional = async (req, res) => {
-    const { regional, interes, propiedad } = req.body;
+    const { regional, interes, propiedad, comisaria } = req.body;
     // console.log("Regional: ", req.body.regional)
     // console.log("Interes: ", req.body.interes)
     // console.log("Propiedad: ", req.body.propiedad)
@@ -211,6 +217,10 @@ const getAllRegional = async (req, res) => {
 
         if (propiedad === 1) {
             whereConditions.especializacionId = propiedad;
+        }
+
+        if (comisaria) {
+            whereConditions.comisariaId = comisaria;
         }
 
         const includeModels = [
@@ -406,6 +416,13 @@ const updateDenuncia = async (req, res) => {
                     throw new Error(`Denuncia con ID ${denunciaData.idDenuncia} no encontrada`);
                 }
 
+                const idUbicacion = denuncia.ubicacionId;
+                console.log("idUbicacion: ", idUbicacion)
+
+                if (!idUbicacion) {
+                    throw new Error(`La denuncia con ID ${denunciaData.idDenuncia} no tiene una ubicación asociada`);
+                }
+
                 await denuncia.update({
                     fechaDenuncia: denunciaData.fechaDenuncia,
                     dniDenunciante: denunciaData.dniDenunciante,
@@ -429,19 +446,17 @@ const updateDenuncia = async (req, res) => {
                     relato: denunciaData.relato
                 }, { transaction: transaccion });
 
-                if (denunciaData.ubicacion) {
-                    await Ubicacion.update({
-                        latitud: denunciaData.ubicacion.latitud,
-                        longitud: denunciaData.ubicacion.longitud,
-                        domicilio: denunciaData.ubicacion.domicilio,
-                        poligono: denunciaData.ubicacion.poligono,
-                        localidadId: denunciaData.ubicacion.localidadId,
-                        estado: denunciaData.ubicacion.estado
-                    }, {
-                        where: { idUbicacion: denuncia.ubicacionId },
-                        transaction: transaccion
-                    });
-                }
+                await Ubicacion.update({
+                    latitud: denunciaData.latitud,
+                    longitud: denunciaData.longitud,
+                    domicilio: denunciaData.domicilio,
+                    poligono: denunciaData.poligono,
+                    localidadId: denunciaData.localidadId,
+                    estado: denunciaData.estado
+                }, {
+                    where: { idUbicacion: idUbicacion },
+                    transaction: transaccion
+                });
 
                 await registrarLog('UPDATE', `DENUNCIA ${denuncia.idDenuncia} ACTUALIZADA`, req.userId);
                 denunciasActualizadas += 1;
@@ -789,4 +804,22 @@ const getTablaMensual = async (req, res) => {
     }
 }
 
-export { getAllDenuncias, getDenunciaById, createDenuncia, updateDenuncia, deleteDenuncia, countDenunciasSC, getDuplicadas, getAllLike, getAllRegional, denunciaTrabajando, getDenunciaReciente, getTotalDenuncias, getTotalInteres, getInteresTotalGrafica, getDelitoGrafica, getTablaInteres, getTablaMensual };
+const getAño = async (req, res) => {
+    try {
+        const years = await Denuncia.findAll({
+            attributes: [
+                [Sequelize.fn("YEAR", Sequelize.col("fechaDenuncia")), "year"]
+            ],
+            group: [Sequelize.fn("YEAR", Sequelize.col("fechaDenuncia"))],
+            order: [[Sequelize.fn("YEAR", Sequelize.col("fechaDenuncia")), "ASC"]],
+            raw: true,
+        });
+        
+        res.status(200).json(years);
+    } catch (error) {
+        console.error("Error obteniendo años:", error);
+        res.status(500).json({ error: "Error obteniendo años" });
+    }
+}
+
+export { getAllDenuncias, getDenunciaById, createDenuncia, updateDenuncia, deleteDenuncia, countDenunciasSC, getDuplicadas, getAllLike, getAllRegional, denunciaTrabajando, getDenunciaReciente, getTotalDenuncias, getTotalInteres, getInteresTotalGrafica, getDelitoGrafica, getTablaInteres, getTablaMensual, getAño };

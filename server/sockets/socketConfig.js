@@ -7,7 +7,7 @@ const userSocketMap = new Map()
 
 export const socketConfiguration = (io) => {
     io.on('connection', (socket) => {
-        console.log('Usuario conectado:', socket.id);
+        // console.log('Usuario conectado:', socket.id);
 
         socket.on('view_denuncia', async ({ denunciaId, userId }) => {
             console.log("Denuncia recibida: " , denunciaId, userId)
@@ -30,6 +30,16 @@ export const socketConfiguration = (io) => {
             }
         });
 
+        socket.on('actualizar_denuncias', async () => {
+            try {
+                console.log("Ingrese a actualizar denuncias")
+                socket.broadcast.emit('denuncias_actualizadas');
+            } catch (error) {
+                console.log("Error actualizando el usuario trabajando: ", error)
+                
+            }
+        });
+
         socket.on('leave_denuncia', async ({ denunciaId }) => {
             console.log("Denuncia leave: ", denunciaId)
             try {
@@ -40,7 +50,7 @@ export const socketConfiguration = (io) => {
                 })
 
                 if (userSocketMap.has(socket.id)) {
-                    userSocketMap.set(socket.id);
+                    userSocketMap.delete(socket.id);
                 }
 
                 socket.broadcast.emit('denuncia_en_vista', { denunciaId, userId: null });
@@ -50,11 +60,11 @@ export const socketConfiguration = (io) => {
         });
 
         socket.on('disconnect', async () => {
-            console.log('Usuario desconectado con disconnect:', socket.id);
-            console.log("Contenido actual de userSocketMap:", userSocketMap);
+            // console.log('Usuario desconectado con disconnect:', socket.id);
+            // console.log("Contenido actual de userSocketMap:", userSocketMap);
 
             const denunciaId = userSocketMap.get(socket.id);
-            console.log("Denuncia en disconnect", denunciaId)
+            // console.log("Denuncia en disconnect", denunciaId)
 
             if (denunciaId !== undefined) {
                 try {
