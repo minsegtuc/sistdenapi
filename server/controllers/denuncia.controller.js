@@ -555,14 +555,9 @@ const getDenunciaReciente = async (req, res) => {
 }
 
 const getTotalDenuncias = async (req, res) => {
-    const { desde, hasta } = req.query
+    const { desde, hasta, regional } = req.query;
 
-    // try {
-    //     let query = 
-    // } catch (error) {
-
-    // }
-
+    console.log("Regional:", regional);
 
     try {
         const totalDenunciasClasificadas = await Denuncia.count({
@@ -572,16 +567,34 @@ const getTotalDenuncias = async (req, res) => {
                     [Op.gte]: desde,
                     [Op.lte]: hasta
                 }
-            }
-        })
-        res.status(200).json(totalDenunciasClasificadas)
+            },
+            include: [
+                {
+                    model: Comisaria,
+                    required: true,
+                    include: regional && regional !== "undefined" ? [
+                        {
+                            model: UnidadRegional,
+                            where: { idUnidadRegional: regional }
+                        }
+                    ] : [
+                        {
+                            model: UnidadRegional
+                        }
+                    ]
+                }
+            ],
+            logging: console.log 
+        });
+
+        res.status(200).json(totalDenunciasClasificadas);
     } catch (error) {
-        res.status(500).json({ message: error.message })
+        res.status(500).json({ message: error.message });
     }
-}
+};
 
 const getTotalInteres = async (req, res) => {
-    const { desde, hasta } = req.query
+    const { desde, hasta, regional } = req.query
     try {
         const totalDenunciasInteres = await Denuncia.count({
             where: {
@@ -591,7 +604,23 @@ const getTotalInteres = async (req, res) => {
                     [Op.gte]: desde,
                     [Op.lte]: hasta
                 }
-            }
+            },
+            include: [
+                {
+                    model: Comisaria,
+                    required: true,
+                    include: regional && regional !== "undefined" ? [
+                        {
+                            model: UnidadRegional,
+                            where: { idUnidadRegional: regional }
+                        }
+                    ] : [
+                        {
+                            model: UnidadRegional
+                        }
+                    ]
+                }
+            ],
         })
         res.status(200).json(totalDenunciasInteres)
     } catch (error) {
@@ -600,7 +629,7 @@ const getTotalInteres = async (req, res) => {
 }
 
 const getInteresTotalGrafica = async (req, res) => {
-    const { desde, hasta } = req.query
+    const { desde, hasta, regional } = req.query;
     try {
         const interestotal = await Denuncia.findAll({
             attributes: [
@@ -615,35 +644,57 @@ const getInteresTotalGrafica = async (req, res) => {
                     'cantidad_interes',
                 ],
             ],
+            include: [
+                {
+                    model: Comisaria,
+                    as: 'Comisarium',
+                    attributes: [],
+                    required: false,
+                    include: [
+                        {
+                            model: UnidadRegional,
+                            as: 'unidadRegional',
+                            required: false,
+                            attributes: [],
+                            ...(regional ? { where: { idUnidadRegional: regional } } : {}),
+                        },
+                    ],
+                },
+            ],
             where: {
                 isClassificated: 1,
                 fechaDenuncia: {
                     [Op.gte]: desde,
-                    [Op.lte]: hasta
-                }
+                    [Op.lte]: hasta,
+                },
             },
-            group: [fn('YEAR', col('fechaDenuncia')), fn('MONTH', col('fechaDenuncia'))],
+            group: [
+                fn('YEAR', col('fechaDenuncia')),
+                fn('MONTH', col('fechaDenuncia')),
+            ],
             order: [
                 [fn('YEAR', col('fechaDenuncia')), 'ASC'],
                 [fn('MONTH', col('fechaDenuncia')), 'ASC'],
             ],
-        })
+        });
 
         const data = interestotal.map(item => ({
             anio: item.get('anio'),
             mes: item.get('mes'),
             cantidad_total: item.get('cantidad_total'),
             cantidad_interes: item.get('cantidad_interes'),
+            nombre_regional: item.get('nombre_regional') || 'Sin regional',
         }));
 
-        res.status(200).json(data)
+        res.status(200).json(data);
     } catch (error) {
-        res.status(500).json({ message: error.message })
+        console.error("Error en getInteresTotalGrafica:", error);
+        res.status(500).json({ message: error.message });
     }
-}
+};
 
 const getDelitoGrafica = async (req, res) => {
-    const { desde, hasta } = req.query
+    const { desde, hasta, regional } = req.query
     try {
         const delito = await Denuncia.findAll({
             attributes: [
@@ -671,6 +722,23 @@ const getDelitoGrafica = async (req, res) => {
                     ),
                     'cantidad_hurto',
                 ],
+            ],
+            include: [
+                {
+                    model: Comisaria,
+                    as: 'Comisarium',
+                    attributes: [],
+                    required: false,
+                    include: [
+                        {
+                            model: UnidadRegional,
+                            as: 'unidadRegional',
+                            attributes: [],
+                            required: false,
+                            where: regional ? { idUnidadRegional: regional } : undefined,
+                        },
+                    ],
+                },
             ],
             where: {
                 isClassificated: 1,
@@ -814,7 +882,7 @@ const getAño = async (req, res) => {
             order: [[Sequelize.fn("YEAR", Sequelize.col("fechaDenuncia")), "ASC"]],
             raw: true,
         });
-        
+
         res.status(200).json(years);
     } catch (error) {
         console.error("Error obteniendo años:", error);
