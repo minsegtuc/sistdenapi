@@ -130,8 +130,12 @@ const Denuncia = sequelize.define('denuncia', {
             key: 'idTipoDelito'
         }
     },
+    cantidad_victimario: {
+        type: DataTypes.STRING(50),
+        allowNull: true
+    },
     isClassificated: {
-        type: DataTypes.TINYINT,
+        type: DataTypes.INTEGER,
         allowNull: false
     },
     trabajando: {

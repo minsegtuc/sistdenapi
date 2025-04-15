@@ -209,7 +209,9 @@ const getAllRegional = async (req, res) => {
     // console.log("Propiedad: ", req.body.propiedad)
     try {
         const whereConditions = {
-            isClassificated: 0
+            isClassificated: {
+                [Op.in]: [0, 2]
+            }
         };
         if (interes === 1) {
             whereConditions.interes = interes;
@@ -323,8 +325,10 @@ const createDenuncia = async (req, res) => {
                     latitud: denunciaData.latitud,
                     longitud: denunciaData.longitud,
                     domicilio: denunciaData.domicilio,
+                    domicilio_ia: denunciaData.domicilio_ia,
                     poligono: denunciaData.poligono,
                     localidadId: denunciaData.localidadId,
+                    tipo_ubicacion: denunciaData.tipo_ubicacion,
                     estado: denunciaData.estado
                 }, { transaccion });
 
@@ -334,7 +338,7 @@ const createDenuncia = async (req, res) => {
                     dniDenunciante: denunciaData.dniDenunciante,
                     interes: denunciaData.interes,
                     aprehendido: denunciaData.aprehendido,
-                    medida: denunciaData.medida,
+                    //medida: denunciaData.medida,
                     seguro: denunciaData.seguro,
                     elementoSustraido: denunciaData.elementoSustraido,
                     fechaDelito: denunciaData.fechaDelito,
@@ -350,7 +354,8 @@ const createDenuncia = async (req, res) => {
                     submodalidadId: denunciaData.submodalidadId,
                     tipoDelitoId: denunciaData.tipoDelitoId,
                     isClassificated: denunciaData.isClassificated,
-                    relato: denunciaData.relato
+                    relato: denunciaData.relato,
+                    cantidad_victimario: denunciaData.cantidad_victimario,
                 }, transaccion);
 
                 await registrarLog('CREATE', `DENUNCIA ${denuncia.idDenuncia} CREADA`, req.userId);
@@ -522,7 +527,9 @@ const countDenunciasSC = async (req, res) => {
     try {
         const amount = await Denuncia.count({
             where: {
-                isClassificated: 0
+                isClassificated: {
+                    [Op.in]: [0, 2]
+                }
             }
         });
         res.status(200).json({ amount })
@@ -584,7 +591,7 @@ const getTotalDenuncias = async (req, res) => {
                     ]
                 }
             ],
-            logging: console.log 
+            logging: console.log
         });
 
         res.status(200).json(totalDenunciasClasificadas);
@@ -649,16 +656,21 @@ const getInteresTotalGrafica = async (req, res) => {
                     model: Comisaria,
                     as: 'Comisarium',
                     attributes: [],
-                    required: false,
-                    include: [
+                    required: true,
+                    include: regional && regional !== "undefined" ? [
                         {
                             model: UnidadRegional,
                             as: 'unidadRegional',
-                            required: false,
                             attributes: [],
-                            ...(regional ? { where: { idUnidadRegional: regional } } : {}),
-                        },
-                    ],
+                            where: { idUnidadRegional: regional }
+                        }
+                    ] : [
+                        {
+                            model: UnidadRegional,
+                            as: 'unidadRegional',
+                            attributes: [],
+                        }
+                    ]
                 },
             ],
             where: {
@@ -728,16 +740,21 @@ const getDelitoGrafica = async (req, res) => {
                     model: Comisaria,
                     as: 'Comisarium',
                     attributes: [],
-                    required: false,
-                    include: [
+                    required: true,
+                    include: regional && regional !== "undefined" ? [
                         {
                             model: UnidadRegional,
                             as: 'unidadRegional',
                             attributes: [],
-                            required: false,
-                            where: regional ? { idUnidadRegional: regional } : undefined,
-                        },
-                    ],
+                            where: { idUnidadRegional: regional }
+                        }
+                    ] : [
+                        {
+                            model: UnidadRegional,
+                            as: 'unidadRegional',
+                            attributes: [],
+                        }
+                    ]
                 },
             ],
             where: {
