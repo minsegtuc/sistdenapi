@@ -1,41 +1,29 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/db.js";
 
-const Ubicacion = sequelize.define('Ubicacion', {
-    idUbicacion: {
+const UbicacionAuxiliar = sequelize.define('UbicacionAuxiliar', {
+    idUbicacionAuxiliar: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true
     },
-    latitud: {
+    latitudAuxiliar: {
         type: DataTypes.STRING(100),
         allowNull: true
     },
-    longitud: {
+    longitudAuxiliar: {
         type: DataTypes.STRING(100),
         allowNull: true
     },
-    domicilio: {
-        type: DataTypes.STRING(500),
-        allowNull: false
-    },
-    // domicilio_ia: {
-    //     type: DataTypes.STRING(500),
-    //     allowNull: true
-    // },
     tipo_precision: {
         type: DataTypes.STRING(100),
         allowNull: true
     },
-    poligono: {
-        type: DataTypes.STRING(100),
+    domicilioAuxiliar: {
+        type: DataTypes.STRING(500),
         allowNull: true
     },
-    estado: {
-        type: DataTypes.INTEGER,
-        allowNull: true
-    },
-    // estado_ia: {
+    // estadoAuxiliar: {
     //     type: DataTypes.STRING(100),
     //     allowNull: true
     // },
@@ -48,7 +36,17 @@ const Ubicacion = sequelize.define('Ubicacion', {
             model: 'localidad',
             key: 'idLocalidad'
         }
+    },
+    denunciaId:{
+        type: DataTypes.STRING(25),
+        allowNull: true,
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        references: {
+            model: 'denuncia',
+            key: 'idDenuncia'
+        }
     }
-}, {tableName: 'ubicacion', timestamps: false});
+}, { tableName: 'ubicacionAuxiliar', timestamps: false });
 
-export default Ubicacion;
+export default UbicacionAuxiliar;   

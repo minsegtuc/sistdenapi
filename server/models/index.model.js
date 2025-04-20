@@ -14,6 +14,7 @@ import Autor from './autor.model.js';
 import Movilidad from './movilidad.model.js';
 import Especializacion from './especializacion.model.js';
 import Denuncia from './denuncia.model.js'
+import UbicacionAuxiliar from './ubicacionAuxiliar.model.js';
 
 //Un rol puede tener muchos usuarios
 Rol.hasMany(Usuario, {
@@ -181,6 +182,15 @@ TipoDelito.hasMany(Modalidad, {
 Modalidad.belongsTo(TipoDelito, {
     foreignKey: 'tipoDelitoId',
     targetKey: 'idTipoDelito'
+})
+
+Denuncia.hasMany(UbicacionAuxiliar, {
+    foreignKey: 'denunciaId',
+    sourceKey: 'idDenuncia'
+})
+UbicacionAuxiliar.belongsTo(Denuncia, {
+    foreignKey: 'denunciaId',
+    targetKey: 'idDenuncia'
 })
 
 export { Log, Usuario, Rol, Departamento, Localidad, Ubicacion, Comisaria, UnidadRegional, TipoDelito, Submodalidad, Modalidad, TipoArma, Autor, Movilidad, Especializacion, Denuncia };
