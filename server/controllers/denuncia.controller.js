@@ -65,7 +65,12 @@ const getDenunciaById = async (req, res) => {
                 {
                     model: Submodalidad,
                     include: [
-                        { model: Modalidad }
+                        { 
+                            model: Modalidad,
+                            include: [
+                                { model: TipoDelito }
+                            ]
+                        }
                     ]
                 },
                 { model: Comisaria },
