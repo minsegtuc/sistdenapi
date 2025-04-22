@@ -10,6 +10,6 @@ const Working = sequelize.define('working', {
         type: DataTypes.STRING(100),
         allowNull: false
     }
-}, {tableName: 'working', timestamps: false});
+}, {tableName: 'working', timestamps: true});
 
 export default Working;

@@ -38,6 +38,9 @@ app.use(cookieParser());
 app.use(morgan('dev'));
 app.use(express.json({ limit: '25mb' }));
 app.use('/api', routes);
+import startCleanWorkingJob from './cron/cleanWorking.js';
+
+startCleanWorkingJob();
 
 sequelize.authenticate()
     .then(() => {

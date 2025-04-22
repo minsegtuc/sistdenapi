@@ -21,7 +21,7 @@ import Scrap from './scrap.routes.js'
 import express from 'express';
 
 const router = express.Router();
-router.use('/working', verifyToken, Working);
+router.use('/working', Working);
 router.use('/autor', verifyToken, AutorRutas);
 router.use('/comisaria', verifyToken, ComisariaRutas);
 router.use('/departamento', verifyToken, DepartamentoRutas);
