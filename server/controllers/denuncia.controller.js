@@ -65,7 +65,7 @@ const getDenunciaById = async (req, res) => {
                 {
                     model: Submodalidad,
                     include: [
-                        { 
+                        {
                             model: Modalidad,
                             include: [
                                 { model: TipoDelito }
@@ -344,7 +344,7 @@ const createDenuncia = async (req, res) => {
                     localidadId: denunciaData.localidadId,
                     tipo_precision: denunciaData.tipo_precision,
                     estado: denunciaData.estado
-                }, { transaccion });                
+                }, { transaccion });
 
                 const denuncia = await Denuncia.create({
                     idDenuncia: denunciaData.idDenuncia,
@@ -372,26 +372,29 @@ const createDenuncia = async (req, res) => {
                     cantidad_victimario: denunciaData.cantidad_victimario,
                 }, transaccion);
 
-                if(Array.isArray(denunciaData.ubicacionesAuxiliares) && denunciaData.ubicacionesAuxiliares.length > 0){
-                    for(const ubi of denunciaData.ubicacionesAuxiliares){
+
+                if ((denunciaData.idDenuncia).charAt(0) !== 'A') {
+                    if (Array.isArray(denunciaData.ubicacionesAuxiliares) && denunciaData.ubicacionesAuxiliares.length > 0) {
+                        for (const ubi of denunciaData.ubicacionesAuxiliares) {
+                            ubicacionAuxiliar = await UbicacionAuxiliar.create({
+                                latitudAuxiliar: ubi.latitudAuxiliar,
+                                longitudAuxiliar: ubi.longitudAuxiliar,
+                                tipo_precision: ubi.tipo_precision,
+                                domicilioAuxiliar: ubi.domicilioAuxiliar,
+                                localidadId: ubi.localidadId,
+                                denunciaId: denunciaData.idDenuncia
+                            }, { transaccion });
+                        }
+                    } else {
                         ubicacionAuxiliar = await UbicacionAuxiliar.create({
-                            latitudAuxiliar: ubi.latitudAuxiliar,
-                            longitudAuxiliar: ubi.longitudAuxiliar,
-                            tipo_precision: ubi.tipo_precision,
-                            domicilioAuxiliar: ubi.domicilioAuxiliar,
-                            localidadId: ubi.localidadId,
-                            denunciaId: denunciaData.idDenuncia
+                            latitudAuxiliar: denunciaData.ubicacionesAuxiliares.latitudAuxiliar,
+                            longitudAuxiliar: denunciaData.ubicacionesAuxiliares.longitudAuxiliar,
+                            tipo_precision: denunciaData.ubicacionesAuxiliares.tipo_precision,
+                            domicilioAuxiliar: denunciaData.ubicacionesAuxiliares.domicilioAuxiliar,
+                            localidadId: denunciaData.ubicacionesAuxiliares.localidadId,
+                            denunciaId: denunciaData.ubicacionesAuxiliares.idDenuncia
                         }, { transaccion });
                     }
-                }else{
-                    ubicacionAuxiliar = await UbicacionAuxiliar.create({
-                        latitudAuxiliar: denunciaData.ubicacionesAuxiliares.latitudAuxiliar,
-                        longitudAuxiliar: denunciaData.ubicacionesAuxiliares.longitudAuxiliar,
-                        tipo_precision: denunciaData.ubicacionesAuxiliares.tipo_precision,
-                        domicilioAuxiliar: denunciaData.ubicacionesAuxiliares.domicilioAuxiliar,
-                        localidadId: denunciaData.ubicacionesAuxiliares.localidadId,
-                        denunciaId: denunciaData.ubicacionesAuxiliares.idDenuncia
-                    }, { transaccion });
                 }
 
                 await registrarLog('CREATE', `DENUNCIA ${denuncia.idDenuncia} CREADA`, req.userId);
