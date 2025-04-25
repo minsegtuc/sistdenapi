@@ -19,10 +19,10 @@ const Ubicacion = sequelize.define('Ubicacion', {
         type: DataTypes.STRING(500),
         allowNull: false
     },
-    // domicilio_ia: {
-    //     type: DataTypes.STRING(500),
-    //     allowNull: true
-    // },
+    domicilio_ia: {
+        type: DataTypes.STRING(500),
+        allowNull: true
+    },
     tipo_precision: {
         type: DataTypes.STRING(100),
         allowNull: true
@@ -35,10 +35,6 @@ const Ubicacion = sequelize.define('Ubicacion', {
         type: DataTypes.INTEGER,
         allowNull: true
     },
-    // estado_ia: {
-    //     type: DataTypes.STRING(100),
-    //     allowNull: true
-    // },
     localidadId: {
         type: DataTypes.INTEGER,
         allowNull: true,

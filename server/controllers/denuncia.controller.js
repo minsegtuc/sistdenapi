@@ -339,7 +339,7 @@ const createDenuncia = async (req, res) => {
                     latitud: denunciaData.latitud,
                     longitud: denunciaData.longitud,
                     domicilio: denunciaData.domicilio,
-                    // domicilio_ia: denunciaData.domicilio_ia,
+                    domicilio_ia: denunciaData.domicilio_ia,
                     poligono: denunciaData.poligono,
                     localidadId: denunciaData.localidadId,
                     tipo_precision: denunciaData.tipo_precision,
