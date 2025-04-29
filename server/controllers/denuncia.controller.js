@@ -462,6 +462,10 @@ const createDenuncia = async (req, res) => {
         for (const denunciaData of denuncias) {
             try {
                 // Crear ubicación principal
+                if (denunciaData.relato && denunciaData.relato.length > 10000) {
+                    denunciaData.relato = denunciaData.relato.slice(0, 10000);
+                }
+
                 const ubicacion = await Ubicacion.create({
                     latitud: denunciaData.latitud,
                     longitud: denunciaData.longitud,
@@ -496,7 +500,8 @@ const createDenuncia = async (req, res) => {
                     tipoDelitoId: denunciaData.tipoDelitoId,
                     isClassificated: denunciaData.isClassificated,
                     relato: denunciaData.relato,
-                    cantidad_victimario: denunciaData.cantidad_victimario
+                    cantidad_victimario: denunciaData.cantidad_victimario,
+                    lugar_del_hecho: denunciaData.lugar_del_hecho,
                 }, { transaction: transaccion });
 
                 // Si corresponde, crear ubicaciones auxiliares
@@ -616,7 +621,8 @@ const updateDenuncia = async (req, res) => {
                     // tipoDelitoId: denunciaData.tipoDelitoId,
                     isClassificated: denunciaData.isClassificated,
                     relato: denunciaData.relato,
-                    cantidad_victimario: denunciaData.cantidad_victimario
+                    cantidad_victimario: denunciaData.cantidad_victimario,
+                    lugar_del_hecho: denunciaData.lugar_del_hecho,
                 }, { transaction: transaccion });
 
                 await Ubicacion.update({

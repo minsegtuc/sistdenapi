@@ -145,7 +145,11 @@ const Denuncia = sequelize.define('denuncia', {
     relato: {
         type: DataTypes.STRING(10000),
         allowNull: true
-    }
+    },
+    lugar_del_hecho: {
+        type: DataTypes.STRING(1000),
+        allowNull: true
+    },
 }, {tableName: 'denuncia', timestamps: false});
 
 export default Denuncia;
