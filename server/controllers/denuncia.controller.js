@@ -132,7 +132,12 @@ const getAllLike = async (req, res) => {
                 {
                     model: Submodalidad,
                     include: [
-                        { model: Modalidad },
+                        {
+                            model: Modalidad,
+                            include: [
+                                { model: TipoDelito }
+                            ]
+                        },
                     ]
                 },
                 { model: TipoDelito }
@@ -184,7 +189,12 @@ const getAllLike = async (req, res) => {
                     {
                         model: Submodalidad,
                         include: [
-                            { model: Modalidad },
+                            {
+                                model: Modalidad,
+                                include: [
+                                    { model: TipoDelito }
+                                ]
+                            },
                         ]
                     },
                     { model: Comisaria },
@@ -450,8 +460,6 @@ const createDenuncia = async (req, res) => {
 
     try {
         for (const denunciaData of denuncias) {
-            console.log("Procesando denuncia:", denunciaData.idDenuncia);
-
             try {
                 // Crear ubicación principal
                 const ubicacion = await Ubicacion.create({
@@ -492,7 +500,8 @@ const createDenuncia = async (req, res) => {
                 }, { transaction: transaccion });
 
                 // Si corresponde, crear ubicaciones auxiliares
-                if (denunciaData.idDenuncia.charAt(0) !== 'A' && denunciaData.ubicacionesAuxiliares) {
+                if (denunciaData.idDenuncia.charAt(0) !== 'A' && Array.isArray(denunciaData.ubicacionesAuxiliares) &&
+                    denunciaData.ubicacionesAuxiliares.length > 0) {
                     const ubicacionesAux = Array.isArray(denunciaData.ubicacionesAuxiliares)
                         ? denunciaData.ubicacionesAuxiliares
                         : [denunciaData.ubicacionesAuxiliares];
@@ -560,12 +569,12 @@ const createDenuncia = async (req, res) => {
 
 
 const updateDenuncia = async (req, res) => {
-    const errores = [];
     const { denuncias } = req.body;
+    const errores = [];
 
-    console.log("Denuncias a actualizar: ", denuncias);
     let denunciasActualizadas = 0;
     let denunciasNoActualizadas = 0;
+
     const transaccion = await sequelize.transaction();
 
     try {
@@ -604,17 +613,20 @@ const updateDenuncia = async (req, res) => {
                     especializacionId: denunciaData.especializacionId,
                     comisariaId: denunciaData.comisariaId,
                     submodalidadId: denunciaData.submodalidadId,
-                    tipoDelitoId: denunciaData.tipoDelitoId,
+                    // tipoDelitoId: denunciaData.tipoDelitoId,
                     isClassificated: denunciaData.isClassificated,
-                    relato: denunciaData.relato
+                    relato: denunciaData.relato,
+                    cantidad_victimario: denunciaData.cantidad_victimario
                 }, { transaction: transaccion });
 
                 await Ubicacion.update({
                     latitud: denunciaData.latitud,
                     longitud: denunciaData.longitud,
                     domicilio: denunciaData.domicilio,
+                    domicilio_ia: denunciaData.domicilio_ia,
                     poligono: denunciaData.poligono,
                     localidadId: denunciaData.localidadId,
+                    tipo_precision: denunciaData.tipo_precision,
                     estado: denunciaData.estado
                 }, {
                     where: { idUbicacion: idUbicacion },
