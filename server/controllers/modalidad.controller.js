@@ -1,4 +1,5 @@
 import Modalidad from "../models/modalidad.model.js";
+import TipoDelito from "../models/tipoDelito.model.js";
 
 const getAllModalidades = async (req, res) => {
     try {
@@ -12,7 +13,11 @@ const getAllModalidades = async (req, res) => {
 const getModalidadById = async (req, res) => {
     const { id } = req.params;
     try {
-        const modalidad = await Modalidad.findByPk(id);
+        const modalidad = await Modalidad.findByPk(id, {
+            include: {
+                model: TipoDelito
+            }
+        });
         res.status(200).json(modalidad);
     } catch (error) {
         res.status(500).json({ message: error.message });
