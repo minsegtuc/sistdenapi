@@ -2,9 +2,60 @@ import Usuario from "../models/usuario.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import sequelize from "../config/db.js";
+import { Op, fn, col, literal, Sequelize } from "sequelize";
 import { registrarLog } from "../helpers/logHelpers.js";
 
 dotenv.config();
+
+const getVista = async (req, res) => {
+    const { fechaInicio, fechaFin, delito, submodalidad, interes, arma } = req.body;
+
+    console.log(req.body)
+
+    let whereClause = []
+    let replacements = {}
+
+    if (fechaInicio && fechaFin) {
+        whereClause.push(`FECHA BETWEEN :fechaInicio AND :fechaFin`)
+        replacements.fechaInicio = fechaInicio
+        replacements.fechaFin = fechaFin
+    }
+    if (delito && delito.trim() !== '') {
+        whereClause.push(`DELITO COLLATE utf8mb4_unicode_ci = :delito`);
+        replacements.delito = delito;
+    }
+
+    if (submodalidad && submodalidad.trim() !== '') {
+        whereClause.push(`SUBMODALIDAD COLLATE utf8mb4_unicode_ci = :submodalidad`);
+        replacements.submodalidad = submodalidad;
+    }
+
+    if (arma && arma.trim() !== '') {
+        whereClause.push(`\`ARMA UTILIZADA\` COLLATE utf8mb4_unicode_ci = :arma`);
+        replacements.arma = arma;
+    }
+
+    if (interes !== undefined && interes !== '') {
+        whereClause.push(`INTERES COLLATE utf8mb4_unicode_ci = :interes`);
+        replacements.interes = interes;
+    }
+
+    const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
+
+    try {
+        const vista = await sequelize.query(
+            `SELECT * FROM denuncias_completas_v8 ${where}`,
+            {
+                type: Sequelize.QueryTypes.SELECT, replacements
+            }
+        );
+        res.status(200).json(vista);
+    } catch (error) {
+        console.error('Error en getVista:', error);
+        res.status(500).json({ message: error.message });
+    }
+}
 
 const prueba = (req, res) => {
     res.status(200).json({
@@ -132,7 +183,7 @@ const createUser = async (req, res) => {
 
         res.status(201).json(usuario)
     } catch (error) {
-        console.error('Error al crear el usuario: ' , error.errors)
+        console.error('Error al crear el usuario: ', error.errors)
         res.status(500).json({
             message: error.message,
             stack: error.stack,
@@ -204,4 +255,4 @@ const deleteUser = async (req, res) => {
     }
 };
 
-export { prueba, login, getAllUsers, getUserById, createUser, updateUser, deleteUser, logout };
+export { prueba, login, getAllUsers, getUserById, createUser, updateUser, deleteUser, logout, getVista };

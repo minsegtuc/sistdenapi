@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import sequelize from './config/db.js';
 import cookieParser from 'cookie-parser';
 import { socketConfiguration } from './sockets/socketConfig.js'
-import { Log, Usuario, Rol, Departamento, Localidad, Ubicacion, Comisaria, UnidadRegional, TipoDelito, Submodalidad, Modalidad, TipoArma, Autor, Movilidad, Especializacion, Denuncia } from './models/index.model.js';
+import { Log, Usuario, Rol, Departamento, Localidad, Ubicacion, Comisaria, UnidadRegional, TipoDelito, Submodalidad, Modalidad, TipoArma, Autor, Movilidad, Especializacion, Denuncia, ObjetoIA } from './models/index.model.js';
 import routes from './routes/index.routes.js';
 import cors from 'cors';
 import http from 'http'

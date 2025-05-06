@@ -15,6 +15,7 @@ import Movilidad from './movilidad.model.js';
 import Especializacion from './especializacion.model.js';
 import Denuncia from './denuncia.model.js'
 import UbicacionAuxiliar from './ubicacionAuxiliar.model.js';
+import ObjetoIA from './objetoIa.model.js';
 
 //Un rol puede tener muchos usuarios
 Rol.hasMany(Usuario, {
@@ -193,5 +194,5 @@ UbicacionAuxiliar.belongsTo(Denuncia, {
     targetKey: 'idDenuncia'
 })
 
-export { Log, Usuario, Rol, Departamento, Localidad, Ubicacion, Comisaria, UnidadRegional, TipoDelito, Submodalidad, Modalidad, TipoArma, Autor, Movilidad, Especializacion, Denuncia };
+export { Log, Usuario, Rol, Departamento, Localidad, Ubicacion, Comisaria, UnidadRegional, TipoDelito, Submodalidad, Modalidad, TipoArma, Autor, Movilidad, Especializacion, Denuncia, ObjetoIA };
 
