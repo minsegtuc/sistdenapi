@@ -8,8 +8,110 @@ import { registrarLog } from "../helpers/logHelpers.js";
 
 dotenv.config();
 
+const getVistaFiltros = async (req, res) => {
+    const { delito, submodalidad, interes, arma, especialidad, riesgo, seguro } = req.body;
+
+    console.log(req.body)
+
+    let whereClause = []
+    let replacements = {}
+
+    if (delito && delito.trim() !== '') {
+        whereClause.push(`DELITO COLLATE utf8mb4_unicode_ci = :delito`);
+        replacements.delito = delito;
+    }
+
+    if (submodalidad && submodalidad.trim() !== '') {
+        whereClause.push(`SUBMODALIDAD COLLATE utf8mb4_unicode_ci = :submodalidad`);
+        replacements.submodalidad = submodalidad;
+    }
+
+    if (arma && arma.trim() !== '') {
+        whereClause.push(`\`ARMA UTILIZADA\` COLLATE utf8mb4_unicode_ci = :arma`);
+        replacements.arma = arma;
+    }
+
+    if (interes !== undefined && interes !== '') {
+        whereClause.push(`INTERES COLLATE utf8mb4_unicode_ci = :interes`);
+        replacements.interes = interes;
+    }
+
+    
+    if (especialidad && especialidad.trim() !== '') {
+        whereClause.push(`ESPECIALIZACION COLLATE utf8mb4_unicode_ci = :especializacion`);
+        replacements.especializacion = especialidad;
+    }
+
+    if (seguro && seguro.trim() !== '') {
+        whereClause.push(`\`PARA SEGURO\` COLLATE utf8mb4_unicode_ci = :seguro`);
+        replacements.seguro = seguro;
+    }
+
+    if (riesgo && riesgo.trim() !== '') {
+        whereClause.push(`VICTIMA COLLATE utf8mb4_unicode_ci = :riesgo`);
+        replacements.riesgo = riesgo;
+    }
+
+    const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
+
+    try {
+        const delitos = await sequelize.query(
+            `SELECT DISTINCT(DELITO) FROM denuncias_completas_v8 ${where}`,
+            {
+                type: Sequelize.QueryTypes.SELECT, replacements
+            }
+        );
+        const submodalidades = await sequelize.query(
+            `SELECT DISTINCT(SUBMODALIDAD) FROM denuncias_completas_v8 ${where}`,
+            {
+                type: Sequelize.QueryTypes.SELECT, replacements
+            }
+        );
+        const armas = await sequelize.query(
+            `SELECT DISTINCT(\`ARMA UTILIZADA\`) FROM denuncias_completas_v8 ${where}`,
+            {
+                type: Sequelize.QueryTypes.SELECT, replacements
+            }
+        );
+        
+        const especializaciones = await sequelize.query(
+            `SELECT DISTINCT(ESPECIALIZACION) FROM denuncias_completas_v8 ${where}`,
+            {
+                type: Sequelize.QueryTypes.SELECT, replacements
+            }
+        );
+
+        const seguros = await sequelize.query(
+            `SELECT DISTINCT(\`PARA SEGURO\`) FROM denuncias_completas_v8 ${where}`,
+            {
+                type: Sequelize.QueryTypes.SELECT, replacements
+            }
+        );
+
+        const riesgos = await sequelize.query(
+            `SELECT DISTINCT(VICTIMA) FROM denuncias_completas_v8 ${where}`,
+            {
+                type: Sequelize.QueryTypes.SELECT, replacements
+            }
+        );
+
+        const filtros = {
+            delitos,
+            submodalidades,
+            armas,
+            especializaciones,
+            seguros,
+            riesgos
+        }
+        res.status(200).json(filtros);
+    } catch (error) {
+        console.error('Error en getVista:', error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
 const getVista = async (req, res) => {
-    const { fechaInicio, fechaFin, delito, submodalidad, interes, arma } = req.body;
+    const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, especialidad, seguro, riesgo } = req.body;
 
     console.log(req.body)
 
@@ -40,6 +142,22 @@ const getVista = async (req, res) => {
         whereClause.push(`INTERES COLLATE utf8mb4_unicode_ci = :interes`);
         replacements.interes = interes;
     }
+
+    if (especialidad && especialidad.trim() !== '') {
+        whereClause.push(`ESPECIALIZACION COLLATE utf8mb4_unicode_ci = :especializacion`);
+        replacements.especializacion = especializacion;
+    }
+
+    if (seguro && seguro.trim() !== '') {
+        whereClause.push(`\`PARA SEGURO\`COLLATE utf8mb4_unicode_ci = :seguro`);
+        replacements.seguro = seguro;
+    }
+
+    if (riesgo && riesgo.trim() !== '') {
+        whereClause.push(`VICTIMA COLLATE utf8mb4_unicode_ci = :riesgo`);
+        replacements.riesgo = riesgo;
+    }
+
 
     const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
 
@@ -255,4 +373,4 @@ const deleteUser = async (req, res) => {
     }
 };
 
-export { prueba, login, getAllUsers, getUserById, createUser, updateUser, deleteUser, logout, getVista };
+export { prueba, login, getAllUsers, getUserById, createUser, updateUser, deleteUser, logout, getVista, getVistaFiltros };
