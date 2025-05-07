@@ -601,26 +601,18 @@ const updateDenuncia = async (req, res) => {
                 }
 
                 await denuncia.update({
-                    fechaDenuncia: denunciaData.fechaDenuncia,
                     dniDenunciante: denunciaData.dniDenunciante,
                     interes: denunciaData.interes,
                     aprehendido: denunciaData.aprehendido,
-                    medida: denunciaData.medida,
                     seguro: denunciaData.seguro,
                     elementoSustraido: denunciaData.elementoSustraido,
-                    fechaDelito: denunciaData.fechaDelito,
-                    horaDelito: denunciaData.horaDelito,
-                    fiscalia: denunciaData.fiscalia,
                     tipoArmaId: denunciaData.tipoArmaId,
                     movilidadId: denunciaData.movilidadId,
                     autorId: denunciaData.autorId,
                     victima: denunciaData.victima,
                     especializacionId: denunciaData.especializacionId,
-                    comisariaId: denunciaData.comisariaId,
                     submodalidadId: denunciaData.submodalidadId,
-                    // tipoDelitoId: denunciaData.tipoDelitoId,
                     isClassificated: denunciaData.isClassificated,
-                    relato: denunciaData.relato,
                     cantidad_victimario: denunciaData.cantidad_victimario,
                     lugar_del_hecho: denunciaData.lugar_del_hecho,
                 }, { transaction: transaccion });
