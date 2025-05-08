@@ -2,7 +2,9 @@ import Submodalidad from "../models/submodalidad.model.js";
 
 const getAllSubmodalidades = async (req, res) => {
     try {
-        const submodalidades = await Submodalidad.findAll();
+        const submodalidades = await Submodalidad.findAll({
+            order: [['descripcion','ASC']]
+        });
         res.status(200).json(submodalidades);
     } catch (error) {
         res.status(500).json({ message: error.message });

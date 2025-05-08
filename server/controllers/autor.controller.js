@@ -2,7 +2,9 @@ import Autor from '../models/autor.model.js';
 
 const getAllAutor = async (req, res) => {
     try {
-        const autores = await Autor.findAll();
+        const autores = await Autor.findAll({
+            order: [['descripcion','ASC']]
+        });
         res.status(200).json(autores);
     } catch (error) {
         res.status(500).json({ message: error.message });

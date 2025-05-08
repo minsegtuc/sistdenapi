@@ -2,7 +2,9 @@ import Movilidad from "../models/movilidad.model.js";
 
 const getAllMovilidades = async (req, res) => {
     try {
-        const movilidades = await Movilidad.findAll();
+        const movilidades = await Movilidad.findAll({
+            order: [['descripcion','ASC']]
+        });
         res.status(200).json(movilidades);
     } catch (error) {
         res.status(500).json({ message: error.message });

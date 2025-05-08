@@ -2,7 +2,9 @@ import TipoDelito from "../models/tipoDelito.model.js";
 
 const getAllTipoDelitos = async (req, res) => {
     try {
-        const tipoDelitos = await TipoDelito.findAll();
+        const tipoDelitos = await TipoDelito.findAll({
+            order: [['descripcion','ASC']]
+        });
         res.status(200).json(tipoDelitos);
     } catch (error) {
         res.status(500).json({ message: error.message });

@@ -8,6 +8,24 @@ import { registrarLog } from "../helpers/logHelpers.js";
 
 dotenv.config();
 
+const getRanking = async (req, res) => {
+    const { fecha } = req.query
+    try {
+        const ranking = await sequelize.query(
+            `select usuario.nombre, COUNT(DISTINCT log.descripcion) AS cantidad_clasificadas from log
+            inner join usuario on log.dniId = usuario.dni where fecha >= :fecha
+            and accion = 'UPDATE' and log.dniId <> 38243415 group by usuario.nombre order by cantidad_clasificadas desc`,
+            {
+                replacements: {fecha},
+                type: Sequelize.QueryTypes.SELECT
+            })
+        res.status(200).json(ranking)
+    } catch (error) {
+        console.log("Error: " , error)
+        res.status(500).json({ message: error.message });
+    }
+}
+
 const getVistaFiltros = async (req, res) => {
     const { delito, submodalidad, interes, arma, especialidad, riesgo, seguro } = req.body;
 
@@ -373,4 +391,4 @@ const deleteUser = async (req, res) => {
     }
 };
 
-export { prueba, login, getAllUsers, getUserById, createUser, updateUser, deleteUser, logout, getVista, getVistaFiltros };
+export { prueba, login, getAllUsers, getUserById, createUser, updateUser, deleteUser, logout, getVista, getVistaFiltros, getRanking };

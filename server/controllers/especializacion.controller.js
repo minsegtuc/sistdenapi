@@ -2,7 +2,9 @@ import Especializacion from "../models/especializacion.model.js";
 
 const getAllEspecializaciones = async (req, res) => {
     try {
-        const especializaciones = await Especializacion.findAll();
+        const especializaciones = await Especializacion.findAll({
+            order: [['descripcion','ASC']]
+        });
         res.status(200).json(especializaciones);
     } catch (error) {
         res.status(500).json({ message: error.message });

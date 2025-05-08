@@ -2,7 +2,9 @@ import TipoArma from "../models/tipoArma.model.js";
 
 const getAllTipoArmas = async (req, res) => {
     try {
-        const tipoArmas = await TipoArma.findAll();
+        const tipoArmas = await TipoArma.findAll({
+            order: [['descripcion','ASC']]
+        });
         res.status(200).json(tipoArmas);
     } catch (error) {
         res.status(500).json({ message: error.message });

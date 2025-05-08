@@ -3,7 +3,9 @@ import TipoDelito from "../models/tipoDelito.model.js";
 
 const getAllModalidades = async (req, res) => {
     try {
-        const modalidades = await Modalidad.findAll();
+        const modalidades = await Modalidad.findAll({
+            order: [['descripcion','ASC']]
+        });
         res.status(200).json(modalidades);
     } catch (error) {
         res.status(500).json({ message: error.message });
