@@ -14,6 +14,7 @@ import TipoDelitoRutas from './tipoDelito.routes.js';
 import UbicacionRutas from './ubicacion.routes.js';
 import UnidadRegionalRutas from './unidadRegional.routes.js';
 import UsuarioRutas from './usuario.routes.js';
+import ObjetoIARutas from './objetoIa.routes.js'
 import verifyToken from '../middleware/jwt.js';
 import VerifyToken from '../controllers/verifytoken.controller.js';
 import Working from './working.routes.js'
@@ -37,6 +38,7 @@ router.use('/tipoArma', verifyToken, TipoArmaRutas);
 router.use('/tipoDelito', verifyToken, TipoDelitoRutas);
 router.use('/ubicacion', verifyToken, UbicacionRutas);
 router.use('/unidadRegional', verifyToken, UnidadRegionalRutas);
+router.use('/objetoIA', verifyToken, ObjetoIARutas)
 router.use('/usuario', UsuarioRutas);
 router.use('/scrap', Scrap)
 router.get('/verifyToken', verifyToken, VerifyToken);

@@ -330,126 +330,6 @@ const denunciaTrabajando = async (req, res) => {
     }
 }
 
-// const createDenuncia = async (req, res) => {
-//     const errores = []
-//     const { denuncias } = req.body
-
-//     console.log("Denuncias a cargar: ", denuncias)
-//     let denunciasCargadas = 0;
-//     let denunciasNoCargadas = 0
-//     const transaccion = await sequelize.transaction();
-
-//     try {
-//         for (const denunciaData of denuncias) {
-//             console.log("DenunciaData: ", denunciaData)
-//             let ubicacion;
-//             let ubicacionAuxiliar;
-//             try {
-//                 ubicacion = await Ubicacion.create({
-//                     latitud: denunciaData.latitud,
-//                     longitud: denunciaData.longitud,
-//                     domicilio: denunciaData.domicilio,
-//                     domicilio_ia: denunciaData.domicilio_ia,
-//                     poligono: denunciaData.poligono,
-//                     localidadId: denunciaData.localidadId,
-//                     tipo_precision: denunciaData.tipo_precision,
-//                     estado: denunciaData.estado
-//                 }, { transaction: transaccion });
-
-//                 const denuncia = await Denuncia.create({
-//                     idDenuncia: denunciaData.idDenuncia,
-//                     fechaDenuncia: denunciaData.fechaDenuncia,
-//                     dniDenunciante: denunciaData.dniDenunciante,
-//                     interes: denunciaData.interes,
-//                     aprehendido: denunciaData.aprehendido,
-//                     //medida: denunciaData.medida,
-//                     seguro: denunciaData.seguro,
-//                     elementoSustraido: denunciaData.elementoSustraido,
-//                     fechaDelito: denunciaData.fechaDelito,
-//                     horaDelito: denunciaData.horaDelito,
-//                     fiscalia: denunciaData.fiscalia,
-//                     tipoArmaId: denunciaData.tipoArmaId,
-//                     movilidadId: denunciaData.movilidadId,
-//                     autorId: denunciaData.autorId,
-//                     victima: denunciaData.victima,
-//                     especializacionId: denunciaData.especializacionId,
-//                     comisariaId: denunciaData.comisariaId,
-//                     ubicacionId: ubicacion.idUbicacion,
-//                     submodalidadId: denunciaData.submodalidadId,
-//                     tipoDelitoId: denunciaData.tipoDelitoId,
-//                     isClassificated: denunciaData.isClassificated,
-//                     relato: denunciaData.relato,
-//                     cantidad_victimario: denunciaData.cantidad_victimario,
-//                 }, { transaction: transaccion });
-
-
-//                 if ((denunciaData.idDenuncia).charAt(0) !== 'A') {
-//                     if (Array.isArray(denunciaData.ubicacionesAuxiliares) && denunciaData.ubicacionesAuxiliares.length > 0) {
-//                         for (const ubi of denunciaData.ubicacionesAuxiliares) {
-//                             ubicacionAuxiliar = await UbicacionAuxiliar.create({
-//                                 latitudAuxiliar: ubi.latitudAuxiliar,
-//                                 longitudAuxiliar: ubi.longitudAuxiliar,
-//                                 tipo_precision: ubi.tipo_precision,
-//                                 domicilioAuxiliar: ubi.domicilioAuxiliar,
-//                                 localidadId: ubi.localidadId,
-//                                 denunciaId: denunciaData.idDenuncia
-//                             }, { transaction: transaccion });
-//                         }
-//                     } else {
-//                         ubicacionAuxiliar = await UbicacionAuxiliar.create({
-//                             latitudAuxiliar: denunciaData.ubicacionesAuxiliares.latitudAuxiliar,
-//                             longitudAuxiliar: denunciaData.ubicacionesAuxiliares.longitudAuxiliar,
-//                             tipo_precision: denunciaData.ubicacionesAuxiliares.tipo_precision,
-//                             domicilioAuxiliar: denunciaData.ubicacionesAuxiliares.domicilioAuxiliar,
-//                             localidadId: denunciaData.ubicacionesAuxiliares.localidadId,
-//                             denunciaId: denunciaData.ubicacionesAuxiliares.idDenuncia
-//                         }, { transaction: transaccion });
-//                     }
-//                 }
-
-//                 await registrarLog('CREATE', `DENUNCIA ${denuncia.idDenuncia} CREADA`, req.userId);
-//                 denunciasCargadas += 1;
-//             } catch (error) {
-//                 errores.push({
-//                     denuncia: denunciaData,
-//                     error: error.message
-//                 });
-
-//                 await registrarLog('ERROR', `Fallo al crear denuncia ${denunciaData.idDenuncia}: ${error.message}`, req.userId);
-//                 denunciasNoCargadas += 1;
-//             }
-//         }
-
-//         if (errores.length > 0) {
-//             await transaccion.rollback();
-//             console.log("Transacción revertida debido a errores en algunos registros.");
-//             res.status(400).json({
-//                 message: "Transacción revertida: algunas denuncias fallaron",
-//                 denunciasCargadas,
-//                 denunciasNoCargadas,
-//                 errores
-//             });
-//         } else {
-//             await transaccion.commit();
-//             res.status(201).json({
-//                 message: "Lote de denuncias cargado con éxito",
-//                 denunciasCargadas,
-//                 denunciasNoCargadas,
-//                 errores
-//             });
-//         }
-//     } catch (error) {
-//         await transaccion.rollback();
-//         await registrarLog('ERROR', `Error inesperado durante la transacción: ${error.message}`, req.userId);
-//         res.status(500).json({
-//             message: "Error en la carga del lote de denuncias",
-//             denunciasCargadas,
-//             denunciasNoCargadas: denuncias.length - denunciasCargadas,
-//             error: error.message
-//         });
-//     }
-// }
-
 const createDenuncia = async (req, res) => {
     const { denuncias } = req.body;
     const errores = [];
@@ -571,7 +451,6 @@ const createDenuncia = async (req, res) => {
         });
     }
 };
-
 
 const updateDenuncia = async (req, res) => {
     const { denuncias } = req.body;

@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAllObjetosIA, getObjetoIAById, createObjetoIA, updateObjetoIA, deleteObjetoIA } from '../controllers/objetoIa.controller.js';
+import { getAllObjetosIA, getObjetoIAById, createObjetoIA } from '../controllers/objetoIa.controller.js';
 
 const router = express.Router();
 router.get('/objetoIA', getAllObjetosIA);

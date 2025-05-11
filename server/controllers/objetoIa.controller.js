@@ -1,4 +1,4 @@
-import ObjetoIA from "../models/objetoIa.model";
+import ObjetoIA from "../models/objetoIa.model.js";
 
 const getAllObjetosIA = async (req, res) => {
     try {
@@ -22,14 +22,36 @@ const getObjetoIAById = async (req, res) => {
 const createObjetoIA = async (req, res) => {
     const { objetoIA } = req.body;
     const errores = []
+    console.log(objetoIA)
 
     try {
-        const objetoIA = await ObjetoIA.create(req.body);
-        res.status(201).json(objetoIA);
+        const resObjetoIA = await ObjetoIA.create({
+            nro_denuncia: objetoIA.nro_denuncia,
+            intentos: objetoIA.intentos,
+            totalPromptTokens: objetoIA.totalPromptTokens,
+            totalResponseTokens: objetoIA.totalResponseTokens,
+            avgLogprobs: objetoIA.avgLogprobs,
+            resultado_victima: objetoIA.resultado_victima,
+            resultado_victimario: objetoIA.resultado_victimario,
+            resultado_lugar: objetoIA.resultado_lugar,
+            resultado_accion_posterior: objetoIA.resultado_accion_posterior,
+            resultado_relato_resaltado: objetoIA.resultado_relato_resaltado,
+            resultado_modus_operandi: objetoIA.resultado_modus_operandi,
+            resultado_para_seguro: objetoIA.resultado_para_seguro,
+            resultado_elementos_sustraidos: objetoIA.resultado_elementos_sustraidos,
+            resultado_geocoding: objetoIA.resultado_geocoding
+        });
+        res.status(201).json(resObjetoIA);
     } catch (error) {
-        console.error("Error al procesar la denuncia")
-        res.status(500).json({ message: error.message });
+        console.error(`Error al procesar la denuncia ${objetoIA.nro_denuncia}:` , error.message)
+
+        errores.push({
+            denuncia: objetoIA.nro_denuncia,
+            error: error.message
+        })
+
+        res.status(400).json({ errores });
     }
 }
 
-export {getAllObjetosIA, getObjetoIAById, createObjetoIA};
+export { getAllObjetosIA, getObjetoIAById, createObjetoIA };
