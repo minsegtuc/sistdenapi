@@ -20,10 +20,14 @@ const getObjetoIAById = async (req, res) => {
 }
 
 const createObjetoIA = async (req, res) => {
+    const { objetoIA } = req.body;
+    const errores = []
+
     try {
         const objetoIA = await ObjetoIA.create(req.body);
         res.status(201).json(objetoIA);
     } catch (error) {
+        console.error("Error al procesar la denuncia")
         res.status(500).json({ message: error.message });
     }
 }
