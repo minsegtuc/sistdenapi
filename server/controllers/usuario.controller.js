@@ -186,7 +186,7 @@ const getVista = async (req, res) => {
                 GROUP_CONCAT(DISTINCT ESPECIALIZACION) AS especializaciones,
                 GROUP_CONCAT(DISTINCT \`PARA SEGURO\`) AS seguros,
                 GROUP_CONCAT(DISTINCT VICTIMA) AS riesgos,
-                GROUP_CONCAT(DISTINT INTERES) AS intereses
+                GROUP_CONCAT(DISTINCT INTERES) AS intereses
             FROM denuncias_completas_v9
             ${where};
         `;
