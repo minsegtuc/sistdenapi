@@ -382,6 +382,7 @@ const createDenuncia = async (req, res) => {
                     relato: denunciaData.relato,
                     cantidad_victimario: denunciaData.cantidad_victimario,
                     lugar_del_hecho: denunciaData.lugar_del_hecho,
+                    victimario: denunciaData.victimario
                 }, { transaction: transaccion });
 
                 // Si corresponde, crear ubicaciones auxiliares
@@ -494,6 +495,7 @@ const updateDenuncia = async (req, res) => {
                     isClassificated: denunciaData.isClassificated,
                     cantidad_victimario: denunciaData.cantidad_victimario,
                     lugar_del_hecho: denunciaData.lugar_del_hecho,
+                    victimario: denunciaData.victimario
                 }, { transaction: transaccion });
 
                 await Ubicacion.update({

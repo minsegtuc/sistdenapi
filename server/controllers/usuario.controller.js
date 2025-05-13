@@ -74,40 +74,40 @@ const getVistaFiltros = async (req, res) => {
 
     try {
         const delitos = await sequelize.query(
-            `SELECT DISTINCT(DELITO) FROM denuncias_completas_v8 ${where}`,
+            `SELECT DISTINCT(DELITO) FROM denuncias_completas_v9 ${where}`,
             {
                 type: Sequelize.QueryTypes.SELECT, replacements
             }
         );
         const submodalidades = await sequelize.query(
-            `SELECT DISTINCT(SUBMODALIDAD) FROM denuncias_completas_v8 ${where}`,
+            `SELECT DISTINCT(SUBMODALIDAD) FROM denuncias_completas_v9 ${where}`,
             {
                 type: Sequelize.QueryTypes.SELECT, replacements
             }
         );
         const armas = await sequelize.query(
-            `SELECT DISTINCT(\`ARMA UTILIZADA\`) FROM denuncias_completas_v8 ${where}`,
+            `SELECT DISTINCT(\`ARMA UTILIZADA\`) FROM denuncias_completas_v9 ${where}`,
             {
                 type: Sequelize.QueryTypes.SELECT, replacements
             }
         );
         
         const especializaciones = await sequelize.query(
-            `SELECT DISTINCT(ESPECIALIZACION) FROM denuncias_completas_v8 ${where}`,
+            `SELECT DISTINCT(ESPECIALIZACION) FROM denuncias_completas_v9 ${where}`,
             {
                 type: Sequelize.QueryTypes.SELECT, replacements
             }
         );
 
         const seguros = await sequelize.query(
-            `SELECT DISTINCT(\`PARA SEGURO\`) FROM denuncias_completas_v8 ${where}`,
+            `SELECT DISTINCT(\`PARA SEGURO\`) FROM denuncias_completas_v9 ${where}`,
             {
                 type: Sequelize.QueryTypes.SELECT, replacements
             }
         );
 
         const riesgos = await sequelize.query(
-            `SELECT DISTINCT(VICTIMA) FROM denuncias_completas_v8 ${where}`,
+            `SELECT DISTINCT(VICTIMA) FROM denuncias_completas_v9 ${where}`,
             {
                 type: Sequelize.QueryTypes.SELECT, replacements
             }
@@ -181,7 +181,7 @@ const getVista = async (req, res) => {
 
     try {
         const vista = await sequelize.query(
-            `SELECT * FROM denuncias_completas_v8 ${where}`,
+            `SELECT * FROM denuncias_completas_v9 ${where}`,
             {
                 type: Sequelize.QueryTypes.SELECT, replacements
             }
