@@ -9,30 +9,48 @@ import { registrarLog } from "../helpers/logHelpers.js";
 dotenv.config();
 
 const getRanking = async (req, res) => {
-    const { fecha } = req.query
+    const { fecha, fechaInicio, fechaFin } = req.query;
+
     try {
-        const ranking = await sequelize.query(
-            `select usuario.nombre, COUNT(DISTINCT log.descripcion) AS cantidad_clasificadas from log
-            inner join usuario on log.dniId = usuario.dni where fecha >= :fecha
-            and accion = 'UPDATE' and log.dniId <> 38243415 group by usuario.nombre order by cantidad_clasificadas desc`,
-            {
-                replacements: {fecha},
-                type: Sequelize.QueryTypes.SELECT
-            })
-        res.status(200).json(ranking)
+        let baseQuery = `
+            SELECT usuario.nombre, COUNT(DISTINCT log.descripcion) AS cantidad_clasificadas
+            FROM log
+            INNER JOIN usuario ON log.dniId = usuario.dni
+            WHERE fecha >= :fecha
+              AND accion = 'UPDATE'
+              AND log.dniId <> 38243415
+        `;
+
+        const replacements = { fecha };
+
+        if (fechaInicio && fechaFin) {
+            baseQuery += ` AND fecha BETWEEN :fechaInicio AND :fechaFin`;
+            replacements.fechaInicio = fechaInicio;
+            replacements.fechaFin = fechaFin;
+        }
+
+        baseQuery += `
+            GROUP BY usuario.nombre
+            ORDER BY cantidad_clasificadas DESC
+        `;
+
+        const ranking = await sequelize.query(baseQuery, {
+            replacements,
+            type: Sequelize.QueryTypes.SELECT
+        });
+
+        res.status(200).json(ranking);
     } catch (error) {
-        console.log("Error: " , error)
+        console.log("Error:", error);
         res.status(500).json({ message: error.message });
     }
-}
+};
 
 const getVistaFiltros = async (req, res) => {
     const { delito, submodalidad, interes, arma, especialidad, riesgo, seguro } = req.body;
 
-    console.log(req.body)
-
-    let whereClause = []
-    let replacements = {}
+    let whereClause = [];
+    let replacements = {};
 
     if (delito && delito.trim() !== '') {
         whereClause.push(`DELITO COLLATE utf8mb4_unicode_ci = :delito`);
@@ -54,7 +72,6 @@ const getVistaFiltros = async (req, res) => {
         replacements.interes = interes;
     }
 
-    
     if (especialidad && especialidad.trim() !== '') {
         whereClause.push(`ESPECIALIZACION COLLATE utf8mb4_unicode_ci = :especializacion`);
         replacements.especializacion = especialidad;
@@ -73,60 +90,42 @@ const getVistaFiltros = async (req, res) => {
     const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
 
     try {
-        const delitos = await sequelize.query(
-            `SELECT DISTINCT(DELITO) FROM denuncias_completas_v9 ${where}`,
-            {
-                type: Sequelize.QueryTypes.SELECT, replacements
-            }
-        );
-        const submodalidades = await sequelize.query(
-            `SELECT DISTINCT(SUBMODALIDAD) FROM denuncias_completas_v9 ${where}`,
-            {
-                type: Sequelize.QueryTypes.SELECT, replacements
-            }
-        );
-        const armas = await sequelize.query(
-            `SELECT DISTINCT(\`ARMA UTILIZADA\`) FROM denuncias_completas_v9 ${where}`,
-            {
-                type: Sequelize.QueryTypes.SELECT, replacements
-            }
-        );
-        
-        const especializaciones = await sequelize.query(
-            `SELECT DISTINCT(ESPECIALIZACION) FROM denuncias_completas_v9 ${where}`,
-            {
-                type: Sequelize.QueryTypes.SELECT, replacements
-            }
-        );
+        const query = `
+            SELECT
+                GROUP_CONCAT(DISTINCT DELITO) AS delitos,
+                GROUP_CONCAT(DISTINCT SUBMODALIDAD) AS submodalidades,
+                GROUP_CONCAT(DISTINCT \`ARMA UTILIZADA\`) AS armas,
+                GROUP_CONCAT(DISTINCT ESPECIALIZACION) AS especializaciones,
+                GROUP_CONCAT(DISTINCT \`PARA SEGURO\`) AS seguros,
+                GROUP_CONCAT(DISTINCT VICTIMA) AS riesgos,
+                GROUP_CONCAT(DISTINCT INTERES) AS intereses
+            FROM denuncias_completas_v9
+            ${where};
+        `;
 
-        const seguros = await sequelize.query(
-            `SELECT DISTINCT(\`PARA SEGURO\`) FROM denuncias_completas_v9 ${where}`,
-            {
-                type: Sequelize.QueryTypes.SELECT, replacements
-            }
-        );
-
-        const riesgos = await sequelize.query(
-            `SELECT DISTINCT(VICTIMA) FROM denuncias_completas_v9 ${where}`,
-            {
-                type: Sequelize.QueryTypes.SELECT, replacements
-            }
-        );
+        const [result] = await sequelize.query(query, {
+            type: Sequelize.QueryTypes.SELECT,
+            replacements
+        });
 
         const filtros = {
-            delitos,
-            submodalidades,
-            armas,
-            especializaciones,
-            seguros,
-            riesgos
-        }
+            delitos: result.delitos ? result.delitos.split(',') : [],
+            submodalidades: result.submodalidades ? result.submodalidades.split(',') : [],
+            armas: result.armas ? result.armas.split(',') : [],
+            especializaciones: result.especializaciones ? result.especializaciones.split(',') : [],
+            seguros: result.seguros ? result.seguros.split(',') : [],
+            riesgos: result.riesgos ? result.riesgos.split(',') : [],
+            intereses: result.intereses ? result.intereses.split(',') : []
+        };
+
+        console.log("Filtros: " , filtros)
+
         res.status(200).json(filtros);
     } catch (error) {
-        console.error('Error en getVista:', error);
+        console.error('Error en getVistaFiltros:', error);
         res.status(500).json({ message: error.message });
     }
-}
+};
 
 const getVista = async (req, res) => {
     const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, especialidad, seguro, riesgo } = req.body;
@@ -176,16 +175,37 @@ const getVista = async (req, res) => {
         replacements.riesgo = riesgo;
     }
 
-
     const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
 
     try {
-        const vista = await sequelize.query(
-            `SELECT * FROM denuncias_completas_v9 ${where}`,
-            {
-                type: Sequelize.QueryTypes.SELECT, replacements
-            }
-        );
+        const query = `
+            SELECT
+                GROUP_CONCAT(DISTINCT DELITO) AS delitos,
+                GROUP_CONCAT(DISTINCT SUBMODALIDAD) AS submodalidades,
+                GROUP_CONCAT(DISTINCT \`ARMA UTILIZADA\`) AS armas,
+                GROUP_CONCAT(DISTINCT ESPECIALIZACION) AS especializaciones,
+                GROUP_CONCAT(DISTINCT \`PARA SEGURO\`) AS seguros,
+                GROUP_CONCAT(DISTINCT VICTIMA) AS riesgos,
+                GROUP_CONCAT(DISTINT INTERES) AS intereses
+            FROM denuncias_completas_v9
+            ${where};
+        `;
+
+        const [result] = await sequelize.query(query, {
+            type: Sequelize.QueryTypes.SELECT,
+            replacements
+        });
+
+        const vista = {
+            delitos: result.delitos ? result.delitos.split(',') : [],
+            submodalidades: result.submodalidades ? result.submodalidades.split(',') : [],
+            armas: result.armas ? result.armas.split(',') : [],
+            especializaciones: result.especializaciones ? result.especializaciones.split(',') : [],
+            seguros: result.seguros ? result.seguros.split(',') : [],
+            riesgos: result.riesgos ? result.riesgos.split(',') : [],
+            intereses: result.intereses ? result.intereses.split(',') : []
+        };
+
         res.status(200).json(vista);
     } catch (error) {
         console.error('Error en getVista:', error);
