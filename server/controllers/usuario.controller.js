@@ -140,6 +140,7 @@ const getVista = async (req, res) => {
         replacements.fechaInicio = fechaInicio
         replacements.fechaFin = fechaFin
     }
+
     if (delito && delito.trim() !== '') {
         whereClause.push(`DELITO COLLATE utf8mb4_unicode_ci = :delito`);
         replacements.delito = delito;
@@ -179,34 +180,17 @@ const getVista = async (req, res) => {
 
     try {
         const query = `
-            SELECT
-                GROUP_CONCAT(DISTINCT DELITO) AS delitos,
-                GROUP_CONCAT(DISTINCT SUBMODALIDAD) AS submodalidades,
-                GROUP_CONCAT(DISTINCT \`ARMA UTILIZADA\`) AS armas,
-                GROUP_CONCAT(DISTINCT ESPECIALIZACION) AS especializaciones,
-                GROUP_CONCAT(DISTINCT \`PARA SEGURO\`) AS seguros,
-                GROUP_CONCAT(DISTINCT VICTIMA) AS riesgos,
-                GROUP_CONCAT(DISTINCT INTERES) AS intereses
+            SELECT *
             FROM denuncias_completas_v9
             ${where};
         `;
 
-        const [result] = await sequelize.query(query, {
+        const result = await sequelize.query(query, {
             type: Sequelize.QueryTypes.SELECT,
             replacements
         });
 
-        const vista = {
-            delitos: result.delitos ? result.delitos.split(',') : [],
-            submodalidades: result.submodalidades ? result.submodalidades.split(',') : [],
-            armas: result.armas ? result.armas.split(',') : [],
-            especializaciones: result.especializaciones ? result.especializaciones.split(',') : [],
-            seguros: result.seguros ? result.seguros.split(',') : [],
-            riesgos: result.riesgos ? result.riesgos.split(',') : [],
-            intereses: result.intereses ? result.intereses.split(',') : []
-        };
-
-        res.status(200).json(vista);
+        res.status(200).json(result);
     } catch (error) {
         console.error('Error en getVista:', error);
         res.status(500).json({ message: error.message });
