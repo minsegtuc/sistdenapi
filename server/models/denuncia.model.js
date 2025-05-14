@@ -80,6 +80,14 @@ const Denuncia = sequelize.define('denuncia', {
         type: DataTypes.TINYINT,
         allowNull: true,
     },
+    domicilio_victima: {
+        type: DataTypes.STRING(100),
+        allowNull: true
+    },
+    localidad_victima: {
+        type: DataTypes.STRING(100),
+        allowNull: true
+    },
     victimario: {
         type: DataTypes.STRING(100),
         allowNull: true
