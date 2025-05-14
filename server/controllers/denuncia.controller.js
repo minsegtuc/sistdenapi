@@ -345,6 +345,9 @@ const createDenuncia = async (req, res) => {
                 if (denunciaData.relato && denunciaData.relato.length > 10000) {
                     denunciaData.relato = denunciaData.relato.slice(0, 10000);
                 }
+                if (denunciaData.domicilio_victima && denunciaData.domicilio_victima.length > 100){
+                    denunciaData.domicilio_victima = denunciaData.relato.slice(0, 100)
+                }
 
                 const ubicacion = await Ubicacion.create({
                     latitud: denunciaData.latitud,
