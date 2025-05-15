@@ -103,6 +103,7 @@ const getAllLike = async (req, res) => {
     const page = parseInt(req.query.page) || 0;
     const limit = parseInt(req.query.limit) || 100;
     const offset = page * limit;
+
     try {
         let denuncias, total;
         const whereConditions = {
@@ -227,9 +228,7 @@ const getAllLike = async (req, res) => {
 
 const getAllRegional = async (req, res) => {
     const { regional, interes, propiedad, comisaria } = req.body;
-    // console.log("Regional: ", req.body.regional)
-    // console.log("Interes: ", req.body.interes)
-    // console.log("Propiedad: ", req.body.propiedad)
+
     try {
         const whereConditions = {
             isClassificated: {
@@ -279,7 +278,31 @@ const getAllRegional = async (req, res) => {
             where: whereConditions
         });
 
-        res.status(200).json({ denuncias });
+        const comisariasUnicas = [];
+        const regionalesUnicas = [];
+
+        const comisariaIds = new Set();
+        const regionalIds = new Set();
+
+        for (const denuncia of denuncias) {
+            const comisaria = denuncia.Comisarium;
+            if (comisaria && !comisariaIds.has(comisaria.idComisaria)) {
+                comisariaIds.add(comisaria.idComisaria);
+                comisariasUnicas.push(comisaria);
+            }
+
+            if (comisaria?.unidadRegionalId && !regionalesUnicas.some(r => r.id === comisaria.unidadRegionalId)) {
+                regionalesUnicas.push({
+                    id: comisaria.unidadRegionalId
+                });
+            }
+        }
+
+        res.status(200).json({
+            denuncias,
+            comisarias: comisariasUnicas,
+            regionales: regionalesUnicas
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -345,7 +368,7 @@ const createDenuncia = async (req, res) => {
                 if (denunciaData.relato && denunciaData.relato.length > 10000) {
                     denunciaData.relato = denunciaData.relato.slice(0, 10000);
                 }
-                if (denunciaData.domicilio_victima && denunciaData.domicilio_victima.length > 100){
+                if (denunciaData.domicilio_victima && denunciaData.domicilio_victima.length > 100) {
                     denunciaData.domicilio_victima = denunciaData.relato.slice(0, 100)
                 }
 
@@ -584,8 +607,10 @@ const countDenunciasSC = async (req, res) => {
         const amount = await Denuncia.count({
             where: {
                 isClassificated: {
-                    [Op.in]: [0, 2]
-                }
+                    [Op.in]: [2],
+                },
+                interes: 1,
+                especializacionId: 1
             }
         });
         res.status(200).json({ amount })
@@ -963,4 +988,4 @@ const getAño = async (req, res) => {
     }
 }
 
-export { getAllDenuncias, getDenunciaById, createDenuncia, updateDenuncia, deleteDenuncia, countDenunciasSC, getDuplicadas, getAllLike, getAllRegional, denunciaTrabajando, getDenunciaReciente, getTotalDenuncias, getTotalInteres, getInteresTotalGrafica, getDelitoGrafica, getTablaInteres, getTablaMensual, getAño};
+export { getAllDenuncias, getDenunciaById, createDenuncia, updateDenuncia, deleteDenuncia, countDenunciasSC, getDuplicadas, getAllLike, getAllRegional, denunciaTrabajando, getDenunciaReciente, getTotalDenuncias, getTotalInteres, getInteresTotalGrafica, getDelitoGrafica, getTablaInteres, getTablaMensual, getAño };
