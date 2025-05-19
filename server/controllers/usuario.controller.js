@@ -136,7 +136,7 @@ const getVista = async (req, res) => {
     let replacements = {}
 
     if (fechaInicio && fechaFin) {
-        whereClause.push(`FECHA BETWEEN :fechaInicio AND :fechaFin`)
+        whereClause.push(`FECHA_HECHO BETWEEN :fechaInicio AND :fechaFin`)
         replacements.fechaInicio = fechaInicio
         replacements.fechaFin = fechaFin
     }
