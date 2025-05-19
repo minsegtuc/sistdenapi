@@ -36,6 +36,7 @@ const createObjetoIA = async (req, res) => {
             resultado_lugar: objetoIA.resultado_lugar,
             resultado_accion_posterior: objetoIA.resultado_accion_posterior,
             resultado_relato_resaltado: objetoIA.resultado_relato_resaltado,
+            relato_mpf: objetoIA.relato_mpf,
             resultado_modus_operandi: objetoIA.resultado_modus_operandi,
             resultado_para_seguro: objetoIA.resultado_para_seguro,
             resultado_elementos_sustraidos: objetoIA.resultado_elementos_sustraidos,

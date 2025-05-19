@@ -45,7 +45,7 @@ startCleanWorkingJob();
 sequelize.authenticate()
     .then(() => {
         console.log('Connection has been established successfully.');
-        return sequelize.sync({});
+        return sequelize.sync({alter: true});
     })
     .then(() => {       
         let server;

@@ -15,6 +15,7 @@ const ObjetoIA = sequelize.define('ObjetoIA', {
     resultado_lugar: DataTypes.JSON,
     resultado_accion_posterior: DataTypes.JSON,
     resultado_relato_resaltado: DataTypes.TEXT,
+    relato_mpf: DataTypes.TEXT,
     resultado_modus_operandi: DataTypes.STRING,
     resultado_para_seguro: DataTypes.BOOLEAN,
     resultado_elementos_sustraidos: DataTypes.JSON,
