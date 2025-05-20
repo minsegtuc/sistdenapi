@@ -267,10 +267,18 @@ const getAllRegional = async (req, res) => {
                 model: Comisaria,
                 where: {
                     unidadRegionalId: regional
-                }
+                },
+                include: [
+                    { model: UnidadRegional, where: { idUnidadRegional: regional } }
+                ]
             });
         } else {
-            includeModels.push({ model: Comisaria });
+            includeModels.push({
+                model: Comisaria,
+                include: [
+                    { model: UnidadRegional, as: 'unidadRegional' }
+                ]
+            });
         }
 
         const denuncias = await Denuncia.findAll({
@@ -291,10 +299,10 @@ const getAllRegional = async (req, res) => {
                 comisariasUnicas.push(comisaria);
             }
 
-            if (comisaria?.unidadRegionalId && !regionalesUnicas.some(r => r.id === comisaria.unidadRegionalId)) {
-                regionalesUnicas.push({
-                    id: comisaria.unidadRegionalId
-                });
+            const regional = comisaria?.unidadRegional;
+            if (regional && !regionalIds.has(regional.idUnidadRegional)) {
+                regionalIds.add(regional.idUnidadRegional);
+                regionalesUnicas.push(regional);
             }
         }
 
