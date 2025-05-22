@@ -9,24 +9,24 @@ import { registrarLog } from "../helpers/logHelpers.js";
 dotenv.config();
 
 const getRanking = async (req, res) => {
-    const { fecha, fechaInicio, fechaFin } = req.query;
+    const { fechaDesde, fechaHasta } = req.query;
 
     try {
         let baseQuery = `
             SELECT usuario.nombre, COUNT(DISTINCT log.descripcion) AS cantidad_clasificadas
             FROM log
             INNER JOIN usuario ON log.dniId = usuario.dni
-            WHERE fecha >= :fecha
-              AND accion = 'UPDATE'
+            WHERE accion = 'UPDATE'
               AND log.dniId <> 38243415
         `;
 
-        const replacements = { fecha };
+        // const replacements = { fecha };
+        let replacements = {};
 
-        if (fechaInicio && fechaFin) {
-            baseQuery += ` AND fecha BETWEEN :fechaInicio AND :fechaFin`;
-            replacements.fechaInicio = fechaInicio;
-            replacements.fechaFin = fechaFin;
+        if (fechaDesde && fechaHasta) {
+            baseQuery += ` AND fecha >= :fechaDesde AND fecha <= :fechaHasta`;
+            replacements.fechaDesde = fechaDesde;
+            replacements.fechaHasta = fechaHasta;
         }
 
         baseQuery += `
