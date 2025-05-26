@@ -118,7 +118,7 @@ const getVistaFiltros = async (req, res) => {
             intereses: result.intereses ? result.intereses.split(',') : []
         };
 
-        console.log("Filtros: " , filtros)
+        console.log("Filtros: ", filtros)
 
         res.status(200).json(filtros);
     } catch (error) {
@@ -195,6 +195,247 @@ const getVista = async (req, res) => {
         console.error('Error en getVista:', error);
         res.status(500).json({ message: error.message });
     }
+}
+
+const getVistaEstadisticas = async (req, res) => {
+    const { fechaInicio, fechaFin } = req.body;
+    const meses = [
+        "enero", "febrero", "marzo", "abril", "mayo", "junio",
+        "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+    ];
+
+    let whereClause = []
+    let replacements = {}
+
+    if (fechaInicio && fechaFin) {
+        whereClause.push(`FECHA_HECHO BETWEEN :fechaInicio AND :fechaFin`)
+        replacements.fechaInicio = fechaInicio
+        replacements.fechaFin = fechaFin
+    }
+
+    const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
+
+    try {
+        const query = `
+            SELECT *
+            FROM denuncias_completas_v9
+            ${where};
+        `;
+
+        const result = await sequelize.query(query, {
+            type: Sequelize.QueryTypes.SELECT,
+            replacements
+        });
+
+        const denuncias = result.filter((denuncia) => (denuncia['CLASIFICADA POR'] === 0 || denuncia['CLASIFICADA POR'] === 1));
+        const denunciaSinInteres = denuncias.filter((denuncia) => (denuncia.INTERES === 'NO'));
+        const denunciasInteres = denuncias.filter((denuncia) => (denuncia.INTERES === 'SI'));
+        const habitantes = 1703186;
+
+        const totalDenuncias = denuncias.length;
+        const totalDenunciasInteres = denunciasInteres.length;
+        const totalDenunciasSinInteres = denunciaSinInteres.length;
+
+        const denunciasPorMes = denuncias.reduce((acc, denuncia) => {
+            const fecha = new Date(denuncia.FECHA_HECHO);
+            const anio = fecha.getUTCFullYear();
+            const mesNombre = meses[fecha.getUTCMonth()];
+            const clave = `${mesNombre} ${anio}`;
+
+            if (!acc[clave]) {
+                acc[clave] = 0;
+            }
+            acc[clave] += 1;
+            return acc;
+        }, {});
+
+        const denunciasPorMesInteres = denunciasInteres.reduce((acc, denuncia) => {
+            const fecha = new Date(denuncia.FECHA_HECHO);
+            const anio = fecha.getUTCFullYear();
+            const mesNombre = meses[fecha.getUTCMonth()];
+            const clave = `${mesNombre} ${anio}`;
+
+            if (!acc[clave]) {
+                acc[clave] = 0;
+            }
+            acc[clave] += 1;
+            return acc;
+        }, {});
+
+        const denunciasPorMesSinInteres = denunciaSinInteres.reduce((acc, denuncia) => {
+            const fecha = new Date(denuncia.FECHA_HECHO);
+            const anio = fecha.getUTCFullYear();
+            const mesNombre = meses[fecha.getUTCMonth()];
+            const clave = `${mesNombre} ${anio}`;
+
+            if (!acc[clave]) {
+                acc[clave] = 0;
+            }
+            acc[clave] += 1;
+            return acc;
+        }, {});
+
+        const robosPorMes = denunciasInteres.reduce((acc, denuncia) => {
+            if (denuncia.DELITO === 'ROBO') {
+                const fecha = new Date(denuncia.FECHA_HECHO);
+                const anio = fecha.getUTCFullYear();
+                const mesNombre = meses[fecha.getUTCMonth()]; // getUTCMonth() devuelve 0 a 11
+                const clave = `${mesNombre} ${anio}`;
+
+                if (!acc[clave]) {
+                    acc[clave] = 0;
+                }
+                acc[clave] += 1;
+            }
+            return acc;
+        }, {});
+
+        const hurtosPorMes = denunciasInteres.reduce((acc, denuncia) => {
+            if (denuncia.DELITO === 'HURTOS') {
+                const fecha = new Date(denuncia.FECHA_HECHO);
+                const anio = fecha.getUTCFullYear();
+                const mesNombre = meses[fecha.getUTCMonth()]; // getUTCMonth() devuelve 0 a 11
+                const clave = `${mesNombre} ${anio}`;
+
+                if (!acc[clave]) {
+                    acc[clave] = 0;
+                }
+                acc[clave] += 1;
+            }
+            return acc;
+        }, {});
+
+        const robosArmaPorMes = denunciasInteres.reduce((acc, denuncia) => {
+            if (denuncia.DELITO === 'ROBO CON ARMA DE FUEGO') {
+                const fecha = new Date(denuncia.FECHA_HECHO);
+                const anio = fecha.getUTCFullYear();
+                const mesNombre = meses[fecha.getUTCMonth()]; // getUTCMonth() devuelve 0 a 11
+                const clave = `${mesNombre} ${anio}`;
+
+                if (!acc[clave]) {
+                    acc[clave] = 0;
+                }
+                acc[clave] += 1;
+            }
+            return acc;
+        }, {});
+
+        res.status(200).json({
+            totalDenuncias,
+            totalDenunciasInteres,
+            totalDenunciasSinInteres,
+            denunciasPorMes,
+            denunciasPorMesInteres,
+            denunciasPorMesSinInteres,
+            robosPorMes,
+            hurtosPorMes,
+            robosArmaPorMes,
+            habitantes
+        });
+    } catch (error) {
+        console.error('Error en getVista:', error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
+const getVistaTablaIzq = async (req, res) => {
+    const { mes, anio } = req.body;
+
+    let whereClause = []
+    let replacements = {}
+
+    const meses = [
+        "enero", "febrero", "marzo", "abril", "mayo", "junio",
+        "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+    ];
+
+    const mesAnterior = mes ? (parseInt(mes) - 1) : null;
+
+    console.log(mes, anio, mesAnterior)
+
+    if (mes && mesAnterior && anio) {
+        whereClause.push(`(
+            (YEAR(FECHA_HECHO) = :anio AND (MONTH(FECHA_HECHO) = :mes OR MONTH(FECHA_HECHO) = :mesAnterior))
+        )`);
+        replacements.anio = anio
+        replacements.mes = mes
+        replacements.mesAnterior = mesAnterior
+    }
+
+    const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
+
+    try {
+        const query = `
+            SELECT *
+            FROM denuncias_completas_v9
+            ${where};
+        `;
+
+        const result = await sequelize.query(query, {
+            type: Sequelize.QueryTypes.SELECT,
+            replacements
+        });
+
+        const denunciasInteres = result.filter((denuncia) => (denuncia.INTERES === 'SI'));
+
+        const totalPorMesHurto = denunciasInteres.reduce((acc, denuncia) => {
+            if (denuncia.DELITO === 'HURTOS') {
+                const fecha = new Date(denuncia.FECHA_HECHO);
+                const anio = fecha.getUTCFullYear();
+                const mesNombre = meses[fecha.getUTCMonth()];
+                const clave = `${mesNombre} ${anio}`;
+
+                if (!acc[clave]) {
+                    acc[clave] = 0;
+                }
+                acc[clave] += 1;
+            }
+            return acc;
+        }, {});
+
+        const totalPorMesRobo = denunciasInteres.reduce((acc, denuncia) => {
+            if (denuncia.DELITO === 'ROBO') {
+                const fecha = new Date(denuncia.FECHA_HECHO);
+                const anio = fecha.getUTCFullYear();
+                const mesNombre = meses[fecha.getUTCMonth()];;
+                const clave = `${mesNombre} ${anio}`;
+
+                if (!acc[clave]) {
+                    acc[clave] = 0;
+                }
+                acc[clave] += 1;
+            }
+            return acc;
+        }, {});
+
+        const totalPorMesRoboArma = denunciasInteres.reduce((acc, denuncia) => {
+            if (denuncia.DELITO === 'ROBO CON ARMA DE FUEGO') {
+                const fecha = new Date(denuncia.FECHA_HECHO);
+                const anio = fecha.getUTCFullYear();
+                const mesNombre = meses[fecha.getUTCMonth()];;
+                const clave = `${mesNombre} ${anio}`;
+
+                if (!acc[clave]) {
+                    acc[clave] = 0;
+                }
+                acc[clave] += 1;
+            }
+            return acc;
+        }, {});
+
+        res.status(200).json({
+            denunciasInteres,
+            totalPorMesHurto,
+            totalPorMesRobo,
+            totalPorMesRoboArma
+        });
+    } catch (error) {
+        console.error('Error en getVista:', error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
+const getVistaTablaDer = async (req, res) => {
 }
 
 const prueba = (req, res) => {
@@ -395,4 +636,4 @@ const deleteUser = async (req, res) => {
     }
 };
 
-export { prueba, login, getAllUsers, getUserById, createUser, updateUser, deleteUser, logout, getVista, getVistaFiltros, getRanking };
+export { prueba, login, getAllUsers, getUserById, createUser, updateUser, deleteUser, logout, getVista, getVistaFiltros, getVistaEstadisticas, getRanking, getVistaTablaIzq, getVistaTablaDer };
