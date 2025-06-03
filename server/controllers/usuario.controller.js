@@ -47,10 +47,16 @@ const getRanking = async (req, res) => {
 };
 
 const getVistaFiltros = async (req, res) => {
-    const { delito, submodalidad, interes, arma, especialidad, riesgo, seguro } = req.body;
+    const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, especialidad, riesgo, seguro, lugar_del_hecho } = req.body;
 
     let whereClause = [];
     let replacements = {};
+
+    if (fechaInicio && fechaFin) {
+        whereClause.push(`FECHA_HECHO BETWEEN :fechaInicio AND :fechaFin`)
+        replacements.fechaInicio = fechaInicio
+        replacements.fechaFin = fechaFin
+    }
 
     if (delito && delito.trim() !== '') {
         whereClause.push(`DELITO COLLATE utf8mb4_unicode_ci = :delito`);
@@ -87,6 +93,11 @@ const getVistaFiltros = async (req, res) => {
         replacements.riesgo = riesgo;
     }
 
+    if (lugar_del_hecho && String(lugar_del_hecho).trim() !== '') {
+        whereClause.push(`Lugar_del_Hecho COLLATE utf8mb4_unicode_ci = :lugar_del_hecho`);
+        replacements.lugar_del_hecho = String(lugar_del_hecho).trim();
+    }
+
     const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
 
     try {
@@ -98,10 +109,14 @@ const getVistaFiltros = async (req, res) => {
                 GROUP_CONCAT(DISTINCT ESPECIALIZACION) AS especializaciones,
                 GROUP_CONCAT(DISTINCT \`PARA SEGURO\`) AS seguros,
                 GROUP_CONCAT(DISTINCT VICTIMA) AS riesgos,
-                GROUP_CONCAT(DISTINCT INTERES) AS intereses
+                GROUP_CONCAT(DISTINCT INTERES) AS intereses,
+                GROUP_CONCAT(DISTINCT Lugar_del_Hecho) AS lugares
             FROM denuncias_completas_v9
             ${where};
         `;
+
+        console.log("Query:", query);
+        console.log("Replacements:", replacements);
 
         const [result] = await sequelize.query(query, {
             type: Sequelize.QueryTypes.SELECT,
@@ -115,7 +130,8 @@ const getVistaFiltros = async (req, res) => {
             especializaciones: result.especializaciones ? result.especializaciones.split(',') : [],
             seguros: result.seguros ? result.seguros.split(',') : [],
             riesgos: result.riesgos ? result.riesgos.split(',') : [],
-            intereses: result.intereses ? result.intereses.split(',') : []
+            intereses: result.intereses ? result.intereses.split(',') : [],
+            lugares: result.lugares ? result.lugares.split(',') : []
         };
 
         console.log("Filtros: ", filtros)
@@ -128,7 +144,7 @@ const getVistaFiltros = async (req, res) => {
 };
 
 const getVista = async (req, res) => {
-    const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, especialidad, seguro, riesgo } = req.body;
+    const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, especialidad, seguro, riesgo, lugar_del_hecho } = req.body;
 
     console.log(req.body)
 
@@ -174,6 +190,11 @@ const getVista = async (req, res) => {
     if (riesgo && riesgo.trim() !== '') {
         whereClause.push(`VICTIMA COLLATE utf8mb4_unicode_ci = :riesgo`);
         replacements.riesgo = riesgo;
+    }
+
+    if (lugar_del_hecho && String(lugar_del_hecho).trim() !== '') {
+        whereClause.push(`Lugar_del_Hecho COLLATE utf8mb4_unicode_ci = :lugar_del_hecho`);
+        replacements.lugar_del_hecho = String(lugar_del_hecho).trim();
     }
 
     const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
