@@ -97,130 +97,279 @@ const getDenunciaById = async (req, res) => {
     }
 }
 
-const getAllLike = async (req, res) => {
-    const { regional, interes, propiedad, año } = req.body;
-    const id = req.body.denunciaSearch
-    const page = parseInt(req.query.page) || 0;
-    const limit = parseInt(req.query.limit) || 100;
-    const offset = page * limit;
+const getDenunciaByIdVista = async (req, res) => {
+    const { denuncia } = req.body;
+    const denunciaDecodedId = decodeURIComponent(denuncia);
+    console.log(req.body);
 
     try {
-        let denuncias, total;
-        const whereConditions = {
-            isClassificated: 1
-        };
-        if (interes === 1) {
-            whereConditions.interes = interes;
-        }
+        const query = `SELECT * FROM denuncias_completas_v9 WHERE NRO_DENUNCIA = "${denunciaDecodedId}"`;
+        const denuncia = await sequelize.query(query, {
+            type: Sequelize.QueryTypes.SELECT,
+        });
 
-        if (propiedad === 1) {
-            whereConditions.especializacionId = propiedad;
-        }
+        res.status(200).json(denuncia);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
 
-        if (año) {
-            whereConditions.fechaDenuncia = {
-                [Op.between]: [`${año}-01-01`, `${año}-12-31`]
-            }
-        }
+const getEstadisticasClasificacion = async (req, res) => {
+    const { fechaInicio, fechaFin } = req.body
 
-        if (!id) {
-            const includeModels = [
-                { model: Ubicacion },
-                { model: TipoArma },
-                { model: Movilidad },
-                { model: Autor },
-                { model: Especializacion },
-                {
-                    model: Submodalidad,
-                    include: [
-                        {
-                            model: Modalidad,
-                            include: [
-                                { model: TipoDelito }
-                            ]
-                        },
-                    ]
-                },
-                { model: TipoDelito }
-            ]
+    let whereClause = []
+    let replacements = {}
 
-            if (regional) {
-                includeModels.push({
-                    model: Comisaria,
-                    where: {
-                        unidadRegionalId: regional
-                    }
-                });
-            } else {
-                includeModels.push({ model: Comisaria });
-            }
+    if (fechaInicio && fechaFin) {
+        whereClause.push(`den.fechaDelito >= :fechaInicio AND den.fechaDelito <= :fechaFin`);
+        replacements.fechaInicio = fechaInicio;
+        replacements.fechaFin = fechaFin;
+    }
 
-            total = await Denuncia.count({
-                where: whereConditions,
-                include: regional ? [{ model: Comisaria, where: { unidadRegionalId: regional } }] : []
-            });
+    const where = whereClause.length > 0 ? `AND ${whereClause.join(' AND ')}` : '';
 
-            const denuncias = await Denuncia.findAll({
-                include: includeModels,
-                where: whereConditions,
-                limit,
-                offset
-            });
+    try {
+        const querySubmodalidad = `SELECT
+        SUM(CASE WHEN JSON_UNQUOTE(ia.resultado_modus_operandi) = submo.descripcion THEN 1 ELSE 0 END) AS coinciden,
+        SUM(CASE WHEN JSON_UNQUOTE(ia.resultado_modus_operandi) != submo.descripcion THEN 1 ELSE 0 END) AS cambiaron
+        FROM denuncia AS den
+        JOIN submodalidad AS submo ON den.submodalidadId = submo.idSubmodalidad
+        JOIN objeto_ia AS ia ON den.idDenuncia = ia.nro_denuncia
+        WHERE den.interes = 1 AND den.isClassificated = 1 ${where};`
 
-            return res.status(200).json({
-                denuncias,
-                total,
-                page,
-                totalPages: Math.ceil(total / limit),
-            });
-        } else {
-            denuncias = await Denuncia.findAll({
-                where: {
-                    idDenuncia: {
-                        [Op.like]: `%${id}%`
-                    },
-                    isClassificated: 1
-                },
-                include: [
-                    { model: Ubicacion },
-                    { model: TipoArma },
-                    { model: Movilidad },
-                    { model: Autor },
-                    { model: Especializacion },
-                    {
-                        model: Submodalidad,
-                        include: [
-                            {
-                                model: Modalidad,
-                                include: [
-                                    { model: TipoDelito }
-                                ]
-                            },
-                        ]
-                    },
-                    { model: Comisaria },
-                    { model: TipoDelito }
-                ],
-                limit,
-                offset
-            });
+        const submodalidad = await sequelize.query(querySubmodalidad, {
+            type: Sequelize.QueryTypes.SELECT,
+            replacements
+        });
 
-            total = await Denuncia.count({
-                where: {
-                    idDenuncia: {
-                        [Op.like]: `%${id}%`
-                    },
-                    isClassificated: 1
-                }
-            });
+        const queryAprehendido = `SELECT
+        SUM(CASE 
+            WHEN 
+            (JSON_UNQUOTE(JSON_EXTRACT(resultado_accion_posterior, '$.aprehendimiento_policial')) = 'true' AND den.aprehendido = 1)
+            OR
+            (JSON_UNQUOTE(JSON_EXTRACT(resultado_accion_posterior, '$.aprehendimiento_policial')) = 'false' AND den.aprehendido = 0)
+            THEN 1 ELSE 0
+        END) AS coinciden,
+        SUM(CASE 
+            WHEN 
+            (JSON_UNQUOTE(JSON_EXTRACT(resultado_accion_posterior, '$.aprehendimiento_policial')) = 'true' AND den.aprehendido = 0)
+            OR
+            (JSON_UNQUOTE(JSON_EXTRACT(resultado_accion_posterior, '$.aprehendimiento_policial')) = 'false' AND den.aprehendido = 1)
+            THEN 1 ELSE 0
+        END) AS cambiaron
+        FROM denuncia AS den
+        JOIN objeto_ia AS ia ON den.idDenuncia = ia.nro_denuncia
+        WHERE den.interes = 1 AND den.isClassificated = 1 ${where};`
 
-            return res.status(200).json({
-                denuncias,
-                total,
-                page,
-                totalPages: Math.ceil(total / limit)
-            });
-        }
+        const aprehendido = await sequelize.query(queryAprehendido, {
+            type: Sequelize.QueryTypes.SELECT,
+            replacements
+        });
+
+        const queryMovilidad = `SELECT
+        SUM(CASE 
+            WHEN LOWER(JSON_UNQUOTE(JSON_EXTRACT(resultado_victimario, '$.movilidad'))) = 
+                    CASE LOWER(mov.descripcion) WHEN 'sd' THEN 'desconocido' ELSE LOWER(mov.descripcion) END 
+            THEN 1 ELSE 0 
+        END) AS coinciden,
+        SUM(CASE 
+            WHEN LOWER(JSON_UNQUOTE(JSON_EXTRACT(resultado_victimario, '$.movilidad'))) != 
+                    CASE LOWER(mov.descripcion) WHEN 'sd' THEN 'desconocido' ELSE LOWER(mov.descripcion) END 
+            THEN 1 ELSE 0 
+        END) AS cambiaron
+        FROM denuncia AS den
+        JOIN movilidad AS mov ON den.movilidadId = mov.idMovilidad
+        JOIN objeto_ia AS ia ON den.idDenuncia = ia.nro_denuncia
+        WHERE den.interes = 1 AND den.isClassificated = 1 ${where};`
+
+        const movilidad = await sequelize.query(queryMovilidad, {
+            type: Sequelize.QueryTypes.SELECT,
+            replacements
+        });
+
+        const queryAutor = `SELECT
+        SUM(CASE 
+            WHEN lower(JSON_UNQUOTE(JSON_EXTRACT(resultado_victimario, '$.autor'))) =
+                CASE lower(aut.descripcion)
+                WHEN "personal_policial" THEN "personal policial"
+                WHEN "SD" THEN "desconocido"
+                ELSE lower(aut.descripcion)
+                END
+            THEN 1 ELSE 0 END) AS coinciden,
+    
+        SUM(CASE 
+            WHEN lower(JSON_UNQUOTE(JSON_EXTRACT(resultado_victimario, '$.autor'))) !=
+                CASE lower(aut.descripcion)
+                WHEN "personal_policial" THEN "personal policial"
+                WHEN "SD" THEN "desconocido"
+                ELSE lower(aut.descripcion)
+                END
+            THEN 1 ELSE 0 END) AS cambiaron
+        FROM denuncia AS den
+        INNER JOIN autor AS aut ON den.autorId = aut.idAutor
+        JOIN objeto_ia AS ia ON den.idDenuncia = ia.nro_denuncia
+        WHERE den.interes = 1 AND den.isClassificated = 1 ${where};`
+
+        const autor = await sequelize.query(queryAutor, {
+            type: Sequelize.QueryTypes.SELECT,
+            replacements
+        });
+
+        const querySeguro = `SELECT
+        SUM(CASE 
+            WHEN ia.resultado_para_seguro = den.seguro
+            THEN 1 ELSE 0 END) AS coinciden,
+
+        SUM(CASE 
+            WHEN ia.resultado_para_seguro != den.seguro
+            THEN 1 ELSE 0 END) AS cambiaron
+        FROM denuncia AS den
+        JOIN objeto_ia AS ia ON den.idDenuncia = ia.nro_denuncia
+        WHERE den.interes = 1 AND den.isClassificated = 1 ${where};`
+
+        const seguro = await sequelize.query(querySeguro, {
+            type: Sequelize.QueryTypes.SELECT,
+            replacements
+        });
+
+        const queryArma = `SELECT
+        SUM(CASE 
+            WHEN LOWER(JSON_UNQUOTE(JSON_EXTRACT(resultado_victimario, '$.arma_utilizada'))) =
+                CASE LOWER(TRIM(arma.descripcion)) 
+                WHEN "Arma Blanca" THEN "blanca"
+                WHEN "Arma de fuego" THEN "de fuego"
+                ELSE LOWER(TRIM(arma.descripcion))
+                END
+            THEN 1 ELSE 0 END) AS coinciden,
+    
+        SUM(CASE 
+            WHEN LOWER(JSON_UNQUOTE(JSON_EXTRACT(resultado_victimario, '$.arma_utilizada'))) !=
+                CASE LOWER(TRIM(arma.descripcion)) 
+                WHEN "Arma Blanca" THEN "blanca"
+                WHEN "Arma de fuego" THEN "de fuego"
+                ELSE LOWER(TRIM(arma.descripcion))
+                END
+            THEN 1 ELSE 0 END) AS cambiaron
+        FROM denuncia AS den
+        INNER JOIN tipoArma AS arma ON den.tipoArmaId = arma.idtipoArma
+        JOIN objeto_ia AS ia ON den.idDenuncia = ia.nro_denuncia
+        WHERE den.interes = 1 AND den.isClassificated = 1 ${where};`
+
+        const arma = await sequelize.query(queryArma, {
+            type: Sequelize.QueryTypes.SELECT,
+            replacements
+        });
+
+        const queryRiesgo = `SELECT
+        SUM(CASE 
+            WHEN 
+            (JSON_UNQUOTE(JSON_EXTRACT(resultado_victima, '$.riesgo')) = 'true' AND den.victima = 1)
+            OR (JSON_UNQUOTE(JSON_EXTRACT(resultado_victima, '$.riesgo')) = 'false' AND den.victima = 0)
+            THEN 1 ELSE 0 END) AS coinciden,
+
+        SUM(CASE 
+            WHEN 
+            (JSON_UNQUOTE(JSON_EXTRACT(resultado_victima, '$.riesgo')) = 'true' AND den.victima = 0)
+            OR (JSON_UNQUOTE(JSON_EXTRACT(resultado_victima, '$.riesgo')) = 'false' AND den.victima = 1)
+            THEN 1 ELSE 0 END) AS cambiaron
+        FROM denuncia AS den
+        JOIN objeto_ia AS ia ON den.idDenuncia = ia.nro_denuncia
+        WHERE den.interes = 1 AND den.isClassificated = 1 ${where};`
+
+        const riesgo = await sequelize.query(queryRiesgo, {
+            type: Sequelize.QueryTypes.SELECT,
+            replacements
+        });
+
+        const queryLugar = `SELECT
+        SUM(CASE 
+            WHEN JSON_UNQUOTE(JSON_EXTRACT(resultado_lugar, '$.lugar_del_hecho')) = den.lugar_del_hecho
+            THEN 1 ELSE 0 END) AS coinciden,
+        SUM(CASE 
+            WHEN JSON_UNQUOTE(JSON_EXTRACT(resultado_lugar, '$.lugar_del_hecho')) != den.lugar_del_hecho
+            THEN 1 ELSE 0 END) AS cambiaron
+        FROM denuncia AS den
+        JOIN objeto_ia AS ia ON den.idDenuncia = ia.nro_denuncia
+        WHERE den.interes = 1 AND den.isClassificated = 1 ${where};`
+
+        const lugar = await sequelize.query(queryLugar, {
+            type: Sequelize.QueryTypes.SELECT,
+            replacements
+        });
+
+        res.status(200).json({ submodalidad, aprehendido, movilidad, autor, arma, seguro, riesgo, lugar });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+const getEstadisticasSubmodalidad = async (req, res) => {
+    const { fechaInicio, fechaFin } = req.body
+
+    let whereClause = []
+    let replacements = {}
+
+    if (fechaInicio && fechaFin) {
+        whereClause.push(`den.fechaDelito >= :fechaInicio AND den.fechaDelito <= :fechaFin`);
+        replacements.fechaInicio = fechaInicio;
+        replacements.fechaFin = fechaFin;
+    }
+
+    const where = whereClause.length > 0 ? `AND ${whereClause.join(' AND ')}` : '';
+
+    try {
+        const queryConteo = `SELECT
+        ia.resultado_modus_operandi AS modalidad_ia,
+        SUM(CASE WHEN ia.resultado_modus_operandi = submo.descripcion THEN 1 ELSE 0 END) AS coinciden,
+        SUM(CASE WHEN ia.resultado_modus_operandi <> submo.descripcion THEN 1 ELSE 0 END) AS cambiaron
+        FROM denuncia AS den
+        INNER JOIN submodalidad AS submo ON den.submodalidadId = submo.idSubmodalidad
+        INNER JOIN objeto_ia AS ia ON den.idDenuncia = ia.nro_denuncia
+        WHERE den.interes = 1 AND den.isClassificated = 1 ${where}
+        GROUP BY ia.resultado_modus_operandi;`
+
+        const conteo = await sequelize.query(queryConteo, {
+            type: Sequelize.QueryTypes.SELECT,
+            replacements
+        });
+
+        res.status(200).json({ conteo });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+const getEstadisticasSankey = async (req, res) => {
+    const { fechaInicio, fechaFin } = req.body
+
+    let whereClause = []
+    let replacements = {}
+
+    if (fechaInicio && fechaFin) {
+        whereClause.push(`den.fechaDelito >= :fechaInicio AND den.fechaDelito <= :fechaFin`);
+        replacements.fechaInicio = fechaInicio;
+        replacements.fechaFin = fechaFin;
+    }
+
+    const where = whereClause.length > 0 ? `AND ${whereClause.join(' AND ')}` : '';
+    
+    try {
+        const querySankey = `SELECT 
+        ia.resultado_modus_operandi AS 'from',
+        submo.descripcion AS 'to',
+        COUNT(*) AS 'flow'
+        FROM denuncia AS den
+        INNER JOIN submodalidad AS submo ON den.submodalidadId = submo.idSubmodalidad
+        INNER JOIN objeto_ia AS ia ON den.idDenuncia = ia.nro_denuncia
+        WHERE den.interes = 1 AND den.isClassificated = 1 ${where}
+        GROUP BY ia.resultado_modus_operandi, submo.descripcion;`
+
+        const sankey = await sequelize.query(querySankey, {
+            type: Sequelize.QueryTypes.SELECT,
+            replacements
+        });
+
+        res.status(200).json({ sankey });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -996,4 +1145,4 @@ const getAño = async (req, res) => {
     }
 }
 
-export { getAllDenuncias, getDenunciaById, createDenuncia, updateDenuncia, deleteDenuncia, countDenunciasSC, getDuplicadas, getAllLike, getAllRegional, denunciaTrabajando, getDenunciaReciente, getTablaInteres, getTablaMensual, getAño };
+export { getAllDenuncias, getDenunciaById, getDenunciaByIdVista, createDenuncia, updateDenuncia, deleteDenuncia, countDenunciasSC, getDuplicadas, getAllRegional, denunciaTrabajando, getDenunciaReciente, getTablaInteres, getTablaMensual, getAño, getEstadisticasClasificacion, getEstadisticasSankey, getEstadisticasSubmodalidad };

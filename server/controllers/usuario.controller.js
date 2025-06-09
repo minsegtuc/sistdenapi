@@ -46,16 +46,157 @@ const getRanking = async (req, res) => {
     }
 };
 
+const getRankingDiario = async (req, res) => {
+    const { fechaDesde, fechaHasta } = req.query;
+
+    try {
+        let baseQuery = `
+            SELECT usuario.nombre, COUNT(DISTINCT log.descripcion) AS cantidad_clasificadas
+            FROM log
+            INNER JOIN usuario ON log.dniId = usuario.dni
+            WHERE accion = 'UPDATE'
+        `;
+
+        let replacements = {};
+
+        if (fechaDesde && fechaHasta) {
+            baseQuery += ` AND fecha >= :fechaDesde AND fecha <= :fechaHasta`;
+            replacements.fechaDesde = fechaDesde;
+            replacements.fechaHasta = fechaHasta;
+        }
+
+        baseQuery += `
+            GROUP BY usuario.nombre
+            ORDER BY cantidad_clasificadas DESC
+        `;
+
+        const ranking = await sequelize.query(baseQuery, {
+            replacements,
+            type: Sequelize.QueryTypes.SELECT
+        });
+
+        res.status(200).json(ranking);
+    } catch (error) {
+        console.log("Error:", error);
+        res.status(500).json({ message: error.message });
+    }
+};
+//     const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, especialidad, riesgo, seguro, lugar_del_hecho, comisaria } = req.body;
+
+//     let whereClause = [];
+//     let replacements = {};
+
+//     if (fechaInicio && fechaFin) {
+//         whereClause.push(`FECHA_HECHO BETWEEN :fechaInicio AND :fechaFin`)
+//         replacements.fechaInicio = fechaInicio
+//         replacements.fechaFin = fechaFin
+//     }
+
+//     if (delito && delito.trim() !== '') {
+//         whereClause.push(`DELITO COLLATE utf8mb4_unicode_ci = :delito`);
+//         replacements.delito = delito;
+//     }
+
+//     if (submodalidad && submodalidad.trim() !== '') {
+//         whereClause.push(`SUBMODALIDAD COLLATE utf8mb4_unicode_ci = :submodalidad`);
+//         replacements.submodalidad = submodalidad;
+//     }
+
+//     if (arma && arma.trim() !== '') {
+//         whereClause.push(`\`ARMA UTILIZADA\` COLLATE utf8mb4_unicode_ci = :arma`);
+//         replacements.arma = arma;
+//     }
+
+//     if (interes !== undefined && interes !== '') {
+//         whereClause.push(`INTERES COLLATE utf8mb4_unicode_ci = :interes`);
+//         replacements.interes = interes;
+//     }
+
+//     if (especialidad && especialidad.trim() !== '') {
+//         whereClause.push(`ESPECIALIZACION COLLATE utf8mb4_unicode_ci = :especializacion`);
+//         replacements.especializacion = especialidad;
+//     }
+
+//     if (seguro && seguro.trim() !== '') {
+//         whereClause.push(`\`PARA SEGURO\` COLLATE utf8mb4_unicode_ci = :seguro`);
+//         replacements.seguro = seguro;
+//     }
+
+//     if (riesgo && riesgo.trim() !== '') {
+//         whereClause.push(`VICTIMA COLLATE utf8mb4_unicode_ci = :riesgo`);
+//         replacements.riesgo = riesgo;
+//     }
+
+//     if (lugar_del_hecho && String(lugar_del_hecho).trim() !== '') {
+//         whereClause.push(`Lugar_del_Hecho COLLATE utf8mb4_unicode_ci = :lugar_del_hecho`);
+//         replacements.lugar_del_hecho = String(lugar_del_hecho).trim();
+//     }
+
+//     if (comisaria && comisaria.trim() !== '') {
+//         whereClause.push(`COMISARIA COLLATE utf8mb4_unicode_ci = :comisaria`);
+//         replacements.comisaria = comisaria;
+//     }
+
+//     const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
+
+//     try {
+//         const query = `
+//             SELECT
+//                 GROUP_CONCAT(DISTINCT DELITO) AS delitos,
+//                 GROUP_CONCAT(DISTINCT SUBMODALIDAD) AS submodalidades,
+//                 GROUP_CONCAT(DISTINCT \`ARMA UTILIZADA\`) AS armas,
+//                 GROUP_CONCAT(DISTINCT ESPECIALIZACION) AS especializaciones,
+//                 GROUP_CONCAT(DISTINCT \`PARA SEGURO\`) AS seguros,
+//                 GROUP_CONCAT(DISTINCT VICTIMA) AS riesgos,
+//                 GROUP_CONCAT(DISTINCT INTERES) AS intereses,
+//                 GROUP_CONCAT(DISTINCT Lugar_del_Hecho) AS lugares,
+//                 GROUP_CONCAT(DISTINCT COMISARIA) AS comisarias
+//             FROM denuncias_completas_v9
+//             ${where};
+//         `;
+
+//         console.log("Query:", query);
+//         console.log("Replacements:", replacements);
+
+//         const [result] = await sequelize.query(query, {
+//             type: Sequelize.QueryTypes.SELECT,
+//             replacements
+//         });
+
+//         const filtros = {
+//             delitos: result.delitos ? result.delitos.split(',') : [],
+//             submodalidades: result.submodalidades ? result.submodalidades.split(',') : [],
+//             armas: result.armas ? result.armas.split(',') : [],
+//             especializaciones: result.especializaciones ? result.especializaciones.split(',') : [],
+//             seguros: result.seguros ? result.seguros.split(',') : [],
+//             riesgos: result.riesgos ? result.riesgos.split(',') : [],
+//             intereses: result.intereses ? result.intereses.split(',') : [],
+//             lugares: result.lugares ? result.lugares.split(',') : [],
+//             comisarias: result.comisarias ? result.comisarias.split(',') : []
+//         };
+
+//         console.log("Filtros: ", filtros)
+
+//         res.status(200).json(filtros);
+//     } catch (error) {
+//         console.error('Error en getVistaFiltros:', error);
+//         res.status(500).json({ message: error.message });
+//     }
+// };
+
 const getVistaFiltros = async (req, res) => {
-    const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, especialidad, riesgo, seguro, lugar_del_hecho } = req.body;
+    const {
+        fechaInicio, fechaFin, delito, submodalidad, interes, arma,
+        especialidad, riesgo, seguro, lugar_del_hecho, comisaria
+    } = req.body;
 
     let whereClause = [];
     let replacements = {};
 
     if (fechaInicio && fechaFin) {
-        whereClause.push(`FECHA_HECHO BETWEEN :fechaInicio AND :fechaFin`)
-        replacements.fechaInicio = fechaInicio
-        replacements.fechaFin = fechaFin
+        whereClause.push(`FECHA_HECHO BETWEEN :fechaInicio AND :fechaFin`);
+        replacements.fechaInicio = fechaInicio;
+        replacements.fechaFin = fechaFin;
     }
 
     if (delito && delito.trim() !== '') {
@@ -73,9 +214,9 @@ const getVistaFiltros = async (req, res) => {
         replacements.arma = arma;
     }
 
-    if (interes !== undefined && interes !== '') {
+    if (interes !== undefined && interes !== null && String(interes).trim() !== '') {
         whereClause.push(`INTERES COLLATE utf8mb4_unicode_ci = :interes`);
-        replacements.interes = interes;
+        replacements.interes = String(interes).trim();
     }
 
     if (especialidad && especialidad.trim() !== '') {
@@ -98,45 +239,65 @@ const getVistaFiltros = async (req, res) => {
         replacements.lugar_del_hecho = String(lugar_del_hecho).trim();
     }
 
-    const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
+    if (comisaria && comisaria.trim() !== '') {
+        whereClause.push(`COMISARIA COLLATE utf8mb4_unicode_ci = :comisaria`);
+        replacements.comisaria = comisaria;
+    }
+
+    const whereSql = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
 
     try {
-        const query = `
-            SELECT
-                GROUP_CONCAT(DISTINCT DELITO) AS delitos,
-                GROUP_CONCAT(DISTINCT SUBMODALIDAD) AS submodalidades,
-                GROUP_CONCAT(DISTINCT \`ARMA UTILIZADA\`) AS armas,
-                GROUP_CONCAT(DISTINCT ESPECIALIZACION) AS especializaciones,
-                GROUP_CONCAT(DISTINCT \`PARA SEGURO\`) AS seguros,
-                GROUP_CONCAT(DISTINCT VICTIMA) AS riesgos,
-                GROUP_CONCAT(DISTINCT INTERES) AS intereses,
-                GROUP_CONCAT(DISTINCT Lugar_del_Hecho) AS lugares
-            FROM denuncias_completas_v9
-            ${where};
-        `;
+        // Definir los campos para los que queremos obtener valores distintos
+        const filterFields = [
+            { dbColumn: 'DELITO', resultKey: 'delitos' },
+            { dbColumn: 'SUBMODALIDAD', resultKey: 'submodalidades' },
+            { dbColumn: '`ARMA UTILIZADA`', resultKey: 'armas', cleanKey: 'ARMA UTILIZADA' },
+            { dbColumn: 'ESPECIALIZACION', resultKey: 'especializaciones' },
+            { dbColumn: '`PARA SEGURO`', resultKey: 'seguros', cleanKey: 'PARA SEGURO' },
+            { dbColumn: 'VICTIMA', resultKey: 'riesgos' },
+            { dbColumn: 'INTERES', resultKey: 'intereses' },
+            { dbColumn: 'Lugar_del_Hecho', resultKey: 'lugares' },
+            { dbColumn: 'COMISARIA', resultKey: 'comisarias' },
+        ];
 
-        console.log("Query:", query);
-        console.log("Replacements:", replacements);
+        const promises = filterFields.map(field => {
+            let distinctWhereSql = whereSql;
+            const notEmptyCondition = `${field.dbColumn} COLLATE utf8mb4_unicode_ci != ''`;
 
-        const [result] = await sequelize.query(query, {
-            type: Sequelize.QueryTypes.SELECT,
-            replacements
+            if (distinctWhereSql) {
+                distinctWhereSql += ` AND ${field.dbColumn} IS NOT NULL AND ${notEmptyCondition}`;
+            } else {
+                distinctWhereSql = `WHERE ${field.dbColumn} IS NOT NULL AND ${notEmptyCondition}`;
+            }
+
+            const query = `
+                SELECT DISTINCT ${field.dbColumn}
+                FROM denuncias_completas_v9
+                ${distinctWhereSql}
+                ORDER BY ${field.dbColumn};
+            `;
+            // console.log(`Query for ${field.resultKey}:`, query);
+            // console.log(`Replacements for ${field.resultKey}:`, replacements);
+
+            return sequelize.query(query, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }).then(results => ({
+                key: field.resultKey,
+                values: results.map(row => row[field.cleanKey || field.dbColumn.replace(/`/g, '')]).filter(value => value !== null && value !== undefined && String(value).trim() !== '') // Mejor filtro post-consulta
+            }));
         });
 
-        const filtros = {
-            delitos: result.delitos ? result.delitos.split(',') : [],
-            submodalidades: result.submodalidades ? result.submodalidades.split(',') : [],
-            armas: result.armas ? result.armas.split(',') : [],
-            especializaciones: result.especializaciones ? result.especializaciones.split(',') : [],
-            seguros: result.seguros ? result.seguros.split(',') : [],
-            riesgos: result.riesgos ? result.riesgos.split(',') : [],
-            intereses: result.intereses ? result.intereses.split(',') : [],
-            lugares: result.lugares ? result.lugares.split(',') : []
-        };
+        const resultsArray = await Promise.all(promises);
 
-        console.log("Filtros: ", filtros)
+        const filtros = {};
+        resultsArray.forEach(result => {
+            filtros[result.key] = result.values;
+        });
 
+        console.log("Filtros: ", filtros);
         res.status(200).json(filtros);
+
     } catch (error) {
         console.error('Error en getVistaFiltros:', error);
         res.status(500).json({ message: error.message });
@@ -144,7 +305,7 @@ const getVistaFiltros = async (req, res) => {
 };
 
 const getVista = async (req, res) => {
-    const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, especialidad, seguro, riesgo, lugar_del_hecho } = req.body;
+    const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, especialidad, seguro, riesgo, lugar_del_hecho, comisaria } = req.body;
 
     console.log(req.body)
 
@@ -197,12 +358,97 @@ const getVista = async (req, res) => {
         replacements.lugar_del_hecho = String(lugar_del_hecho).trim();
     }
 
+    if (comisaria && comisaria.trim() !== '') {
+        whereClause.push(`COMISARIA COLLATE utf8mb4_unicode_ci = :comisaria`);
+        replacements.comisaria = comisaria;
+    }
+
     const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
 
     try {
         const query = `
             SELECT *
             FROM denuncias_completas_v9
+            ${where};
+        `;
+
+        const result = await sequelize.query(query, {
+            type: Sequelize.QueryTypes.SELECT,
+            replacements
+        });
+
+        res.status(200).json(result);
+    } catch (error) {
+        console.error('Error en getVista:', error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
+const getVistaSinRelato = async (req, res) => {
+    const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, especialidad, seguro, riesgo, lugar_del_hecho, comisaria } = req.body;
+
+    console.log(req.body)
+
+    let whereClause = []
+    let replacements = {}
+
+    if (fechaInicio && fechaFin) {
+        whereClause.push(`FECHA_HECHO BETWEEN :fechaInicio AND :fechaFin`)
+        replacements.fechaInicio = fechaInicio
+        replacements.fechaFin = fechaFin
+    }
+
+    if (delito && delito.trim() !== '') {
+        whereClause.push(`DELITO COLLATE utf8mb4_unicode_ci = :delito`);
+        replacements.delito = delito;
+    }
+
+    if (submodalidad && submodalidad.trim() !== '') {
+        whereClause.push(`SUBMODALIDAD COLLATE utf8mb4_unicode_ci = :submodalidad`);
+        replacements.submodalidad = submodalidad;
+    }
+
+    if (arma && arma.trim() !== '') {
+        whereClause.push(`\`ARMA UTILIZADA\` COLLATE utf8mb4_unicode_ci = :arma`);
+        replacements.arma = arma;
+    }
+
+    if (interes !== undefined && interes !== '') {
+        whereClause.push(`INTERES COLLATE utf8mb4_unicode_ci = :interes`);
+        replacements.interes = interes;
+    }
+
+    if (especialidad && especialidad.trim() !== '') {
+        whereClause.push(`ESPECIALIZACION COLLATE utf8mb4_unicode_ci = :especializacion`);
+        replacements.especializacion = especializacion;
+    }
+
+    if (seguro && seguro.trim() !== '') {
+        whereClause.push(`\`PARA SEGURO\`COLLATE utf8mb4_unicode_ci = :seguro`);
+        replacements.seguro = seguro;
+    }
+
+    if (riesgo && riesgo.trim() !== '') {
+        whereClause.push(`VICTIMA COLLATE utf8mb4_unicode_ci = :riesgo`);
+        replacements.riesgo = riesgo;
+    }
+
+    if (lugar_del_hecho && String(lugar_del_hecho).trim() !== '') {
+        whereClause.push(`Lugar_del_Hecho COLLATE utf8mb4_unicode_ci = :lugar_del_hecho`);
+        replacements.lugar_del_hecho = String(lugar_del_hecho).trim();
+    }
+
+    if (comisaria && comisaria.trim() !== '') {
+        whereClause.push(`COMISARIA COLLATE utf8mb4_unicode_ci = :comisaria`);
+        replacements.comisaria = comisaria;
+    }
+
+    const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
+
+    try {
+        const query = `
+            SELECT *
+            FROM denuncias_completas_v9_sin_relato
             ${where};
         `;
 
@@ -751,4 +997,4 @@ const deleteUser = async (req, res) => {
     }
 };
 
-export { prueba, login, getAllUsers, getUserById, createUser, updateUser, deleteUser, logout, getVista, getVistaFiltros, getVistaEstadisticas, getRanking, getVistaTablaIzq, getVistaTablaDer };
+export { prueba, login, getAllUsers, getUserById, createUser, updateUser, deleteUser, logout, getVista, getVistaFiltros, getVistaEstadisticas, getRanking, getVistaTablaIzq, getVistaTablaDer, getVistaSinRelato, getRankingDiario };
