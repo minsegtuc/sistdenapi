@@ -91,6 +91,8 @@ const getVistaFiltros = async (req, res) => {
     let whereClause = [];
     let replacements = {};
 
+    whereClause.push(`\`CLASIFICADA POR\` COLLATE utf8mb4_unicode_ci <> 2`);
+
     if (fechaInicio && fechaFin) {
         whereClause.push(`FECHA_HECHO BETWEEN :fechaInicio AND :fechaFin`);
         replacements.fechaInicio = fechaInicio;
@@ -209,6 +211,8 @@ const getVista = async (req, res) => {
 
     let whereClause = []
     let replacements = {}
+
+    whereClause.push(`\`CLASIFICADA POR\` COLLATE utf8mb4_unicode_ci <> 2`);
 
     if (fechaInicio && fechaFin) {
         whereClause.push(`FECHA_HECHO BETWEEN :fechaInicio AND :fechaFin`)
