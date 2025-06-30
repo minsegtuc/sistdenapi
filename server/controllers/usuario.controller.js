@@ -294,6 +294,8 @@ const getVistaSinRelato = async (req, res) => {
     let whereClause = []
     let replacements = {}
 
+    whereClause.push(`\`CLASIFICADA POR\` COLLATE utf8mb4_unicode_ci <> 2`);
+
     if (fechaInicio && fechaFin) {
         whereClause.push(`FECHA_HECHO BETWEEN :fechaInicio AND :fechaFin`)
         replacements.fechaInicio = fechaInicio
@@ -375,6 +377,8 @@ const getVistaEstadisticas = async (req, res) => {
 
     let whereClause = []
     let replacements = {}
+
+    whereClause.push(`\`CLASIFICADA POR\` COLLATE utf8mb4_unicode_ci <> 2`);
 
     if (fechaInicio && fechaFin) {
         whereClause.push(`FECHA_HECHO BETWEEN :fechaInicio AND :fechaFin`)
@@ -513,6 +517,8 @@ const getVistaTablaIzq = async (req, res) => {
     let whereClause = []
     let replacements = {}
 
+    whereClause.push(`\`CLASIFICADA POR\` COLLATE utf8mb4_unicode_ci <> 2`);
+
     const meses = [
         "enero", "febrero", "marzo", "abril", "mayo", "junio",
         "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
@@ -609,6 +615,8 @@ const getVistaTablaDer = async (req, res) => {
 
     let whereClause = []
     let replacements = {}
+
+    whereClause.push(`\`CLASIFICADA POR\` COLLATE utf8mb4_unicode_ci <> 2`);
 
     const meses = [
         "enero", "febrero", "marzo", "abril", "mayo", "junio",
