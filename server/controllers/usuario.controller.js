@@ -3,10 +3,29 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import sequelize from "../config/db.js";
-import { Op, fn, col, literal, Sequelize } from "sequelize";
+import { Op, fn, col, literal, Sequelize, or } from "sequelize";
 import { registrarLog } from "../helpers/logHelpers.js";
 
 dotenv.config();
+
+function ordenarPorFecha(obj) {
+    const mesesOrden = {
+        enero: 0, febrero: 1, marzo: 2, abril: 3, mayo: 4, junio: 5,
+        julio: 6, agosto: 7, septiembre: 8, octubre: 9, noviembre: 10, diciembre: 11
+    };
+
+    const entries = Object.entries(obj);
+
+    entries.sort((a, b) => {
+        const [mesA, anioA] = a[0].split(" ");
+        const [mesB, anioB] = b[0].split(" ");
+        const dateA = new Date(+anioA, mesesOrden[mesA]);
+        const dateB = new Date(+anioB, mesesOrden[mesB]);
+        return dateA - dateB;
+    });
+
+    return Object.fromEntries(entries);
+}
 
 const getRanking = async (req, res) => {
     const { fechaDesde, fechaHasta } = req.query;
@@ -497,12 +516,12 @@ const getVistaEstadisticas = async (req, res) => {
             totalDenuncias,
             totalDenunciasInteres,
             totalDenunciasSinInteres,
-            denunciasPorMes,
-            denunciasPorMesInteres,
-            denunciasPorMesSinInteres,
-            robosPorMes,
-            hurtosPorMes,
-            robosArmaPorMes,
+            denunciasPorMes: ordenarPorFecha(denunciasPorMes),
+            denunciasPorMesInteres: ordenarPorFecha(denunciasPorMesInteres),
+            denunciasPorMesSinInteres: ordenarPorFecha(denunciasPorMesSinInteres),
+            robosPorMes: ordenarPorFecha(robosPorMes),
+            hurtosPorMes: ordenarPorFecha(hurtosPorMes),
+            robosArmaPorMes: ordenarPorFecha(robosArmaPorMes),
             habitantes
         });
     } catch (error) {
@@ -600,9 +619,9 @@ const getVistaTablaIzq = async (req, res) => {
 
         res.status(200).json({
             denunciasInteres,
-            totalPorMesHurto,
-            totalPorMesRobo,
-            totalPorMesRoboArma
+            totalPorMesHurto: ordenarPorFecha(totalPorMesHurto),
+            totalPorMesRobo: ordenarPorFecha(totalPorMesRobo),
+            totalPorMesRoboArma: ordenarPorFecha(totalPorMesRoboArma)
         });
     } catch (error) {
         console.error('Error en getVista:', error);
@@ -699,9 +718,9 @@ const getVistaTablaDer = async (req, res) => {
 
         res.status(200).json({
             denunciasInteres,
-            totalPorMesHurto,
-            totalPorMesRobo,
-            totalPorMesRoboArma
+            totalPorMesHurto: ordenarPorFecha(totalPorMesHurto),
+            totalPorMesRobo: ordenarPorFecha(totalPorMesRobo),
+            totalPorMesRoboArma: ordenarPorFecha(totalPorMesRoboArma)
         });
     } catch (error) {
         console.error('Error en getVista:', error);
