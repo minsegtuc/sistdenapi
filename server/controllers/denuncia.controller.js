@@ -682,7 +682,8 @@ const updateDenuncia = async (req, res) => {
                     lugar_del_hecho: denunciaData.lugar_del_hecho,
                     victimario: denunciaData.victimario,
                     domicilio_victima: denunciaData.domicilio_victima,
-                    localidad_victima: denunciaData.localidad_victima
+                    localidad_victima: denunciaData.localidad_victima,
+                    comisariaId: denunciaData.comisariaId,
                 }, { transaction: transaccion });
 
                 await Ubicacion.update({
