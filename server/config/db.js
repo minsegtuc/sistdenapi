@@ -12,6 +12,7 @@ console.log(DB_NAME,DB_USER,DB_HOST,DB_NAME)
 
 const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
     host: DB_HOST,
+    port: 3307,
     dialect: 'mysql'
 });
 
