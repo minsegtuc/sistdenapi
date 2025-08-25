@@ -1,23 +1,25 @@
 import express from 'express';
-import { getAllDenuncias, getDenunciaById, getDenunciaByIdVista, createDenuncia, updateDenuncia, deleteDenuncia, countDenunciasSC, getDuplicadas, getAllRegional, denunciaTrabajando, getDenunciaReciente, getTablaInteres, getTablaMensual, getAño, getEstadisticasClasificacion, getEstadisticasSankey, getEstadisticasSubmodalidad} from '../controllers/denuncia.controller.js';
+import verifyToken from '../middleware/jwt.js';
+import { updateClasificacion, getAllDenuncias, getDenunciaById, getDenunciaByIdVista, createDenuncia, updateDenuncia, deleteDenuncia, countDenunciasSC, getDuplicadas, getAllRegional, denunciaTrabajando, getDenunciaReciente, getTablaInteres, getTablaMensual, getAño, getEstadisticasClasificacion, getEstadisticasSankey, getEstadisticasSubmodalidad} from '../controllers/denuncia.controller.js';
 
 const router = express.Router();
-router.get('/denuncia/count', countDenunciasSC);
-router.get('/denuncia/:clasificada', getAllDenuncias);
-router.get('/reciente', getDenunciaReciente)
-router.get('/tablaInteres', getTablaInteres)
-router.get('/mensual', getTablaMensual)
-router.get('/anio', getAño);
-router.post('/estadisticasClasificacion', getEstadisticasClasificacion);
-router.post('/estadisticasSubmodalidad', getEstadisticasSubmodalidad);
-router.post('/estadisticasSankey', getEstadisticasSankey);
-router.get('/:id', getDenunciaById);
-router.post('/denuncia/buscar', getDenunciaByIdVista);
-router.post('/duplicadas', getDuplicadas)
-router.post('/denuncia', createDenuncia);
-router.post('/trabajando', denunciaTrabajando);
-router.post('/regional', getAllRegional);
-router.put('/update', updateDenuncia);
-router.delete('/denuncia/:id', deleteDenuncia);
+router.get('/denuncia/count', verifyToken, countDenunciasSC);
+router.get('/denuncia/:clasificada', verifyToken, getAllDenuncias);
+router.get('/reciente', verifyToken, getDenunciaReciente)
+router.get('/tablaInteres', verifyToken, getTablaInteres)
+router.get('/mensual', verifyToken, getTablaMensual)
+router.get('/anio', verifyToken, getAño);
+router.post('/estadisticasClasificacion', verifyToken, getEstadisticasClasificacion);
+router.post('/estadisticasSubmodalidad', verifyToken, getEstadisticasSubmodalidad);
+router.post('/estadisticasSankey', verifyToken, getEstadisticasSankey);
+router.get('/:id', verifyToken, getDenunciaById);
+router.post('/denuncia/buscar', verifyToken, getDenunciaByIdVista);
+router.post('/duplicadas', verifyToken, getDuplicadas)
+router.post('/denuncia', verifyToken, createDenuncia);
+router.post('/trabajando', verifyToken, denunciaTrabajando);
+router.post('/regional', verifyToken, getAllRegional);
+router.put('/update', verifyToken, updateDenuncia);
+router.put('/observar', updateClasificacion);
+router.delete('/denuncia/:id', verifyToken, deleteDenuncia);
 
 export default router;

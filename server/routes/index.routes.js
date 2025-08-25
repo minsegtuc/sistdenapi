@@ -26,7 +26,7 @@ router.use('/working', Working);
 router.use('/autor', verifyToken, AutorRutas);
 router.use('/comisaria', verifyToken, ComisariaRutas);
 router.use('/departamento', verifyToken, DepartamentoRutas);
-router.use('/denuncia', verifyToken, DenunciaRutas);
+router.use('/denuncia', DenunciaRutas);
 router.use('/especializacion', verifyToken, EspecializacionRutas);
 router.use('/localidad', verifyToken, LocalidadRutas);
 router.use('/log', verifyToken, LogRutas);

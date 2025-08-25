@@ -352,7 +352,7 @@ const getEstadisticasSankey = async (req, res) => {
     }
 
     const where = whereClause.length > 0 ? `AND ${whereClause.join(' AND ')}` : '';
-    
+
     try {
         const querySankey = `SELECT 
         ia.resultado_modus_operandi AS 'from',
@@ -381,7 +381,7 @@ const getAllRegional = async (req, res) => {
     try {
         const whereConditions = {
             isClassificated: {
-                [Op.in]: [0, 2]
+                [Op.in]: [0, 2, 3]
             }
         };
         if (interes === 1) {
@@ -743,6 +743,59 @@ const updateDenuncia = async (req, res) => {
     }
 }
 
+const updateClasificacion = async (req, res) => {
+    const { idDenuncia } = req.body;
+    const errores = [];
+
+    let denunciasActualizadas = 0;
+    let denunciasNoActualizadas = 0;
+
+    const transaccion = await sequelize.transaction();
+    let denuncia;
+    try {
+        denuncia = await Denuncia.findByPk(idDenuncia, { transaction: transaccion });
+
+        if (!denuncia) {
+            throw new Error(`Denuncia con ID ${idDenuncia} no encontrada`);
+        }
+
+        await denuncia.update({
+            isClassificated: 3
+        }, { transaction: transaccion });
+
+        await registrarLog('UPDATE', `DENUNCIA ${idDenuncia} ACTUALIZADA`, req.userId);
+        denunciasActualizadas += 1;
+    } catch (error) {
+        errores.push({
+            denuncia: idDenuncia,
+            error: error.message
+        });
+
+        await registrarLog('ERROR', `Fallo al actualizar denuncia ${idDenuncia}: ${error.message}`, req.userId);
+        denunciasNoActualizadas += 1;
+    }
+
+
+    if (errores.length > 0) {
+        await transaccion.rollback();
+        console.log("Transacción revertida debido a errores en algunas actualizaciones.");
+        res.status(400).json({
+            message: "Transacción revertida: algunas denuncias fallaron al actualizarse",
+            denunciasActualizadas,
+            denunciasNoActualizadas,
+            errores
+        });
+    } else {
+        await transaccion.commit();
+        res.status(200).json({
+            message: "Lote de denuncias actualizado con éxito",
+            denunciasActualizadas,
+            denunciasNoActualizadas,
+            errores
+        });
+    }
+}
+
 const deleteDenuncia = async (req, res) => {
     const { id } = req.params;
     try {
@@ -799,232 +852,6 @@ const getDenunciaReciente = async (req, res) => {
         res.status(500).json({ message: error.message })
     }
 }
-
-// const getTotalDenuncias = async (req, res) => {
-//     const { desde, hasta, regional } = req.query;
-
-//     console.log("Regional:", regional);
-
-//     try {
-//         const totalDenunciasClasificadas = await Denuncia.count({
-//             where: {
-//                 isClassificated: 1,
-//                 fechaDenuncia: {
-//                     [Op.gte]: desde,
-//                     [Op.lte]: hasta
-//                 }
-//             },
-//             include: [
-//                 {
-//                     model: Comisaria,
-//                     required: true,
-//                     include: regional && regional !== "undefined" ? [
-//                         {
-//                             model: UnidadRegional,
-//                             where: { idUnidadRegional: regional }
-//                         }
-//                     ] : [
-//                         {
-//                             model: UnidadRegional
-//                         }
-//                     ]
-//                 }
-//             ],
-//             logging: console.log
-//         });
-
-//         res.status(200).json(totalDenunciasClasificadas);
-//     } catch (error) {
-//         res.status(500).json({ message: error.message });
-//     }
-// };
-
-// const getTotalInteres = async (req, res) => {
-//     const { desde, hasta, regional } = req.query
-//     try {
-//         const totalDenunciasInteres = await Denuncia.count({
-//             where: {
-//                 isClassificated: 1,
-//                 interes: 1,
-//                 fechaDenuncia: {
-//                     [Op.gte]: desde,
-//                     [Op.lte]: hasta
-//                 }
-//             },
-//             include: [
-//                 {
-//                     model: Comisaria,
-//                     required: true,
-//                     include: regional && regional !== "undefined" ? [
-//                         {
-//                             model: UnidadRegional,
-//                             where: { idUnidadRegional: regional }
-//                         }
-//                     ] : [
-//                         {
-//                             model: UnidadRegional
-//                         }
-//                     ]
-//                 }
-//             ],
-//         })
-//         res.status(200).json(totalDenunciasInteres)
-//     } catch (error) {
-//         res.status(500).json({ message: error.message })
-//     }
-// }
-
-// const getInteresTotalGrafica = async (req, res) => {
-//     const { desde, hasta, regional } = req.query;
-//     try {
-//         const interestotal = await Denuncia.findAll({
-//             attributes: [
-//                 [fn('YEAR', col('fechaDenuncia')), 'anio'],
-//                 [fn('MONTH', col('fechaDenuncia')), 'mes'],
-//                 [fn('COUNT', col('*')), 'cantidad_total'],
-//                 [
-//                     fn(
-//                         'SUM',
-//                         literal("CASE WHEN interes = 1 THEN 1 ELSE 0 END")
-//                     ),
-//                     'cantidad_interes',
-//                 ],
-//             ],
-//             include: [
-//                 {
-//                     model: Comisaria,
-//                     as: 'Comisarium',
-//                     attributes: [],
-//                     required: true,
-//                     include: regional && regional !== "undefined" ? [
-//                         {
-//                             model: UnidadRegional,
-//                             as: 'unidadRegional',
-//                             attributes: [],
-//                             where: { idUnidadRegional: regional }
-//                         }
-//                     ] : [
-//                         {
-//                             model: UnidadRegional,
-//                             as: 'unidadRegional',
-//                             attributes: [],
-//                         }
-//                     ]
-//                 },
-//             ],
-//             where: {
-//                 isClassificated: 1,
-//                 fechaDenuncia: {
-//                     [Op.gte]: desde,
-//                     [Op.lte]: hasta,
-//                 },
-//             },
-//             group: [
-//                 fn('YEAR', col('fechaDenuncia')),
-//                 fn('MONTH', col('fechaDenuncia')),
-//             ],
-//             order: [
-//                 [fn('YEAR', col('fechaDenuncia')), 'ASC'],
-//                 [fn('MONTH', col('fechaDenuncia')), 'ASC'],
-//             ],
-//         });
-
-//         const data = interestotal.map(item => ({
-//             anio: item.get('anio'),
-//             mes: item.get('mes'),
-//             cantidad_total: item.get('cantidad_total'),
-//             cantidad_interes: item.get('cantidad_interes'),
-//             nombre_regional: item.get('nombre_regional') || 'Sin regional',
-//         }));
-
-//         res.status(200).json(data);
-//     } catch (error) {
-//         console.error("Error en getInteresTotalGrafica:", error);
-//         res.status(500).json({ message: error.message });
-//     }
-// };
-
-// const getDelitoGrafica = async (req, res) => {
-//     const { desde, hasta, regional } = req.query
-//     try {
-//         const delito = await Denuncia.findAll({
-//             attributes: [
-//                 [fn('YEAR', col('fechaDenuncia')), 'anio'],
-//                 [fn('MONTH', col('fechaDenuncia')), 'mes'],
-//                 [fn('COUNT', col('*')), 'cantidad_total'],
-//                 [
-//                     fn(
-//                         'SUM',
-//                         literal("CASE WHEN tipoDelitoId = 52 THEN 1 ELSE 0 END")
-//                     ),
-//                     'cantidad_robo',
-//                 ],
-//                 [
-//                     fn(
-//                         'SUM',
-//                         literal("CASE WHEN tipoDelitoId = 51 THEN 1 ELSE 0 END")
-//                     ),
-//                     'cantidad_arma',
-//                 ],
-//                 [
-//                     fn(
-//                         'SUM',
-//                         literal("CASE WHEN tipoDelitoId = 36 THEN 1 ELSE 0 END")
-//                     ),
-//                     'cantidad_hurto',
-//                 ],
-//             ],
-//             include: [
-//                 {
-//                     model: Comisaria,
-//                     as: 'Comisarium',
-//                     attributes: [],
-//                     required: true,
-//                     include: regional && regional !== "undefined" ? [
-//                         {
-//                             model: UnidadRegional,
-//                             as: 'unidadRegional',
-//                             attributes: [],
-//                             where: { idUnidadRegional: regional }
-//                         }
-//                     ] : [
-//                         {
-//                             model: UnidadRegional,
-//                             as: 'unidadRegional',
-//                             attributes: [],
-//                         }
-//                     ]
-//                 },
-//             ],
-//             where: {
-//                 isClassificated: 1,
-//                 interes: 1,
-//                 fechaDenuncia: {
-//                     [Op.gte]: desde,
-//                     [Op.lte]: hasta
-//                 }
-//             },
-//             group: [fn('YEAR', col('fechaDenuncia')), fn('MONTH', col('fechaDenuncia'))],
-//             order: [
-//                 [fn('YEAR', col('fechaDenuncia')), 'ASC'],
-//                 [fn('MONTH', col('fechaDenuncia')), 'ASC'],
-//             ],
-//         })
-
-//         const data = delito.map(item => ({
-//             anio: item.get('anio'),
-//             mes: item.get('mes'),
-//             cantidad_total: item.get('cantidad_total'),
-//             cantidad_robo: item.get('cantidad_robo'),
-//             cantidad_arma: item.get('cantidad_arma'),
-//             cantidad_hurto: item.get('cantidad_hurto'),
-//         }));
-
-//         res.status(200).json(data)
-//     } catch (error) {
-//         res.status(500).json({ message: error.message })
-//     }
-// }
 
 const getTablaInteres = async (req, res) => {
     const { mes, anio } = req.query
@@ -1146,4 +973,4 @@ const getAño = async (req, res) => {
     }
 }
 
-export { getAllDenuncias, getDenunciaById, getDenunciaByIdVista, createDenuncia, updateDenuncia, deleteDenuncia, countDenunciasSC, getDuplicadas, getAllRegional, denunciaTrabajando, getDenunciaReciente, getTablaInteres, getTablaMensual, getAño, getEstadisticasClasificacion, getEstadisticasSankey, getEstadisticasSubmodalidad };
+export { updateClasificacion, getAllDenuncias, getDenunciaById, getDenunciaByIdVista, createDenuncia, updateDenuncia, deleteDenuncia, countDenunciasSC, getDuplicadas, getAllRegional, denunciaTrabajando, getDenunciaReciente, getTablaInteres, getTablaMensual, getAño, getEstadisticasClasificacion, getEstadisticasSankey, getEstadisticasSubmodalidad };
