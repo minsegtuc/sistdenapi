@@ -162,6 +162,10 @@ const Denuncia = sequelize.define('denuncia', {
         type: DataTypes.STRING(1000),
         allowNull: true
     },
+    detalleObservacion: {
+        type: DataTypes.STRING(1000),
+        allowNull: true
+    },
 }, {tableName: 'denuncia', timestamps: false});
 
 export default Denuncia;

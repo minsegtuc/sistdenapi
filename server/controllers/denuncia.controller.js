@@ -744,7 +744,7 @@ const updateDenuncia = async (req, res) => {
 }
 
 const updateClasificacion = async (req, res) => {
-    const { idDenuncia } = req.body;
+    const { idDenuncia, detalle } = req.body;
     const errores = [];
 
     let denunciasActualizadas = 0;
@@ -760,7 +760,8 @@ const updateClasificacion = async (req, res) => {
         }
 
         await denuncia.update({
-            isClassificated: 3
+            isClassificated: 3,
+            detalleObservacion: detalle
         }, { transaction: transaccion });
 
         await registrarLog('UPDATE', `DENUNCIA ${idDenuncia} ACTUALIZADA`, req.userId);
