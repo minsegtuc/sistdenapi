@@ -746,6 +746,7 @@ const updateDenuncia = async (req, res) => {
 
 const updateClasificacion = async (req, res) => {
     const { idDenuncia, detalle } = req.body;
+    console.log("Denuncia y detalle: ", idDenuncia, detalle)
     const errores = [];
 
     let denunciasActualizadas = 0;
