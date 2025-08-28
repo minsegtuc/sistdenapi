@@ -215,6 +215,7 @@ const getVistaFiltros = async (req, res) => {
         });
 
         console.log("Filtros: ", filtros);
+        await registrarLog("Consulta", "Se han obtenido los filtros para la vista", req.userId);
         res.status(200).json(filtros);
 
     } catch (error) {
