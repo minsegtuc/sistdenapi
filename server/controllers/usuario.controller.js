@@ -298,6 +298,8 @@ const getVista = async (req, res) => {
             replacements
         });
 
+        await registrarLog("Consulta", "Se ha realizado una consulta con filtros", req.userId);
+
         res.status(200).json(result);
     } catch (error) {
         console.error('Error en getVista:', error);
