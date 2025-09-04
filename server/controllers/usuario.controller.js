@@ -225,6 +225,7 @@ const getVistaFiltros = async (req, res) => {
 };
 
 const getVista = async (req, res) => {
+    console.log(req.userId)
     const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, especialidad, seguro, riesgo, lugar_del_hecho, comisaria } = req.body;
 
     console.log(req.body)

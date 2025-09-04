@@ -12,7 +12,7 @@ import Localidad from "../models/localidad.model.js"
 import Comisaria from "../models/comisaria.model.js"
 import UnidadRegional from "../models/unidadRegional.model.js"
 import { registrarLog } from "../helpers/logHelpers.js";
-import { Op, fn, col, literal, Sequelize } from "sequelize";
+import { Op, fn, col, literal, Sequelize, where } from "sequelize";
 import sequelize from "../config/db.js";
 import { wss } from "../sockets/socketConfig.js";
 
@@ -376,7 +376,7 @@ const getEstadisticasSankey = async (req, res) => {
 }
 
 const getAllRegional = async (req, res) => {
-    const { regional, interes, propiedad, comisaria } = req.body;
+    const { regional, interes, propiedad, comisaria, mesDenuncia } = req.body;
 
     try {
         const whereConditions = {
@@ -394,6 +394,16 @@ const getAllRegional = async (req, res) => {
 
         if (comisaria) {
             whereConditions.comisariaId = comisaria;
+        }
+
+        if (mesDenuncia) {
+            const [year, month] = mesDenuncia.split("-").map(Number);
+            const startDate = new Date(year, month - 1, 1); // primer día del mes
+            const endDate = new Date(year, month, 0, 23, 59, 59); // último día del mes
+
+            whereConditions.fechaDenuncia = {
+                [Op.between]: [startDate, endDate]
+            };
         }
 
         const includeModels = [

@@ -9,7 +9,7 @@ const Modalidad = sequelize.define('modalidad', {
         allowNull: false
     },
     descripcion: {
-        type: DataTypes.STRING(45),
+        type: DataTypes.STRING(256),
         allowNull: false
     },
     tipoDelitoId: {
