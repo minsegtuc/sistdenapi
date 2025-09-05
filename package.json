@@ -4,6 +4,7 @@
   "description": "",
   "main": "server.js",
   "type": "module",
+  "homepage": "https://control.srv555183.hstgr.cloud/",
   "scripts": {
     "start": "node server/server.js",
     "dev": "nodemon server/server.js"
