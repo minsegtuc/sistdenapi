@@ -759,7 +759,7 @@ const login = async (req, res) => {
                     expiresIn: '5h'
                 });
 
-                res.cookie('auth_token', token, {
+                res.cookie('token', token, {
                     secure: process.env.NODE_ENV === 'production',
                     sameSite: 'Strict',
                     maxAge: 18000000
@@ -796,7 +796,7 @@ const login = async (req, res) => {
 
 const logout = async (req, res) => {
     try {
-        res.clearCookie('auth_token');
+        res.clearCookie('token');
         res.status(200).json({
             message: "Usuario deslogueado correctamente"
         });
