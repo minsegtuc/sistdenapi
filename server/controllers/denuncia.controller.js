@@ -711,6 +711,7 @@ const updateDenuncia = async (req, res) => {
                     transaction: transaccion
                 });
 
+                console.log("El deni es: " , req.user?.id)
                 await registrarLog('UPDATE', `DENUNCIA ${denuncia.idDenuncia} ACTUALIZADA`, req.user?.id);
                 denunciasActualizadas += 1;
             } catch (error) {
