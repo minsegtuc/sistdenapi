@@ -32,12 +32,12 @@ const getRanking = async (req, res) => {
 
     try {
         let baseQuery = `
-            SELECT usuario.nombre, COUNT(DISTINCT log.descripcion) AS cantidad_clasificadas
-            FROM log
-            INNER JOIN usuario ON log.dniId = usuario.dni
-            WHERE accion = 'UPDATE'
-              AND log.dniId <> 38243415
-        `;
+    SELECT log.dniId, COUNT(DISTINCT log.descripcion) AS cantidad_clasificadas
+    FROM log
+    WHERE accion = 'UPDATE'
+      AND log.dniId <> 38243415
+    GROUP BY log.dniId
+`;
 
         // const replacements = { fecha };
         let replacements = {};
@@ -70,11 +70,11 @@ const getRankingDiario = async (req, res) => {
 
     try {
         let baseQuery = `
-            SELECT usuario.nombre, COUNT(DISTINCT log.descripcion) AS cantidad_clasificadas
-            FROM log
-            INNER JOIN usuario ON log.dniId = usuario.dni
-            WHERE accion = 'UPDATE'
-        `;
+    SELECT log.dniId, COUNT(DISTINCT log.descripcion) AS cantidad_clasificadas
+    FROM log
+    WHERE accion = 'UPDATE'
+    GROUP BY log.dniId
+`;
 
         let replacements = {};
 
