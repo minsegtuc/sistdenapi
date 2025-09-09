@@ -56,11 +56,15 @@ const getRanking = async (req, res) => {
             type: Sequelize.QueryTypes.SELECT
         });
 
+        console.log("Ranking: " , ranking)
+
         const usuariosPromises = ranking.map(async r => {
-            const response = await fetch(`${process.env.HOST_AUTH}/auth/usuario/${r.dniId}`, {
+            const response = await fetch(`${process.env.HOST_AUTH}/auth/usuario/dni/${r.dniId}`, {
                 method: "GET",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include"
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${process.env.INTERNAL_API_TOKEN}`
+                },                
             });
 
             if (!response.ok) {
@@ -115,10 +119,12 @@ const getRankingDiario = async (req, res) => {
         });
 
         const usuariosPromises = ranking.map(async r => {
-            const response = await fetch(`${process.env.HOST_AUTH}/auth/usuario/${r.dniId}`, {
+            const response = await fetch(`${process.env.HOST_AUTH}/auth/usuario/dni/${r.dniId}`, {
                 method: "GET",
-                headers: { "Content-Type": "application/json" },
-                credentials: "include"
+                headers: { 
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${process.env.INTERNAL_API_TOKEN}`
+                },  
             });
 
             if (!response.ok) {
