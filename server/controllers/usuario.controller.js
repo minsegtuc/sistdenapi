@@ -32,14 +32,12 @@ const getRanking = async (req, res) => {
 
     try {
         let baseQuery = `
-    SELECT log.dniId, COUNT(DISTINCT log.descripcion) AS cantidad_clasificadas
-    FROM log
-    WHERE accion = 'UPDATE'
-      AND log.dniId <> 38243415
-    GROUP BY log.dniId
-`;
+            SELECT log.dniId, COUNT(DISTINCT log.descripcion) AS cantidad_clasificadas
+            FROM log
+            WHERE accion = 'UPDATE'
+              AND log.dniId <> 38243415
+        `;
 
-        // const replacements = { fecha };
         let replacements = {};
 
         if (fechaDesde && fechaHasta) {
@@ -49,7 +47,7 @@ const getRanking = async (req, res) => {
         }
 
         baseQuery += `
-            GROUP BY usuario.nombre
+            GROUP BY log.dniId
             ORDER BY cantidad_clasificadas DESC
         `;
 
@@ -64,17 +62,17 @@ const getRanking = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
 
 const getRankingDiario = async (req, res) => {
     const { fechaDesde, fechaHasta } = req.query;
 
     try {
         let baseQuery = `
-    SELECT log.dniId, COUNT(DISTINCT log.descripcion) AS cantidad_clasificadas
-    FROM log
-    WHERE accion = 'UPDATE'
-    GROUP BY log.dniId
-`;
+            SELECT log.dniId, COUNT(DISTINCT log.descripcion) AS cantidad_clasificadas
+            FROM log
+            WHERE accion = 'UPDATE'
+        `;
 
         let replacements = {};
 
@@ -85,7 +83,7 @@ const getRankingDiario = async (req, res) => {
         }
 
         baseQuery += `
-            GROUP BY usuario.nombre
+            GROUP BY log.dniId
             ORDER BY cantidad_clasificadas DESC
         `;
 
@@ -100,6 +98,7 @@ const getRankingDiario = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
 
 const getVistaFiltros = async (req, res) => {
     const {
@@ -300,7 +299,7 @@ const getVista = async (req, res) => {
             replacements
         });
 
-        await registrarLog("Consulta", "Se ha realizado una consulta con filtros", req.user?.id);
+        await registrarLog("Consulta", "Se ha realizado una consulta con filtros", req.userId);
 
         res.status(200).json(result);
     } catch (error) {
@@ -811,7 +810,7 @@ const getAllUsers = async (req, res) => {
     try {
         const usuarios = await Usuario.findAll();
 
-        await registrarLog("Listar", "Se han listado todos los usuarios", req.user?.id);
+        await registrarLog("Listar", "Se han listado todos los usuarios", req.userId);
 
         res.status(200).json(usuarios);
     } catch (error) {
@@ -825,7 +824,7 @@ const getUserById = async (req, res) => {
     const { id } = req.params;
     try {
         const usuario = await Usuario.findByPk(id);
-        await registrarLog("Listar", `Se ha listado el usuario ${usuario.nombre} ${usuario.apellido}`, req.user?.id);
+        await registrarLog("Listar", `Se ha listado el usuario ${usuario.nombre} ${usuario.apellido}`, req.userId);
         res.status(200).json(usuario);
     } catch (error) {
         res.status(500).json({
@@ -853,7 +852,7 @@ const createUser = async (req, res) => {
             descripcion: `El usuario ${usuario.nombre} ${usuario.apellido} ha sido creado`
         }
 
-        await registrarLog(log.accion, log.descripcion, req.user?.id);
+        await registrarLog(log.accion, log.descripcion, req.userId);
 
 
         res.status(201).json(usuario)
@@ -894,7 +893,7 @@ const updateUser = async (req, res) => {
             descripcion: `El usuario ${req.body.nombre} ${req.body.apellido} ha sido actualizado`
         }
 
-        await registrarLog(log.accion, log.descripcion, req.user?.id);
+        await registrarLog(log.accion, log.descripcion, req.userId);
 
         res.status(200).json(usuario);
     } catch (error) {
@@ -918,7 +917,7 @@ const deleteUser = async (req, res) => {
             descripcion: `El usuario con el id ${id} ha sido eliminado`
         }
 
-        await registrarLog(log.accion, log.descripcion, req.user?.id);
+        await registrarLog(log.accion, log.descripcion, req.userId);
 
         res.status(200).json({
             message: "Usuario eliminado correctamente"
