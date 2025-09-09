@@ -56,7 +56,29 @@ const getRanking = async (req, res) => {
             type: Sequelize.QueryTypes.SELECT
         });
 
-        res.status(200).json(ranking);
+        const usuariosPromises = ranking.map(async r => {
+            const response = await fetch(`${process.env.HOST_AUTH}/api/usuario/${r.dniId}`, {
+                method: "GET",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include"
+            });
+
+            if (!response.ok) {
+                return { nombre: "Desconocido", dni: r.dniId }; // fallback si no existe
+            }
+
+            return response.json();
+        })
+
+        const usuarios = await Promise.all(usuariosPromises)
+
+        const rankingFinal = ranking.map((r, i) => ({
+            dniId: r.dniId,
+            cantidad_clasificadas: r.cantidad_clasificadas,
+            usuario: usuarios[i]
+        }));
+
+        res.status(200).json(rankingFinal);
     } catch (error) {
         console.log("Error:", error);
         res.status(500).json({ message: error.message });
@@ -92,7 +114,29 @@ const getRankingDiario = async (req, res) => {
             type: Sequelize.QueryTypes.SELECT
         });
 
-        res.status(200).json(ranking);
+        const usuariosPromises = ranking.map(async r => {
+            const response = await fetch(`${process.env.HOST_AUTH}/api/usuario/${r.dniId}`, {
+                method: "GET",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include"
+            });
+
+            if (!response.ok) {
+                return { nombre: "Desconocido", dni: r.dniId }; // fallback si no existe
+            }
+
+            return response.json();
+        })
+
+        const usuarios = await Promise.all(usuariosPromises)
+
+        const rankingFinal = ranking.map((r, i) => ({
+            dniId: r.dniId,
+            cantidad_clasificadas: r.cantidad_clasificadas,
+            usuario: usuarios[i]
+        }));
+
+        res.status(200).json(rankingFinal);
     } catch (error) {
         console.log("Error:", error);
         res.status(500).json({ message: error.message });
