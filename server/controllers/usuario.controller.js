@@ -215,7 +215,7 @@ const getVistaFiltros = async (req, res) => {
         });
 
         console.log("Filtros: ", filtros);
-        await registrarLog("Consulta", "Se han obtenido los filtros para la vista", req.userId);
+        await registrarLog("Consulta", "Se han obtenido los filtros para la vista", req.user?.id);
         res.status(200).json(filtros);
 
     } catch (error) {
@@ -225,7 +225,7 @@ const getVistaFiltros = async (req, res) => {
 };
 
 const getVista = async (req, res) => {
-    console.log(req.userId)
+    console.log(req.user?.id)
     const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, especialidad, seguro, riesgo, lugar_del_hecho, comisaria } = req.body;
 
     console.log(req.body)
@@ -300,7 +300,7 @@ const getVista = async (req, res) => {
             replacements
         });
 
-        await registrarLog("Consulta", "Se ha realizado una consulta con filtros", req.userId);
+        await registrarLog("Consulta", "Se ha realizado una consulta con filtros", req.user?.id);
 
         res.status(200).json(result);
     } catch (error) {
@@ -811,7 +811,7 @@ const getAllUsers = async (req, res) => {
     try {
         const usuarios = await Usuario.findAll();
 
-        await registrarLog("Listar", "Se han listado todos los usuarios", req.userId);
+        await registrarLog("Listar", "Se han listado todos los usuarios", req.user?.id);
 
         res.status(200).json(usuarios);
     } catch (error) {
@@ -825,7 +825,7 @@ const getUserById = async (req, res) => {
     const { id } = req.params;
     try {
         const usuario = await Usuario.findByPk(id);
-        await registrarLog("Listar", `Se ha listado el usuario ${usuario.nombre} ${usuario.apellido}`, req.userId);
+        await registrarLog("Listar", `Se ha listado el usuario ${usuario.nombre} ${usuario.apellido}`, req.user?.id);
         res.status(200).json(usuario);
     } catch (error) {
         res.status(500).json({
@@ -853,7 +853,7 @@ const createUser = async (req, res) => {
             descripcion: `El usuario ${usuario.nombre} ${usuario.apellido} ha sido creado`
         }
 
-        await registrarLog(log.accion, log.descripcion, req.userId);
+        await registrarLog(log.accion, log.descripcion, req.user?.id);
 
 
         res.status(201).json(usuario)
@@ -894,7 +894,7 @@ const updateUser = async (req, res) => {
             descripcion: `El usuario ${req.body.nombre} ${req.body.apellido} ha sido actualizado`
         }
 
-        await registrarLog(log.accion, log.descripcion, req.userId);
+        await registrarLog(log.accion, log.descripcion, req.user?.id);
 
         res.status(200).json(usuario);
     } catch (error) {
@@ -918,7 +918,7 @@ const deleteUser = async (req, res) => {
             descripcion: `El usuario con el id ${id} ha sido eliminado`
         }
 
-        await registrarLog(log.accion, log.descripcion, req.userId);
+        await registrarLog(log.accion, log.descripcion, req.user?.id);
 
         res.status(200).json({
             message: "Usuario eliminado correctamente"

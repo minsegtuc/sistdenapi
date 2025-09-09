@@ -512,7 +512,7 @@ const denunciaTrabajando = async (req, res) => {
             });
         })
 
-        await registrarLog('UPDATE', `DENUNCIA ${req.body.denunciaid} ACTUALIZADA`, req.userId);
+        await registrarLog('UPDATE', `DENUNCIA ${req.body.denunciaid} ACTUALIZADA`, req.user?.id);
 
         res.status(200).json(denuncia)
     } catch (error) {
@@ -599,7 +599,7 @@ const createDenuncia = async (req, res) => {
                     }
                 }
 
-                await registrarLog('CREATE', `DENUNCIA ${denuncia.idDenuncia} CREADA`, req.userId);
+                await registrarLog('CREATE', `DENUNCIA ${denuncia.idDenuncia} CREADA`, req.user?.id);
                 denunciasCargadas++;
 
             } catch (error) {
@@ -610,7 +610,7 @@ const createDenuncia = async (req, res) => {
                     error: error.message
                 });
 
-                await registrarLog('ERROR', `Error al crear denuncia ${denunciaData.idDenuncia}: ${error.message}`, req.userId);
+                await registrarLog('ERROR', `Error al crear denuncia ${denunciaData.idDenuncia}: ${error.message}`, req.user?.id);
                 denunciasNoCargadas++;
             }
         }
@@ -637,7 +637,7 @@ const createDenuncia = async (req, res) => {
     } catch (error) {
         console.error("Error inesperado:", error.message);
         await transaccion.rollback();
-        await registrarLog('ERROR', `Error general al cargar denuncias: ${error.message}`, req.userId);
+        await registrarLog('ERROR', `Error general al cargar denuncias: ${error.message}`, req.user?.id);
 
         res.status(500).json({
             message: "Error inesperado al cargar denuncias.",
@@ -711,7 +711,7 @@ const updateDenuncia = async (req, res) => {
                     transaction: transaccion
                 });
 
-                await registrarLog('UPDATE', `DENUNCIA ${denuncia.idDenuncia} ACTUALIZADA`, req.userId);
+                await registrarLog('UPDATE', `DENUNCIA ${denuncia.idDenuncia} ACTUALIZADA`, req.user?.id);
                 denunciasActualizadas += 1;
             } catch (error) {
                 errores.push({
@@ -719,7 +719,7 @@ const updateDenuncia = async (req, res) => {
                     error: error.message
                 });
 
-                await registrarLog('ERROR', `Fallo al actualizar denuncia ${denunciaData.idDenuncia}: ${error.message}`, req.userId);
+                await registrarLog('ERROR', `Fallo al actualizar denuncia ${denunciaData.idDenuncia}: ${error.message}`, req.user?.id);
                 denunciasNoActualizadas += 1;
             }
         }
@@ -744,7 +744,7 @@ const updateDenuncia = async (req, res) => {
         }
     } catch (error) {
         await transaccion.rollback();
-        await registrarLog('ERROR', `Error inesperado durante la transacción: ${error.message}`, req.userId);
+        await registrarLog('ERROR', `Error inesperado durante la transacción: ${error.message}`, req.user?.id);
         res.status(500).json({
             message: "Error en la actualización del lote de denuncias",
             denunciasActualizadas,
@@ -776,7 +776,7 @@ const updateClasificacion = async (req, res) => {
             detalleObservacion: detalle
         }, { transaction: transaccion });
 
-        await registrarLog('UPDATE', `DENUNCIA ${idDenuncia} ACTUALIZADA`, req.userId);
+        await registrarLog('UPDATE', `DENUNCIA ${idDenuncia} ACTUALIZADA`, req.user?.id);
         denunciasActualizadas += 1;
     } catch (error) {
         errores.push({
@@ -784,7 +784,7 @@ const updateClasificacion = async (req, res) => {
             error: error.message
         });
 
-        await registrarLog('ERROR', `Fallo al actualizar denuncia ${idDenuncia}: ${error.message}`, req.userId);
+        await registrarLog('ERROR', `Fallo al actualizar denuncia ${idDenuncia}: ${error.message}`, req.user?.id);
         denunciasNoActualizadas += 1;
     }
 
@@ -818,7 +818,7 @@ const deleteDenuncia = async (req, res) => {
             }
         });
 
-        await registrarLog('DELETE', `DENUNCIA ${id} ELIMINADA`, req.userId);
+        await registrarLog('DELETE', `DENUNCIA ${id} ELIMINADA`, req.user?.id);
 
         res.status(200).json(denuncia);
     } catch (error) {
