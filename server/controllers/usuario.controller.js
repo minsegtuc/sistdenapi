@@ -115,7 +115,7 @@ const getRankingDiario = async (req, res) => {
         });
 
         const usuariosPromises = ranking.map(async r => {
-            const response = await fetch(`${process.env.HOST_AUTH}/api/usuario/${r.dniId}`, {
+            const response = await fetch(`${process.env.HOST_AUTH}/auth/usuario/${r.dniId}`, {
                 method: "GET",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include"
