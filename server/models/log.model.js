@@ -21,11 +21,7 @@ const Log = sequelize.define('Log', {
     },
     dniId: {
         type: DataTypes.INTEGER,
-        allowNull: false,
-        references: {
-            model: 'usuario',
-            key: 'dni'
-        }
+        allowNull: false
     }
 }, {tableName: 'log', timestamps: false});
 

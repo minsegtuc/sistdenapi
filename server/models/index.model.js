@@ -27,16 +27,6 @@ Usuario.belongsTo(Rol, {
     targetKey: 'idRol'
 });
 
-//Un usuario puede tener muchos logs
-Usuario.hasMany(Log, {
-    foreignKey: 'dniId',
-    sourceKey: 'dni'
-});
-Log.belongsTo(Usuario, {
-    foreignKey: 'dniId',
-    targetKey: 'dni'
-});
-
 //Un departamento puede tener muchas localidades
 Departamento.hasMany(Localidad, {
     foreignKey: 'departamentoId',

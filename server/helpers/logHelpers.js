@@ -6,7 +6,7 @@ const registrarLog = async (accion, descripcion, dniId) => {
             accion: accion,
             descripcion: descripcion,
             fecha: new Date(),
-            dniId: dniId
+            dniId
         }
     }
 
