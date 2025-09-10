@@ -376,14 +376,29 @@ const getEstadisticasSankey = async (req, res) => {
 }
 
 const getAllRegional = async (req, res) => {
-    const { regional, interes, propiedad, comisaria, mesDenuncia } = req.body;
+    const { regional, interes, propiedad, comisaria, mesDenuncia, IA, observada } = req.body;
 
     try {
-        const whereConditions = {
-            isClassificated: {
-                [Op.in]: [0, 2, 3]
-            }
-        };
+        const whereConditions = {}
+        // const whereConditions = {
+        //     isClassificated: {
+        //         [Op.in]: [0, 2, 3]
+        //     }
+        // };
+        const values = []
+
+        if(IA === 1){
+            values.push(2)
+        }
+
+        if(observada === 1){
+            values.push(3)
+        }
+
+        if(values.length > 0){
+            whereConditions.isClassificated = {[Op.in]: values}
+        }
+
         if (interes === 1) {
             whereConditions.interes = interes;
         }
