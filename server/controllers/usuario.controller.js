@@ -440,6 +440,86 @@ const getVistaSinRelato = async (req, res) => {
     }
 }
 
+const getVistaMapa = async (req, res) => {
+    const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, especialidad, seguro, riesgo, lugar_del_hecho, comisaria } = req.body;
+
+    console.log(req.body)
+
+    let whereClause = []
+    let replacements = {}
+
+    if (fechaInicio && fechaFin) {
+        whereClause.push(`FECHA_HECHO BETWEEN :fechaInicio AND :fechaFin`)
+        replacements.fechaInicio = fechaInicio
+        replacements.fechaFin = fechaFin
+    }
+
+    if (delito && delito.trim() !== '') {
+        whereClause.push(`DELITO COLLATE utf8mb4_unicode_ci = :delito`);
+        replacements.delito = delito;
+    }
+
+    if (submodalidad && submodalidad.trim() !== '') {
+        whereClause.push(`SUBMODALIDAD COLLATE utf8mb4_unicode_ci = :submodalidad`);
+        replacements.submodalidad = submodalidad;
+    }
+
+    if (arma && arma.trim() !== '') {
+        whereClause.push(`\`ARMA UTILIZADA\` COLLATE utf8mb4_unicode_ci = :arma`);
+        replacements.arma = arma;
+    }
+
+    if (interes !== undefined && interes !== '') {
+        whereClause.push(`INTERES COLLATE utf8mb4_unicode_ci = :interes`);
+        replacements.interes = interes;
+    }
+
+    if (especialidad && especialidad.trim() !== '') {
+        whereClause.push(`ESPECIALIZACION COLLATE utf8mb4_unicode_ci = :especializacion`);
+        replacements.especializacion = especializacion;
+    }
+
+    if (seguro && seguro.trim() !== '') {
+        whereClause.push(`\`PARA SEGURO\`COLLATE utf8mb4_unicode_ci = :seguro`);
+        replacements.seguro = seguro;
+    }
+
+    if (riesgo && riesgo.trim() !== '') {
+        whereClause.push(`VICTIMA COLLATE utf8mb4_unicode_ci = :riesgo`);
+        replacements.riesgo = riesgo;
+    }
+
+    if (lugar_del_hecho && String(lugar_del_hecho).trim() !== '') {
+        whereClause.push(`Lugar_del_Hecho COLLATE utf8mb4_unicode_ci = :lugar_del_hecho`);
+        replacements.lugar_del_hecho = String(lugar_del_hecho).trim();
+    }
+
+    if (comisaria && comisaria.trim() !== '') {
+        whereClause.push(`COMISARIA COLLATE utf8mb4_unicode_ci = :comisaria`);
+        replacements.comisaria = comisaria;
+    }
+
+    const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
+
+    try {
+        const query = `
+            SELECT *
+            FROM denuncias_mapa
+            ${where};
+        `;
+
+        const result = await sequelize.query(query, {
+            type: Sequelize.QueryTypes.SELECT,
+            replacements
+        });
+
+        res.status(200).json(result);
+    } catch (error) {
+        console.error('Error en getVista:', error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
 const getVistaEstadisticas = async (req, res) => {
     const { fechaInicio, fechaFin } = req.body;
     const meses = [
@@ -979,4 +1059,4 @@ const deleteUser = async (req, res) => {
     }
 };
 
-export { prueba, login, getAllUsers, getUserById, createUser, updateUser, deleteUser, logout, getVista, getVistaFiltros, getVistaEstadisticas, getRanking, getVistaTablaIzq, getVistaTablaDer, getVistaSinRelato, getRankingDiario };
+export { getVistaMapa, prueba, login, getAllUsers, getUserById, createUser, updateUser, deleteUser, logout, getVista, getVistaFiltros, getVistaEstadisticas, getRanking, getVistaTablaIzq, getVistaTablaDer, getVistaSinRelato, getRankingDiario };
