@@ -868,10 +868,12 @@ const prueba = (req, res) => {
 };
 
 const getManifest = (req, res) => {
+    res.setHeader("Content-Type", "application/manifest+json");
+
     const referer = req.get('referer') || '';
 
     if (referer.includes('/sgd')) {
-        // Manifest para el módulo SGD
+        // Manifest para SGD
         res.json({
             name: "Sistema de Gestión de Denuncias",
             short_name: "SGD",
@@ -880,12 +882,12 @@ const getManifest = (req, res) => {
             background_color: "#ffffff",
             theme_color: "#ff6600",
             icons: [
-                { src: "/icons/sgd-192.png", sizes: "192x192", type: "image/png" },
-                { src: "/icons/sgd-512.png", sizes: "512x512", type: "image/png" }
+                { src: "/img_logo.png", sizes: "192x192", type: "image/png" }, 
+                { src: "/img_logo.png", sizes: "512x512", type: "image/png" }
             ]
         });
     } else {
-        // Manifest por defecto (SCG)
+        // Manifest por defecto SCG
         res.json({
             name: "Sistema de Control de Gestión",
             short_name: "SCG",
@@ -894,8 +896,8 @@ const getManifest = (req, res) => {
             background_color: "#000000",
             theme_color: "#005CA2",
             icons: [
-                { src: "/icons/scg-192.png", sizes: "192x192", type: "image/png" },
-                { src: "/icons/scg-512.png", sizes: "512x512", type: "image/png" }
+                { src: "/img_logo.png", sizes: "192x192", type: "image/png" }, 
+                { src: "/img_logo.png", sizes: "512x512", type: "image/png" }
             ]
         });
     }
