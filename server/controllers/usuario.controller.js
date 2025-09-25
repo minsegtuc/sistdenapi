@@ -868,40 +868,31 @@ const prueba = (req, res) => {
 };
 
 const getManifest = (req, res) => {
-    res.setHeader("Content-Type", "application/manifest+json");
+    try {
+        const referer = req.get('referer') || '';
+        console.log("Referer recibido:", referer); // log para debug
 
-    const referer = req.get('referer') || '';
-
-    if (referer.includes('/sgd')) {
-        // Manifest para SGD
-        res.json({
-            name: "Sistema de Gestión de Denuncias",
-            short_name: "SGD",
-            start_url: "/sgd",
-            display: "standalone",
-            background_color: "#ffffff",
-            theme_color: "#ff6600",
-            icons: [
-                { src: "/img_logo.png", sizes: "192x192", type: "image/png" }, 
-                { src: "/img_logo.png", sizes: "512x512", type: "image/png" }
-            ]
-        });
-    } else {
-        // Manifest por defecto SCG
-        res.json({
-            name: "Sistema de Control de Gestión",
-            short_name: "SCG",
-            start_url: "/",
-            display: "standalone",
-            background_color: "#000000",
-            theme_color: "#005CA2",
-            icons: [
-                { src: "/img_logo.png", sizes: "192x192", type: "image/png" }, 
-                { src: "/img_logo.png", sizes: "512x512", type: "image/png" }
-            ]
-        });
+        if (referer.includes('/sgd')) {
+            res.json({
+                name: "Sistema de Gestión de Denuncias",
+                short_name: "SGD",
+                start_url: "/sgd",
+                display: "standalone"
+            });
+        } else {
+            res.json({
+                name: "Otra App",
+                short_name: "OA",
+                start_url: "/",
+                display: "standalone"
+            });
+        }
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Error generando manifest");
     }
-}
+};
+
 
 const login = async (req, res) => {
     const { email, contraseña } = req.body;
