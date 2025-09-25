@@ -868,40 +868,52 @@ const prueba = (req, res) => {
 };
 
 const getManifest = (req, res) => {
-    res.setHeader("Content-Type", "application/manifest+json");
+    try {
+        // Forzar el tipo correcto
+        res.setHeader("Content-Type", "application/manifest+json");
 
-    const referer = req.get('referer') || '';
+        // Obtener referer de forma segura
+        const referer = req.get('referer') || '';
+        console.log("=== Manifest Request ===");
+        console.log("Headers recibidos:", req.headers);
+        console.log("Referer:", referer);
 
-    if (referer.includes('/sgd')) {
-        // Manifest para SGD
-        res.json({
-            name: "Sistema de Gestión de Denuncias",
-            short_name: "SGD",
-            start_url: "/sgd",
-            display: "standalone",
-            background_color: "#ffffff",
-            theme_color: "#ff6600",
-            icons: [
-                { src: "/img_logo.png", sizes: "192x192", type: "image/png" }, 
-                { src: "/img_logo.png", sizes: "512x512", type: "image/png" }
-            ]
-        });
-    } else {
-        // Manifest por defecto SCG
-        res.json({
-            name: "Sistema de Control de Gestión",
-            short_name: "SCG",
-            start_url: "/",
-            display: "standalone",
-            background_color: "#000000",
-            theme_color: "#005CA2",
-            icons: [
-                { src: "/img_logo.png", sizes: "192x192", type: "image/png" }, 
-                { src: "/img_logo.png", sizes: "512x512", type: "image/png" }
-            ]
-        });
+        // Elegir manifest según referer
+        if (referer.includes('/sgd')) {
+            console.log("Se sirve manifest para SGD");
+            res.json({
+                name: "Sistema de Gestión de Denuncias",
+                short_name: "SGD",
+                start_url: "/sgd",
+                display: "standalone",
+                background_color: "#ffffff",
+                theme_color: "#ff6600",
+                icons: [
+                    { src: "/img_logo.png", sizes: "192x192", type: "image/png" },
+                    { src: "/img_logo.png", sizes: "512x512", type: "image/png" }
+                ]
+            });
+        } else {
+            console.log("Se sirve manifest por defecto SCG");
+            res.json({
+                name: "Sistema de Control de Gestión",
+                short_name: "SCG",
+                start_url: "/",
+                display: "standalone",
+                background_color: "#000000",
+                theme_color: "#005CA2",
+                icons: [
+                    { src: "/img_logo.png", sizes: "192x192", type: "image/png" },
+                    { src: "/img_logo.png", sizes: "512x512", type: "image/png" }
+                ]
+            });
+        }
+    } catch (err) {
+        console.error("Error en getManifest:", err);
+        res.status(500).send("Error interno en el manifest");
     }
-}
+};
+
 
 const login = async (req, res) => {
     const { email, contraseña } = req.body;
