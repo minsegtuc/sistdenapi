@@ -853,7 +853,16 @@ const countDenunciasSC = async (req, res) => {
                 especializacionId: 1
             }
         });
-        res.status(200).json({ amount })
+
+        const amountObservadas = await Denuncia.count({
+            where: {
+                isClassificated: {
+                    [Op.in]: [3],
+                }
+            }
+        });
+
+        res.status(200).json({ amount, amountObservadas })
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

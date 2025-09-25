@@ -1,10 +1,11 @@
 import express from 'express';
-import { getVistaMapa, prueba, getAllUsers, getUserById, createUser, updateUser, deleteUser, login, logout, getVista, getVistaFiltros, getRanking, getVistaEstadisticas, getVistaTablaIzq, getVistaTablaDer, getVistaSinRelato, getRankingDiario } from '../controllers/usuario.controller.js';
+import { getVistaMapa, prueba, getAllUsers, getUserById, createUser, updateUser, deleteUser, login, logout, getVista, getVistaFiltros, getRanking, getVistaEstadisticas, getVistaTablaIzq, getVistaTablaDer, getVistaSinRelato, getRankingDiario, getManifest } from '../controllers/usuario.controller.js';
 import verifyToken from '../middleware/jwt.js';
 
 const router = express.Router();
 
 router.get('/prueba', prueba)
+router.get('/manifest.json', getManifest)
 router.post('/login', login);
 router.post('/logout', logout);
 router.get('/user', verifyToken, getAllUsers);

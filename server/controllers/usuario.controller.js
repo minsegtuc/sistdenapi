@@ -56,15 +56,15 @@ const getRanking = async (req, res) => {
             type: Sequelize.QueryTypes.SELECT
         });
 
-        console.log("Ranking: " , ranking)
+        console.log("Ranking: ", ranking)
 
         const usuariosPromises = ranking.map(async r => {
             const response = await fetch(`${process.env.HOST_AUTH}/auth/usuario/dni/${r.dniId}`, {
                 method: "GET",
-                headers: { 
+                headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${process.env.INTERNAL_API_TOKEN}`
-                },                
+                },
             });
 
             if (!response.ok) {
@@ -121,10 +121,10 @@ const getRankingDiario = async (req, res) => {
         const usuariosPromises = ranking.map(async r => {
             const response = await fetch(`${process.env.HOST_AUTH}/auth/usuario/dni/${r.dniId}`, {
                 method: "GET",
-                headers: { 
+                headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${process.env.INTERNAL_API_TOKEN}`
-                },  
+                },
             });
 
             if (!response.ok) {
@@ -867,6 +867,40 @@ const prueba = (req, res) => {
     });
 };
 
+const getManifest = (req, res) => {
+    const referer = req.get('referer') || '';
+
+    if (referer.includes('/sgd')) {
+        // Manifest para el módulo SGD
+        res.json({
+            name: "Sistema de Gestión de Denuncias",
+            short_name: "SGD",
+            start_url: "/sgd",
+            display: "standalone",
+            background_color: "#ffffff",
+            theme_color: "#ff6600",
+            icons: [
+                { src: "/icons/sgd-192.png", sizes: "192x192", type: "image/png" },
+                { src: "/icons/sgd-512.png", sizes: "512x512", type: "image/png" }
+            ]
+        });
+    } else {
+        // Manifest por defecto (SCG)
+        res.json({
+            name: "Sistema de Control de Gestión",
+            short_name: "SCG",
+            start_url: "/",
+            display: "standalone",
+            background_color: "#000000",
+            theme_color: "#005CA2",
+            icons: [
+                { src: "/icons/scg-192.png", sizes: "192x192", type: "image/png" },
+                { src: "/icons/scg-512.png", sizes: "512x512", type: "image/png" }
+            ]
+        });
+    }
+}
+
 const login = async (req, res) => {
     const { email, contraseña } = req.body;
     try {
@@ -1059,4 +1093,4 @@ const deleteUser = async (req, res) => {
     }
 };
 
-export { getVistaMapa, prueba, login, getAllUsers, getUserById, createUser, updateUser, deleteUser, logout, getVista, getVistaFiltros, getVistaEstadisticas, getRanking, getVistaTablaIzq, getVistaTablaDer, getVistaSinRelato, getRankingDiario };
+export { getVistaMapa, prueba, login, getAllUsers, getUserById, createUser, updateUser, deleteUser, logout, getVista, getVistaFiltros, getVistaEstadisticas, getRanking, getVistaTablaIzq, getVistaTablaDer, getVistaSinRelato, getRankingDiario, getManifest };
