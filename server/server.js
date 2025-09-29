@@ -17,7 +17,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3005;
 
-const allowedOrigins = ['https://srv555183.hstgr.cloud', 'http://localhost:5173','https://control.srv555183.hstgr.cloud','http://control.srv555183.hstgr.cloud'];
+const allowedOrigins = ['https://srv555183.hstgr.cloud', 'http://localhost:5173','https://control.srv555183.hstgr.cloud','http://control.srv555183.hstgr.cloud','http://control.minsegtuc.gov.ar'];
 
 const corsOptions = {
     origin: function (origin, callback) {
