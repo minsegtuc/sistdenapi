@@ -6,7 +6,7 @@ const verifyToken = (req, res, next) => {
     dotenv.config()
 
     const token = req.cookies.token
-    console.log("Token recibido en middleware:", token);
+    // console.log("Token recibido en middleware:", token);
     if(!token){
         return res.status(403).json({message: 'A token is required for authentication'})
     }
