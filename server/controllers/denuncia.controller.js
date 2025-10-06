@@ -48,6 +48,7 @@ const getAllDenuncias = async (req, res) => {
 }
 
 const getDenunciaById = async (req, res) => {
+    console.log("Denuncia desde controlador: ", req.params.id)
     const { id } = req.params;
     try {
         const denuncia = await Denuncia.findByPk(id, {
