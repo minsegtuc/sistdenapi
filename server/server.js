@@ -17,7 +17,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3005;
 
-const allowedOrigins = ['https://srv555183.hstgr.cloud', 'http://localhost:5173','https://control.srv555183.hstgr.cloud','http://control.srv555183.hstgr.cloud','https://control.minsegtuc.gov.ar'];
+const allowedOrigins = ['https://srv555183.hstgr.cloud', 'http://localhost:5173', 'https://control.srv555183.hstgr.cloud', 'http://control.srv555183.hstgr.cloud', 'https://control.minsegtuc.gov.ar'];
 
 const corsOptions = {
     origin: function (origin, callback) {
@@ -32,6 +32,7 @@ const corsOptions = {
     allowedHeaders: ['Content-Type', 'Authorization']
 };
 
+app.set('trust proxy', 1);
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(cookieParser());
@@ -47,34 +48,43 @@ sequelize.authenticate()
         console.log('Connection has been established successfully.');
         return sequelize.sync({});
     })
-    .then(() => {       
-        let server;
-        let io;
+    .then(() => {
+        // let server;
+        // let io;
 
-        if (process.env.NODE_ENV === 'production') {
-            const options = {
-                key: fs.readFileSync('/etc/letsencrypt/live/srv555183.hstgr.cloud/privkey.pem'),
-                cert: fs.readFileSync('/etc/letsencrypt/live/srv555183.hstgr.cloud/fullchain.pem')
-            };
-            server = https.createServer(options, app);
-            io = new Server(server, {
-                cors: {
-                    origin: allowedOrigins,
-                    methods: ['GET', 'POST', 'PUT', 'DELETE','UPDATE','PATCH'],
-                    credentials: true,
-                },
-            });
-        } else {
-            server = http.createServer(app);
-            io = new Server(server, {
-                cors: {
-                    origin: allowedOrigins,
-                    methods: ['GET', 'POST', 'PUT', 'DELETE','UPDATE','PATCH'],
-                    credentials: true,
-                },
-            });
-        }
+        // if (process.env.NODE_ENV === 'production') {
+        //     const options = {
+        //         key: fs.readFileSync('/etc/letsencrypt/live/srv555183.hstgr.cloud/privkey.pem'),
+        //         cert: fs.readFileSync('/etc/letsencrypt/live/srv555183.hstgr.cloud/fullchain.pem')
+        //     };
+        //     server = https.createServer(options, app);
+        //     io = new Server(server, {
+        //         cors: {
+        //             origin: allowedOrigins,
+        //             methods: ['GET', 'POST', 'PUT', 'DELETE','UPDATE','PATCH'],
+        //             credentials: true,
+        //         },
+        //     });
+        // } else {
+        //     server = http.createServer(app);
+        //     io = new Server(server, {
+        //         cors: {
+        //             origin: allowedOrigins,
+        //             methods: ['GET', 'POST', 'PUT', 'DELETE','UPDATE','PATCH'],
+        //             credentials: true,
+        //         },
+        //     });
+        // }
 
+        const server = http.createServer(app);
+        let io = new Server(server, {
+            cors: {
+                origin: allowedOrigins,
+                methods: ['GET', 'POST', 'PUT', 'DELETE', 'UPDATE', 'PATCH'],
+                credentials: true,
+            },
+        });
+        
         socketConfiguration(io)
 
         server.listen(PORT, () => {
