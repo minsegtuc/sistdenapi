@@ -52,11 +52,7 @@ sequelize.authenticate()
         let io;
 
         if (process.env.NODE_ENV === 'production') {
-            const options = {
-                key: fs.readFileSync('/etc/letsencrypt/live/srv555183.hstgr.cloud/privkey.pem'),
-                cert: fs.readFileSync('/etc/letsencrypt/live/srv555183.hstgr.cloud/fullchain.pem')
-            };
-            server = https.createServer(options, app);
+            server = http.createServer(app);
             io = new Server(server, {
                 cors: {
                     origin: allowedOrigins,
