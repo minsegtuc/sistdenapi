@@ -65,11 +65,13 @@ const getRanking = async (req, res) => {
 			const path = `${authBase.replace(/\/$/, '')}/auth/usuario/dni/${r.dniId}`;
 			const url = path.startsWith('http') ? path : new URL(path, baseOrigin).toString();
 
+			const internalToken = process.env.INTERNAL_API_TOKEN || process.env.INTERNAL_API_KEY || "";
 			const response = await fetch(url, {
 				method: "GET",
 				headers: {
 					"Content-Type": "application/json",
-					"Authorization": `Bearer ${process.env.INTERNAL_API_TOKEN}`
+					"Authorization": internalToken ? `Bearer ${internalToken}` : undefined,
+					"x-internal-token": internalToken || undefined,
 				},
 			});
 
@@ -131,11 +133,13 @@ const getRankingDiario = async (req, res) => {
 			const path = `${authBase.replace(/\/$/, '')}/auth/usuario/dni/${r.dniId}`;
 			const url = path.startsWith('http') ? path : new URL(path, baseOrigin).toString();
 
+			const internalToken = process.env.INTERNAL_API_TOKEN || process.env.INTERNAL_API_KEY || "";
 			const response = await fetch(url, {
 				method: "GET",
 				headers: {
 					"Content-Type": "application/json",
-					"Authorization": `Bearer ${process.env.INTERNAL_API_TOKEN}`
+					"Authorization": internalToken ? `Bearer ${internalToken}` : undefined,
+					"x-internal-token": internalToken || undefined,
 				},
 			});
 
