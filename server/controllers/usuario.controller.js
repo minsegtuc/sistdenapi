@@ -58,14 +58,20 @@ const getRanking = async (req, res) => {
 
         console.log("Ranking: ", ranking)
 
-        const usuariosPromises = ranking.map(async r => {
-            const response = await fetch(`${process.env.HOST_AUTH}/auth/usuario/dni/${r.dniId}`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${process.env.INTERNAL_API_TOKEN}`
-                },
-            });
+		const usuariosPromises = ranking.map(async r => {
+			const authBase = process.env.HOST_AUTH || "";
+			const incomingHost = req.get('x-forwarded-host') || req.get('host');
+			const baseOrigin = `${req.protocol}://${incomingHost}`;
+			const path = `${authBase.replace(/\/$/, '')}/auth/usuario/dni/${r.dniId}`;
+			const url = path.startsWith('http') ? path : new URL(path, baseOrigin).toString();
+
+			const response = await fetch(url, {
+				method: "GET",
+				headers: {
+					"Content-Type": "application/json",
+					"Authorization": `Bearer ${process.env.INTERNAL_API_TOKEN}`
+				},
+			});
 
             if (!response.ok) {
                 return { nombre: "Desconocido", dni: r.dniId }; // fallback si no existe
@@ -119,13 +125,19 @@ const getRankingDiario = async (req, res) => {
         });
 
         const usuariosPromises = ranking.map(async r => {
-            const response = await fetch(`${process.env.HOST_AUTH}/auth/usuario/dni/${r.dniId}`, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${process.env.INTERNAL_API_TOKEN}`
-                },
-            });
+			const authBase = process.env.HOST_AUTH || "";
+			const incomingHost = req.get('x-forwarded-host') || req.get('host');
+			const baseOrigin = `${req.protocol}://${incomingHost}`;
+			const path = `${authBase.replace(/\/$/, '')}/auth/usuario/dni/${r.dniId}`;
+			const url = path.startsWith('http') ? path : new URL(path, baseOrigin).toString();
+
+			const response = await fetch(url, {
+				method: "GET",
+				headers: {
+					"Content-Type": "application/json",
+					"Authorization": `Bearer ${process.env.INTERNAL_API_TOKEN}`
+				},
+			});
 
             if (!response.ok) {
                 return { nombre: "Desconocido", dni: r.dniId }; // fallback si no existe
