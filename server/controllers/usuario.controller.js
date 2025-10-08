@@ -66,12 +66,17 @@ const getRanking = async (req, res) => {
 			const url = path.startsWith('http') ? path : new URL(path, baseOrigin).toString();
 
 			const internalToken = process.env.INTERNAL_API_TOKEN || process.env.INTERNAL_API_KEY || "";
+			if (!internalToken) {
+				throw new Error("Missing INTERNAL_API_TOKEN/INTERNAL_API_KEY for internal auth request");
+			}
 			const response = await fetch(url, {
 				method: "GET",
 				headers: {
 					"Content-Type": "application/json",
-					"Authorization": internalToken ? `Bearer ${internalToken}` : undefined,
-					"x-internal-token": internalToken || undefined,
+					"Accept": "application/json",
+					"Authorization": internalToken, // plain token to match auth service expectation
+					"x-internal-token": internalToken,
+					"x-api-key": internalToken,
 				},
 			});
 
@@ -134,12 +139,17 @@ const getRankingDiario = async (req, res) => {
 			const url = path.startsWith('http') ? path : new URL(path, baseOrigin).toString();
 
 			const internalToken = process.env.INTERNAL_API_TOKEN || process.env.INTERNAL_API_KEY || "";
+			if (!internalToken) {
+				throw new Error("Missing INTERNAL_API_TOKEN/INTERNAL_API_KEY for internal auth request");
+			}
 			const response = await fetch(url, {
 				method: "GET",
 				headers: {
 					"Content-Type": "application/json",
-					"Authorization": internalToken ? `Bearer ${internalToken}` : undefined,
-					"x-internal-token": internalToken || undefined,
+					"Accept": "application/json",
+					"Authorization": internalToken, // plain token to match auth service expectation
+					"x-internal-token": internalToken,
+					"x-api-key": internalToken,
 				},
 			});
 
@@ -149,7 +159,6 @@ const getRankingDiario = async (req, res) => {
 
             return response.json();
         })
-
         const usuarios = await Promise.all(usuariosPromises)
 
         const rankingFinal = ranking.map((r, i) => ({
