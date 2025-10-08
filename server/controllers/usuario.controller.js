@@ -58,27 +58,14 @@ const getRanking = async (req, res) => {
 
         console.log("Ranking: ", ranking)
 
-		const usuariosPromises = ranking.map(async r => {
-			const authBase = process.env.HOST_AUTH || "";
-			const incomingHost = req.get('x-forwarded-host') || req.get('host');
-			const baseOrigin = `${req.protocol}://${incomingHost}`;
-			const path = `${authBase.replace(/\/$/, '')}/auth/usuario/dni/${r.dniId}`;
-			const url = path.startsWith('http') ? path : new URL(path, baseOrigin).toString();
-
-			const internalToken = process.env.INTERNAL_API_TOKEN || process.env.INTERNAL_API_KEY || "";
-			if (!internalToken) {
-				throw new Error("Missing INTERNAL_API_TOKEN/INTERNAL_API_KEY for internal auth request");
-			}
-			const response = await fetch(url, {
-				method: "GET",
-				headers: {
-					"Content-Type": "application/json",
-					"Accept": "application/json",
-					"Authorization": internalToken, // plain token to match auth service expectation
-					"x-internal-token": internalToken,
-					"x-api-key": internalToken,
-				},
-			});
+        const usuariosPromises = ranking.map(async r => {
+            const response = await fetch(`http://127.0.0.1:3008/auth/usuario/dni/${r.dniId}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${process.env.INTERNAL_API_TOKEN}`
+                },
+            });
 
             if (!response.ok) {
                 return { nombre: "Desconocido", dni: r.dniId }; // fallback si no existe
@@ -132,26 +119,13 @@ const getRankingDiario = async (req, res) => {
         });
 
         const usuariosPromises = ranking.map(async r => {
-			const authBase = process.env.HOST_AUTH || "";
-			const incomingHost = req.get('x-forwarded-host') || req.get('host');
-			const baseOrigin = `${req.protocol}://${incomingHost}`;
-			const path = `${authBase.replace(/\/$/, '')}/auth/usuario/dni/${r.dniId}`;
-			const url = path.startsWith('http') ? path : new URL(path, baseOrigin).toString();
-
-			const internalToken = process.env.INTERNAL_API_TOKEN || process.env.INTERNAL_API_KEY || "";
-			if (!internalToken) {
-				throw new Error("Missing INTERNAL_API_TOKEN/INTERNAL_API_KEY for internal auth request");
-			}
-			const response = await fetch(url, {
-				method: "GET",
-				headers: {
-					"Content-Type": "application/json",
-					"Accept": "application/json",
-					"Authorization": internalToken, // plain token to match auth service expectation
-					"x-internal-token": internalToken,
-					"x-api-key": internalToken,
-				},
-			});
+            const response = await fetch(`http://127.0.0.1:3008/auth/usuario/dni/${r.dniId}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${process.env.INTERNAL_API_TOKEN}`
+                },
+            });
 
             if (!response.ok) {
                 return { nombre: "Desconocido", dni: r.dniId }; // fallback si no existe
@@ -159,6 +133,7 @@ const getRankingDiario = async (req, res) => {
 
             return response.json();
         })
+
         const usuarios = await Promise.all(usuariosPromises)
 
         const rankingFinal = ranking.map((r, i) => ({
