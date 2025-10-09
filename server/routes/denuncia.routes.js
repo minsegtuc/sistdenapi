@@ -19,7 +19,7 @@ router.post('/denuncia', verifyToken, createDenuncia);
 router.post('/trabajando', verifyToken, denunciaTrabajando);
 router.post('/regional', verifyToken, getAllRegional);
 router.put('/update', verifyToken, updateDenuncia);
-router.put('/observar', updateClasificacion);
+router.put('/observar', verifyToken, updateClasificacion);
 router.delete('/denuncia/:id', verifyToken, deleteDenuncia);
 
 export default router;
