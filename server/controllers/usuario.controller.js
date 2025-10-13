@@ -96,7 +96,7 @@ const getRankingObservada = async (req, res) => {
         let baseQuery = `
             SELECT log.dniId, COUNT(DISTINCT log.descripcion) AS cantidad_clasificadas
             FROM log
-            WHERE accion = 'OBERVAR'
+            WHERE accion = 'OBSERVAR'
         `;
 
         let replacements = {};
