@@ -1,5 +1,5 @@
 import express from 'express';
-import { getVistaMapa, prueba, getAllUsers, getUserById, createUser, updateUser, deleteUser, login, logout, getVista, getVistaFiltros, getRanking, getVistaEstadisticas, getVistaTablaIzq, getVistaTablaDer, getVistaSinRelato, getRankingDiario, getManifest } from '../controllers/usuario.controller.js';
+import { getRankingObservada, getVistaMapa, prueba, getAllUsers, getUserById, createUser, updateUser, deleteUser, login, logout, getVista, getVistaFiltros, getRanking, getVistaEstadisticas, getVistaTablaIzq, getVistaTablaDer, getVistaSinRelato, getRankingDiario, getManifest } from '../controllers/usuario.controller.js';
 import verifyToken from '../middleware/jwt.js';
 
 const router = express.Router();
@@ -12,6 +12,7 @@ router.get('/user', verifyToken, getAllUsers);
 router.get('/user/:id', verifyToken, getUserById);
 router.get('/ranking', verifyToken, getRanking)
 router.get('/rankingDiario', verifyToken, getRankingDiario)
+router.get('/rankingDiario', verifyToken, getRankingObservada)
 router.post('/vista', verifyToken, getVista)
 router.post('/vistaSinRelato', verifyToken, getVistaSinRelato)
 router.post('/vistaMapa', verifyToken, getVistaMapa)

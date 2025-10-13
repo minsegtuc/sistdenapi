@@ -89,6 +89,66 @@ const getRanking = async (req, res) => {
     }
 };
 
+const getRankingObservada = async (req, res) => {
+    const { fechaDesde, fechaHasta } = req.query;
+
+    try {
+        let baseQuery = `
+            SELECT log.dniId, COUNT(DISTINCT log.descripcion) AS cantidad_clasificadas
+            FROM log
+            WHERE accion = 'OBERVAR'
+        `;
+
+        let replacements = {};
+
+        if (fechaDesde && fechaHasta) {
+            baseQuery += ` AND fecha >= :fechaDesde AND fecha <= :fechaHasta`;
+            replacements.fechaDesde = fechaDesde;
+            replacements.fechaHasta = fechaHasta;
+        }
+
+        baseQuery += `
+            GROUP BY log.dniId
+            ORDER BY cantidad_clasificadas DESC
+        `;
+
+        const ranking = await sequelize.query(baseQuery, {
+            replacements,
+            type: Sequelize.QueryTypes.SELECT
+        });
+
+        console.log("Ranking: ", ranking)
+
+        const usuariosPromises = ranking.map(async r => {
+            const response = await fetch(`http://127.0.0.1:3008/auth/usuario/dni/${r.dniId}`, {
+                method: "GET",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${process.env.INTERNAL_API_TOKEN}`
+                },
+            });
+
+            if (!response.ok) {
+                return { nombre: "Desconocido", dni: r.dniId }; // fallback si no existe
+            }
+
+            return response.json();
+        })
+
+        const usuarios = await Promise.all(usuariosPromises)
+
+        const rankingFinal = ranking.map((r, i) => ({
+            dniId: r.dniId,
+            cantidad_clasificadas: r.cantidad_clasificadas,
+            usuario: usuarios[i]
+        }));
+
+        res.status(200).json(rankingFinal);
+    } catch (error) {
+        console.log("Error:", error);
+        res.status(500).json({ message: error.message });
+    }
+};
 
 const getRankingDiario = async (req, res) => {
     const { fechaDesde, fechaHasta } = req.query;
@@ -1107,4 +1167,4 @@ const deleteUser = async (req, res) => {
     }
 };
 
-export { getVistaMapa, prueba, login, getAllUsers, getUserById, createUser, updateUser, deleteUser, logout, getVista, getVistaFiltros, getVistaEstadisticas, getRanking, getVistaTablaIzq, getVistaTablaDer, getVistaSinRelato, getRankingDiario, getManifest };
+export { getRankingObservada, getVistaMapa, prueba, login, getAllUsers, getUserById, createUser, updateUser, deleteUser, logout, getVista, getVistaFiltros, getVistaEstadisticas, getRanking, getVistaTablaIzq, getVistaTablaDer, getVistaSinRelato, getRankingDiario, getManifest };
