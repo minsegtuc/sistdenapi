@@ -509,7 +509,7 @@ const getVistaSinRelatoStaging = async (req, res) => {
     let likeClause = []
     let replacements = {}
 
-    whereClause.push(`\`CLASIFICADA POR\` COLLATE utf8mb4_unicode_ci <> 2`);
+    whereClause.push(`\`CLASIFICADA POR\` COLLATE utf8mb4_0900_ai_ci <> 2`);
 
     if (fechaInicio && fechaFin) {
         whereClause.push(`FECHA_HECHO BETWEEN :fechaInicio AND :fechaFin`)
@@ -518,72 +518,72 @@ const getVistaSinRelatoStaging = async (req, res) => {
     }
 
     if (delito && delito.trim() !== '') {
-        whereClause.push(`DELITO COLLATE utf8mb4_unicode_ci = :delito`);
+        whereClause.push(`DELITO COLLATE utf8mb4_0900_ai_ci = :delito`);
         replacements.delito = delito;
     }
 
     if (submodalidad && submodalidad.trim() !== '') {
-        whereClause.push(`SUBMODALIDAD COLLATE utf8mb4_unicode_ci = :submodalidad`);
+        whereClause.push(`SUBMODALIDAD COLLATE utf8mb4_0900_ai_ci = :submodalidad`);
         replacements.submodalidad = submodalidad;
     }
 
     if (arma && arma.trim() !== '') {
-        whereClause.push(`\`ARMA UTILIZADA\` COLLATE utf8mb4_unicode_ci = :arma`);
+        whereClause.push(`\`ARMA UTILIZADA\` COLLATE utf8mb4_0900_ai_ci = :arma`);
         replacements.arma = arma;
     }
 
     if (interes !== undefined && interes !== '') {
-        whereClause.push(`INTERES COLLATE utf8mb4_unicode_ci = :interes`);
+        whereClause.push(`INTERES COLLATE utf8mb4_0900_ai_ci = :interes`);
         replacements.interes = interes;
     }
 
     if (especialidad && especialidad.trim() !== '') {
-        whereClause.push(`ESPECIALIZACION COLLATE utf8mb4_unicode_ci = :especializacion`);
+        whereClause.push(`ESPECIALIZACION COLLATE utf8mb4_0900_ai_ci = :especializacion`);
         replacements.especializacion = especializacion;
     }
 
     if (seguro && seguro.trim() !== '') {
-        whereClause.push(`\`PARA SEGURO\`COLLATE utf8mb4_unicode_ci = :seguro`);
+        whereClause.push(`\`PARA SEGURO\`COLLATE utf8mb4_0900_ai_ci = :seguro`);
         replacements.seguro = seguro;
     }
 
     if (riesgo && riesgo.trim() !== '') {
-        whereClause.push(`VICTIMA COLLATE utf8mb4_unicode_ci = :riesgo`);
+        whereClause.push(`VICTIMA COLLATE utf8mb4_0900_ai_ci = :riesgo`);
         replacements.riesgo = riesgo;
     }
 
     if (lugar_del_hecho && String(lugar_del_hecho).trim() !== '') {
-        whereClause.push(`Lugar_del_Hecho COLLATE utf8mb4_unicode_ci = :lugar_del_hecho`);
+        whereClause.push(`Lugar_del_Hecho COLLATE utf8mb4_0900_ai_ci = :lugar_del_hecho`);
         replacements.lugar_del_hecho = String(lugar_del_hecho).trim();
     }
 
     if (comisaria && comisaria.trim() !== '') {
-        whereClause.push(`COMISARIA COLLATE utf8mb4_unicode_ci = :comisaria`);
+        whereClause.push(`COMISARIA COLLATE utf8mb4_0900_ai_ci = :comisaria`);
         replacements.comisaria = comisaria;
     }
 
     if (unidadRegional && unidadRegional.trim() !== '') {
-        whereClause.push(`\`UNIDAD REGIONAL\` COLLATE utf8mb4_unicode_ci = :unidadRegional`);
+        whereClause.push(`\`UNIDAD REGIONAL\` COLLATE utf8mb4_0900_ai_ci = :unidadRegional`);
         replacements.unidadRegional = unidadRegional;
     }
 
     if (localidad && localidad.trim() !== '') {
-        whereClause.push(`LOCALIDAD COLLATE utf8mb4_unicode_ci = :localidad`);
+        whereClause.push(`LOCALIDAD COLLATE utf8mb4_0900_ai_ci = :localidad`);
         replacements.localidad = localidad;
     }
 
     if (modalidad && modalidad.trim() !== '') {
-        whereClause.push(`MODALIDAD COLLATE utf8mb4_unicode_ci = :modalidad`);
+        whereClause.push(`MODALIDAD COLLATE utf8mb4_0900_ai_ci = :modalidad`);
         replacements.modalidad = modalidad;
     }
 
     if (elementosSustraidos && elementosSustraidos.trim() !== '') {
-        likeClause.push(`\`ELEMENTOS SUSTRAIDOS\` COLLATE utf8mb4_unicode_ci LIKE :elementosSustraidos`);
+        likeClause.push(`\`ELEMENTOS SUSTRAIDOS\` COLLATE utf8mb4_0900_ai_ci LIKE :elementosSustraidos`);
         replacements.elementosSustraidos = `%${elementosSustraidos}%`;
     }
 
     if (victimario && victimario.trim() !== '') {
-        likeClause.push(`VICTIMARIO COLLATE utf8mb4_unicode_ci LIKE :victimario`);
+        likeClause.push(`VICTIMARIO COLLATE utf8mb4_0900_ai_ci LIKE :victimario`);
         replacements.victimario = `%${victimario}%`;
     }
 
@@ -618,21 +618,21 @@ const getVistaSinRelatoStaging = async (req, res) => {
             porDelitos: `
                 SELECT DELITO AS delito, COUNT(*) AS cantidad
                 FROM denuncias_completas_v9_sin_relato
-                ${andWhere} ${like} DELITO IS NOT NULL AND DELITO COLLATE utf8mb4_unicode_ci <> ''
+                ${andWhere} ${like} DELITO IS NOT NULL AND DELITO COLLATE utf8mb4_0900_ai_ci <> ''
                 GROUP BY DELITO
                 ORDER BY cantidad DESC
             `,
             porModalidad: `
                 SELECT MODALIDAD AS modalidad, COUNT(*) AS cantidad
                 FROM denuncias_completas_v9_sin_relato
-                ${andWhere} ${like} MODALIDAD IS NOT NULL AND MODALIDAD COLLATE utf8mb4_unicode_ci <> ''
+                ${andWhere} ${like} MODALIDAD IS NOT NULL AND MODALIDAD COLLATE utf8mb4_0900_ai_ci <> ''
                 GROUP BY MODALIDAD
                 ORDER BY cantidad DESC
             `,
             porSubmodalidad: `
                 SELECT SUBMODALIDAD AS submodalidad, COUNT(*) AS cantidad
                 FROM denuncias_completas_v9_sin_relato
-                ${andWhere} ${like} SUBMODALIDAD IS NOT NULL AND SUBMODALIDAD COLLATE utf8mb4_unicode_ci <> ''
+                ${andWhere} ${like} SUBMODALIDAD IS NOT NULL AND SUBMODALIDAD COLLATE utf8mb4_0900_ai_ci <> ''
                 GROUP BY SUBMODALIDAD
                 ORDER BY cantidad DESC
             `,
