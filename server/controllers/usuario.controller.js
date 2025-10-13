@@ -563,27 +563,27 @@ const getVistaSinRelatoStaging = async (req, res) => {
     }
 
     if (unidadRegional && unidadRegional.trim() !== '') {
-        whereClause.push(`\`UNIDAD REGIONAL\` COLLATE utf8mb4_unicode_ci = :unidadRegional`);
+        whereClause.push(`\`UNIDAD REGIONAL\` COLLATE utf8mb4_0900_ai_ci = :unidadRegional`);
         replacements.unidadRegional = unidadRegional;
     }
 
     if (localidad && localidad.trim() !== '') {
-        whereClause.push(`LOCALIDAD COLLATE utf8mb4_unicode_ci = :localidad`);
+        whereClause.push(`LOCALIDAD COLLATE utf8mb4_0900_ai_ci = :localidad`);
         replacements.localidad = localidad;
     }
 
     if (modalidad && modalidad.trim() !== '') {
-        whereClause.push(`MODALIDAD COLLATE utf8mb4_unicode_ci = :modalidad`);
+        whereClause.push(`MODALIDAD COLLATE utf8mb4_0900_ai_ci = :modalidad`);
         replacements.modalidad = modalidad;
     }
 
     if (elementosSustraidos && elementosSustraidos.trim() !== '') {
-        likeClause.push(`\`ELEMENTOS SUSTRAIDOS\` COLLATE utf8mb4_unicode_ci LIKE :elementosSustraidos`);
+        likeClause.push(`\`ELEMENTOS SUSTRAIDOS\` COLLATE utf8mb4_0900_ai_ci LIKE :elementosSustraidos`);
         replacements.elementosSustraidos = `%${elementosSustraidos}%`;
     }
 
     if (victimario && victimario.trim() !== '') {
-        likeClause.push(`VICTIMARIO COLLATE utf8mb4_unicode_ci LIKE :victimario`);
+        likeClause.push(`VICTIMARIO COLLATE utf8mb4_0900_ai_ci LIKE :victimario`);
         replacements.victimario = `%${victimario}%`;
     }
 
