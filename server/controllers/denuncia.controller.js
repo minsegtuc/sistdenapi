@@ -793,7 +793,7 @@ const updateClasificacion = async (req, res) => {
             detalleObservacion: detalle
         }, { transaction: transaccion });
 
-        await registrarLog('UPDATE', `DENUNCIA ${idDenuncia} ACTUALIZADA`, req.user?.id);
+        await registrarLog('OBSERVAR', `DENUNCIA ${idDenuncia} ACTUALIZADA`, req.user?.id);
         denunciasActualizadas += 1;
     } catch (error) {
         errores.push({
