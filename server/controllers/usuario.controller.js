@@ -591,19 +591,130 @@ const getVistaSinRelatoStaging = async (req, res) => {
     const like = likeClause.length > 0 ? (where ? ` AND ${likeClause.join(' AND ')}` : `WHERE ${likeClause.join(' AND ')}`) : '';
 
     try {
-        const query = `
-            SELECT *
-            FROM denuncias_completas_v9_sin_relato
-            ${where}
-            ${like};
-        `;
+        const andWhere = where ? `${where} AND` : 'WHERE';
 
-        const result = await sequelize.query(query, {
-            type: Sequelize.QueryTypes.SELECT,
-            replacements
+        const queries = {
+            total: `SELECT COUNT(*) AS total FROM denuncias_completas_v9_sin_relato ${where} ${like}`,
+            interes: `SELECT COUNT(*) AS interes FROM denuncias_completas_v9_sin_relato ${where} ${like} AND INTERES = 'SI'`,
+            noInteres: `SELECT COUNT(*) AS noInteres FROM denuncias_completas_v9_sin_relato ${where} ${like} AND INTERES = 'NO'`,
+            victima: `SELECT COUNT(*) AS victima FROM denuncias_completas_v9_sin_relato ${where} ${like} AND VICTIMA = 'CON RIESGO'`,
+            robo: `SELECT COUNT(*) AS robo FROM denuncias_completas_v9_sin_relato ${where} ${like} AND DELITO = 'ROBO'`,
+            hurtos: `SELECT COUNT(*) AS hurtos FROM denuncias_completas_v9_sin_relato ${where} ${like} AND DELITO = 'HURTOS'`,
+            roboArma: `SELECT COUNT(*) AS roboArma FROM denuncias_completas_v9_sin_relato ${where} ${like} AND DELITO = 'ROBO CON ARMA DE FUEGO'`,
+            porFechas: `
+                SELECT DATE(FECHA_HECHO) AS fecha, COUNT(*) AS cantidad
+                FROM denuncias_completas_v9_sin_relato
+                ${where} ${like}
+                GROUP BY DATE(FECHA_HECHO)
+                ORDER BY fecha
+            `,
+            porFechaYHora: `
+                SELECT DATE(FECHA_HECHO) AS fecha, HOUR(FECHA_HECHO) AS hora, COUNT(*) AS cantidad
+                FROM denuncias_completas_v9_sin_relato
+                ${where} ${like}
+                GROUP BY DATE(FECHA_HECHO), HOUR(FECHA_HECHO)
+                ORDER BY fecha, hora
+            `,
+            porDelitos: `
+                SELECT DELITO AS delito, COUNT(*) AS cantidad
+                FROM denuncias_completas_v9_sin_relato
+                ${andWhere} ${like} DELITO IS NOT NULL AND DELITO COLLATE utf8mb4_unicode_ci <> ''
+                GROUP BY DELITO
+                ORDER BY cantidad DESC
+            `,
+            porModalidad: `
+                SELECT MODALIDAD AS modalidad, COUNT(*) AS cantidad
+                FROM denuncias_completas_v9_sin_relato
+                ${andWhere} ${like} MODALIDAD IS NOT NULL AND MODALIDAD COLLATE utf8mb4_unicode_ci <> ''
+                GROUP BY MODALIDAD
+                ORDER BY cantidad DESC
+            `,
+            porSubmodalidad: `
+                SELECT SUBMODALIDAD AS submodalidad, COUNT(*) AS cantidad
+                FROM denuncias_completas_v9_sin_relato
+                ${andWhere} ${like} SUBMODALIDAD IS NOT NULL AND SUBMODALIDAD COLLATE utf8mb4_unicode_ci <> ''
+                GROUP BY SUBMODALIDAD
+                ORDER BY cantidad DESC
+            `,
+            porElementosSustraidos: `SELECT COUNT(*) AS porElementosSustraidos FROM denuncias_completas_v9_sin_relato ${where} ${like}`,
+            porVictimario: `SELECT COUNT(*) AS porVictimario FROM denuncias_completas_v9_sin_relato ${where} ${like}`,
+        }
+
+        const [total, interes, noInteres, victima, robo, hurtos, roboArma, porFechas, porFechaYHora, porDelitos, porModalidad, porSubmodalidad, porElementosSustraidos, porVictimario] = await Promise.all([
+            sequelize.query(queries.total, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
+            sequelize.query(queries.interes, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
+            sequelize.query(queries.noInteres, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
+            sequelize.query(queries.victima, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
+            sequelize.query(queries.robo, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
+            sequelize.query(queries.hurtos, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
+            sequelize.query(queries.roboArma, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
+            sequelize.query(queries.porFechas, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
+            sequelize.query(queries.porFechaYHora, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
+            sequelize.query(queries.porDelitos, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
+            sequelize.query(queries.porModalidad, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
+            sequelize.query(queries.porSubmodalidad, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
+            sequelize.query(queries.porElementosSustraidos, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
+            sequelize.query(queries.porVictimario, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
+        ]);
+
+        res.status(200).json({
+            total,
+            interes,
+            noInteres,
+            victima,
+            robo,
+            hurtos,
+            roboArma,
+            porFechas,
+            porFechaYHora,
+            porDelitos,
+            porModalidad,
+            porSubmodalidad,
+            porElementosSustraidos,
+            porVictimario
         });
-
-        res.status(200).json(result);
     } catch (error) {
         console.error('Error en getVista:', error);
         res.status(500).json({ message: error.message });
