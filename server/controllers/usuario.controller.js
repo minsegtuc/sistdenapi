@@ -563,27 +563,27 @@ const getVistaSinRelatoStaging = async (req, res) => {
     }
 
     if (unidadRegional && unidadRegional.trim() !== '') {
-        whereClause.push(`\`UNIDAD REGIONAL\` COLLATE utf8mb4_0900_ai_ci = :unidadRegional`);
+        whereClause.push(`\`UNIDAD REGIONAL\` = CAST(:unidadRegional AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_0900_ai_ci`);
         replacements.unidadRegional = unidadRegional;
     }
 
     if (localidad && localidad.trim() !== '') {
-        whereClause.push(`LOCALIDAD COLLATE utf8mb4_0900_ai_ci = :localidad`);
+        whereClause.push(`LOCALIDAD = CAST(:localidad AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_0900_ai_ci`);
         replacements.localidad = localidad;
     }
 
     if (modalidad && modalidad.trim() !== '') {
-        whereClause.push(`MODALIDAD COLLATE utf8mb4_0900_ai_ci = :modalidad`);
+        whereClause.push(`MODALIDAD = CAST(:modalidad AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_0900_ai_ci`);
         replacements.modalidad = modalidad;
     }
 
     if (elementosSustraidos && elementosSustraidos.trim() !== '') {
-        likeClause.push(`\`ELEMENTOS SUSTRAIDOS\` COLLATE utf8mb4_0900_ai_ci LIKE :elementosSustraidos`);
+        likeClause.push(`\`ELEMENTOS SUSTRAIDOS\` LIKE CAST(:elementosSustraidos AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_0900_ai_ci`);
         replacements.elementosSustraidos = `%${elementosSustraidos}%`;
     }
 
     if (victimario && victimario.trim() !== '') {
-        likeClause.push(`VICTIMARIO COLLATE utf8mb4_0900_ai_ci LIKE :victimario`);
+        likeClause.push(`VICTIMARIO LIKE CAST(:victimario AS CHAR CHARACTER SET utf8mb4) COLLATE utf8mb4_0900_ai_ci`);
         replacements.victimario = `%${victimario}%`;
     }
 
@@ -618,21 +618,21 @@ const getVistaSinRelatoStaging = async (req, res) => {
             porDelitos: `
                 SELECT DELITO AS delito, COUNT(*) AS cantidad
                 FROM denuncias_completas_v9_sin_relato
-                ${andWhere} ${like} DELITO IS NOT NULL AND DELITO COLLATE utf8mb4_unicode_ci <> ''
+                ${andWhere} ${like} DELITO IS NOT NULL AND DELITO <> ''
                 GROUP BY DELITO
                 ORDER BY cantidad DESC
             `,
             porModalidad: `
                 SELECT MODALIDAD AS modalidad, COUNT(*) AS cantidad
                 FROM denuncias_completas_v9_sin_relato
-                ${andWhere} ${like} MODALIDAD IS NOT NULL AND MODALIDAD COLLATE utf8mb4_unicode_ci <> ''
+                ${andWhere} ${like} MODALIDAD IS NOT NULL AND MODALIDAD <> ''
                 GROUP BY MODALIDAD
                 ORDER BY cantidad DESC
             `,
             porSubmodalidad: `
                 SELECT SUBMODALIDAD AS submodalidad, COUNT(*) AS cantidad
                 FROM denuncias_completas_v9_sin_relato
-                ${andWhere} ${like} SUBMODALIDAD IS NOT NULL AND SUBMODALIDAD COLLATE utf8mb4_unicode_ci <> ''
+                ${andWhere} ${like} SUBMODALIDAD IS NOT NULL AND SUBMODALIDAD <> ''
                 GROUP BY SUBMODALIDAD
                 ORDER BY cantidad DESC
             `,
