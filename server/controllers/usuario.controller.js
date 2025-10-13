@@ -501,11 +501,12 @@ const getVistaSinRelato = async (req, res) => {
 }
 
 const getVistaSinRelatoStaging = async (req, res) => {
-    const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, especialidad, seguro, riesgo, lugar_del_hecho, comisaria } = req.body;
+    const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, especialidad, seguro, riesgo, lugar_del_hecho, comisaria, unidadRegional, localidad, modalidad, elementosSustraidos, victimario } = req.body;
 
     console.log(req.body)
 
     let whereClause = []
+    let likeClause = []
     let replacements = {}
 
     whereClause.push(`\`CLASIFICADA POR\` COLLATE utf8mb4_unicode_ci <> 2`);
@@ -561,13 +562,40 @@ const getVistaSinRelatoStaging = async (req, res) => {
         replacements.comisaria = comisaria;
     }
 
+    if (unidadRegional && unidadRegional.trim() !== '') {
+        whereClause.push(`\`UNIDAD REGIONAL\` COLLATE utf8mb4_unicode_ci = :unidadRegional`);
+        replacements.unidadRegional = unidadRegional;
+    }
+
+    if (localidad && localidad.trim() !== '') {
+        whereClause.push(`LOCALIDAD COLLATE utf8mb4_unicode_ci = :localidad`);
+        replacements.localidad = localidad;
+    }
+
+    if (modalidad && modalidad.trim() !== '') {
+        whereClause.push(`MODALIDAD COLLATE utf8mb4_unicode_ci = :modalidad`);
+        replacements.modalidad = modalidad;
+    }
+
+    if (elementosSustraidos && elementosSustraidos.trim() !== '') {
+        likeClause.push(`\`ELEMENTOS SUSTRAIDOS\` COLLATE utf8mb4_unicode_ci LIKE :elementosSustraidos`);
+        replacements.elementosSustraidos = `%${elementosSustraidos}%`;
+    }
+
+    if (victimario && victimario.trim() !== '') {
+        likeClause.push(`VICTIMARIO COLLATE utf8mb4_unicode_ci LIKE :victimario`);
+        replacements.victimario = `%${victimario}%`;
+    }
+
     const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
+    const like = likeClause.length > 0 ? (where ? ` AND ${likeClause.join(' AND ')}` : `WHERE ${likeClause.join(' AND ')}`) : '';
 
     try {
         const query = `
             SELECT *
             FROM denuncias_completas_v9_sin_relato
-            ${where};
+            ${where}
+            ${like};
         `;
 
         const result = await sequelize.query(query, {
