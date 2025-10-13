@@ -12,7 +12,7 @@ router.get('/user', verifyToken, getAllUsers);
 router.get('/user/:id', verifyToken, getUserById);
 router.get('/ranking', verifyToken, getRanking)
 router.get('/rankingDiario', verifyToken, getRankingDiario)
-router.get('/rankingDiario', verifyToken, getRankingObservada)
+router.get('/rankingObservadas', verifyToken, getRankingObservada)
 router.post('/vista', verifyToken, getVista)
 router.post('/vistaSinRelato', verifyToken, getVistaSinRelato)
 router.post('/vistaMapa', verifyToken, getVistaMapa)
