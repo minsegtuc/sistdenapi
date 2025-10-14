@@ -335,7 +335,7 @@ const getVistaFiltros = async (req, res) => {
 
 const getVista = async (req, res) => {
     console.log(req.user?.id)
-    const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, especialidad, seguro, riesgo, lugar_del_hecho, comisaria } = req.body;
+    const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, seguro, riesgo, lugar_del_hecho, comisaria } = req.body;
 
     console.log(req.body)
 
@@ -368,11 +368,6 @@ const getVista = async (req, res) => {
     if (interes !== undefined && interes !== '') {
         whereClause.push(`INTERES COLLATE utf8mb4_unicode_ci = :interes`);
         replacements.interes = interes;
-    }
-
-    if (especialidad && especialidad.trim() !== '') {
-        whereClause.push(`ESPECIALIZACION COLLATE utf8mb4_unicode_ci = :especializacion`);
-        replacements.especializacion = especializacion;
     }
 
     if (seguro && seguro.trim() !== '') {
