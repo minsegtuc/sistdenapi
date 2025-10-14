@@ -707,10 +707,10 @@ const getVistaSinRelatoStaging = async (req, res) => {
                 ORDER BY fecha
             `,
             porFechaYHora: `
-                SELECT DATE(FECHA_HECHO) AS fecha, HOUR(FECHA_HECHO) AS hora, COUNT(*) AS cantidad
+                SELECT DATE(FECHA_HECHO) AS fecha, HOUR(HORA) AS hora, COUNT(*) AS cantidad
                 FROM denuncias_completas_v9_sin_relato
                 ${where} ${like}
-                GROUP BY DATE(FECHA_HECHO), HOUR(FECHA_HECHO)
+                GROUP BY DATE(FECHA_HECHO), HOUR(HORA)
                 ORDER BY fecha, hora
             `,
             porDelitos: `
