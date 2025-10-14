@@ -808,7 +808,7 @@ const getVistaSinRelatoStaging = async (req, res) => {
             value DESC;`
         }
 
-        const [total, interes, noInteres, victima, robo, hurtos, roboArma, porFechas, porFechaYHora, porDelitos, porModalidad, porSubmodalidad, porElementosSustraidos, porVictimario] = await Promise.all([
+        const [total, interes, noInteres, victima, robo, hurtos, roboArma, porFechas, porFechaYHora, porDelitos, porModalidad, porSubmodalidad, porElementosSustraidos, porVictimario, deArmasAMovilidad, deMovilidadALugar] = await Promise.all([
             sequelize.query(queries.total, {
                 type: Sequelize.QueryTypes.SELECT,
                 replacements
@@ -865,6 +865,14 @@ const getVistaSinRelatoStaging = async (req, res) => {
                 type: Sequelize.QueryTypes.SELECT,
                 replacements
             }),
+            sequelize.query(queries.deArmasAMovilidad, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
+            sequelize.query(queries.deMovilidadALugar, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
         ]);
 
         res.status(200).json({
@@ -881,7 +889,9 @@ const getVistaSinRelatoStaging = async (req, res) => {
             porModalidad,
             porSubmodalidad,
             porElementosSustraidos,
-            porVictimario
+            porVictimario,
+            deArmasAMovilidad,
+            deMovilidadALugar
         });
     } catch (error) {
         console.error('Error en getVistaSinRelatoStaging:', error);
