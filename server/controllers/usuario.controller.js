@@ -662,7 +662,7 @@ const getVistaSinRelatoStaging = async (req, res) => {
 
     if (unidadRegional?.trim()) {
         whereClause.push(`\`UNIDAD REGIONAL\` COLLATE utf8mb4_0900_ai_ci = :unidadRegional`);
-        replacements.unidadRegional = unidadRegional.rim();
+        replacements.unidadRegional = unidadRegional.trim();
     }
 
     if (localidad?.trim()) {
