@@ -333,61 +333,149 @@ const getVistaFiltros = async (req, res) => {
     }
 };
 
+// const getVista = async (req, res) => {
+//     console.log(req.user?.id)
+//     const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, seguro, riesgo, lugar_del_hecho, comisaria } = req.body;
+
+//     console.log(req.body)
+
+//     let whereClause = []
+//     let replacements = {}
+
+//     // whereClause.push(`\`CLASIFICADA POR\` COLLATE utf8mb4_unicode_ci <> 2`);
+
+//     if (fechaInicio && fechaFin) {
+//         whereClause.push(`FECHA_HECHO BETWEEN :fechaInicio AND :fechaFin`)
+//         replacements.fechaInicio = fechaInicio
+//         replacements.fechaFin = fechaFin
+//     }
+
+//     if (delito && delito.trim() !== '') {
+//         whereClause.push(`DELITO COLLATE utf8mb4_unicode_ci = :delito`);
+//         replacements.delito = delito;
+//     }
+
+//     if (submodalidad && submodalidad.trim() !== '') {
+//         whereClause.push(`SUBMODALIDAD COLLATE utf8mb4_unicode_ci = :submodalidad`);
+//         replacements.submodalidad = submodalidad;
+//     }
+
+//     if (arma && arma.trim() !== '') {
+//         whereClause.push(`\`ARMA UTILIZADA\` COLLATE utf8mb4_unicode_ci = :arma`);
+//         replacements.arma = arma;
+//     }
+
+//     if (interes !== undefined && interes !== '') {
+//         whereClause.push(`INTERES COLLATE utf8mb4_unicode_ci = :interes`);
+//         replacements.interes = interes;
+//     }
+
+//     if (seguro && seguro.trim() !== '') {
+//         whereClause.push(`\`PARA SEGURO\`COLLATE utf8mb4_unicode_ci = :seguro`);
+//         replacements.seguro = seguro;
+//     }
+
+//     if (riesgo && riesgo.trim() !== '') {
+//         whereClause.push(`VICTIMA COLLATE utf8mb4_unicode_ci = :riesgo`);
+//         replacements.riesgo = riesgo;
+//     }
+
+//     if (lugar_del_hecho && String(lugar_del_hecho).trim() !== '') {
+//         whereClause.push(`Lugar_del_Hecho COLLATE utf8mb4_unicode_ci = :lugar_del_hecho`);
+//         replacements.lugar_del_hecho = String(lugar_del_hecho).trim();
+//     }
+
+//     if (comisaria && comisaria.trim() !== '') {
+//         whereClause.push(`COMISARIA COLLATE utf8mb4_unicode_ci = :comisaria`);
+//         replacements.comisaria = comisaria;
+//     }
+
+//     const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
+
+//     try {
+//         const query = `
+//             SELECT *
+//             FROM denuncias_completas_v9
+//             ${where};
+//         `;
+
+//         const result = await sequelize.query(query, {
+//             type: Sequelize.QueryTypes.SELECT,
+//             replacements
+//         });
+
+//         await registrarLog("Consulta", "Se ha realizado una consulta con filtros", req.userId);
+
+//         res.status(200).json(result);
+//     } catch (error) {
+//         console.error('Error en getVista:', error);
+//         res.status(500).json({ message: error.message });
+//     }
+// }
+
 const getVista = async (req, res) => {
-    console.log(req.user?.id)
-    const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, seguro, riesgo, lugar_del_hecho, comisaria } = req.body;
+    console.log(req.user?.id);
 
-    console.log(req.body)
+    const {
+        fechaInicio,
+        fechaFin,
+        delito = '',
+        submodalidad = '',
+        interes = '',
+        arma = '',
+        seguro = '',
+        riesgo = '',
+        lugar_del_hecho = '',
+        comisaria = ''
+    } = req.body || {};
 
-    let whereClause = []
-    let replacements = {}
-
-    // whereClause.push(`\`CLASIFICADA POR\` COLLATE utf8mb4_unicode_ci <> 2`);
+    let whereClause = [];
+    let replacements = {};
 
     if (fechaInicio && fechaFin) {
-        whereClause.push(`FECHA_HECHO BETWEEN :fechaInicio AND :fechaFin`)
-        replacements.fechaInicio = fechaInicio
-        replacements.fechaFin = fechaFin
+        whereClause.push(`FECHA_HECHO BETWEEN :fechaInicio AND :fechaFin`);
+        replacements.fechaInicio = fechaInicio;
+        replacements.fechaFin = fechaFin;
     }
 
-    if (delito && delito.trim() !== '') {
+    if (delito?.trim()) {
         whereClause.push(`DELITO COLLATE utf8mb4_unicode_ci = :delito`);
-        replacements.delito = delito;
+        replacements.delito = delito.trim();
     }
 
-    if (submodalidad && submodalidad.trim() !== '') {
+    if (submodalidad?.trim()) {
         whereClause.push(`SUBMODALIDAD COLLATE utf8mb4_unicode_ci = :submodalidad`);
-        replacements.submodalidad = submodalidad;
+        replacements.submodalidad = submodalidad.trim();
     }
 
-    if (arma && arma.trim() !== '') {
+    if (arma?.trim()) {
         whereClause.push(`\`ARMA UTILIZADA\` COLLATE utf8mb4_unicode_ci = :arma`);
-        replacements.arma = arma;
+        replacements.arma = arma.trim();
     }
 
-    if (interes !== undefined && interes !== '') {
+    if (interes?.trim()) {
         whereClause.push(`INTERES COLLATE utf8mb4_unicode_ci = :interes`);
-        replacements.interes = interes;
+        replacements.interes = interes.trim();
     }
 
-    if (seguro && seguro.trim() !== '') {
-        whereClause.push(`\`PARA SEGURO\`COLLATE utf8mb4_unicode_ci = :seguro`);
-        replacements.seguro = seguro;
+    if (seguro?.trim()) {
+        whereClause.push(`\`PARA SEGURO\` COLLATE utf8mb4_unicode_ci = :seguro`);
+        replacements.seguro = seguro.trim();
     }
 
-    if (riesgo && riesgo.trim() !== '') {
+    if (riesgo?.trim()) {
         whereClause.push(`VICTIMA COLLATE utf8mb4_unicode_ci = :riesgo`);
-        replacements.riesgo = riesgo;
+        replacements.riesgo = riesgo.trim();
     }
 
-    if (lugar_del_hecho && String(lugar_del_hecho).trim() !== '') {
+    if (String(lugar_del_hecho)?.trim()) {
         whereClause.push(`Lugar_del_Hecho COLLATE utf8mb4_unicode_ci = :lugar_del_hecho`);
         replacements.lugar_del_hecho = String(lugar_del_hecho).trim();
     }
 
-    if (comisaria && comisaria.trim() !== '') {
+    if (comisaria?.trim()) {
         whereClause.push(`COMISARIA COLLATE utf8mb4_unicode_ci = :comisaria`);
-        replacements.comisaria = comisaria;
+        replacements.comisaria = comisaria.trim();
     }
 
     const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
@@ -411,7 +499,8 @@ const getVista = async (req, res) => {
         console.error('Error en getVista:', error);
         res.status(500).json({ message: error.message });
     }
-}
+};
+
 
 const getVistaSinRelato = async (req, res) => {
     const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, especialidad, seguro, riesgo, lugar_del_hecho, comisaria } = req.body;
