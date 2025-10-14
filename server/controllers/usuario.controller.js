@@ -785,7 +785,7 @@ const getVistaSinRelatoStaging = async (req, res) => {
             FROM
             denuncias_completas_v9_sin_relato
             ${andWhere} ${like}
-            \`CLASIFICADA POR\` <> 2 AND FECHA_HECHO >= '2025-10-01' AND INTERES = 'SI'
+            \`CLASIFICADA POR\` <> 2
             GROUP BY
             arma,
             movilidad
@@ -800,7 +800,7 @@ const getVistaSinRelatoStaging = async (req, res) => {
             FROM
             denuncias_completas_v9_sin_relato
             WHERE
-            \`CLASIFICADA POR\` <> 2 AND FECHA_HECHO >= '2025-10-01' AND INTERES = 'SI'
+            \`CLASIFICADA POR\` <> 2
             GROUP BY
             movilidad,
             lugarDelHecho
