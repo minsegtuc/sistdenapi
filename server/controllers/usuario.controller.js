@@ -588,22 +588,22 @@ const getVistaSinRelatoStaging = async (req, res) => {
     await sequelize.query("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;");
     await sequelize.query("SET collation_connection = 'utf8mb4_unicode_ci';");
 
-    const { 
-        fechaInicio, 
-        fechaFin, 
-        delito = '', 
-        submodalidad = '', 
-        interes = '', 
-        arma = '', 
-        seguro = '', 
-        riesgo = '', 
-        lugar_del_hecho = '', 
-        comisaria = '', 
-        unidadRegional = '', 
-        localidad = '', 
-        modalidad = '', 
-        elementosSustraidos = '', 
-        victimario = '' 
+    const {
+        fechaInicio,
+        fechaFin,
+        delito = '',
+        submodalidad = '',
+        interes = '',
+        arma = '',
+        seguro = '',
+        riesgo = '',
+        lugar_del_hecho = '',
+        comisaria = '',
+        unidadRegional = '',
+        localidad = '',
+        modalidad = '',
+        elementosSustraidos = '',
+        victimario = ''
     } = req.body || {};
 
     console.log(req.body)
@@ -777,6 +777,35 @@ const getVistaSinRelatoStaging = async (req, res) => {
             ORDER BY
             cantidad DESC;
             `,
+            deArmasAMovilidad: `
+            SELECT
+            COALESCE(NULLIF(\`ARMA UTILIZADA\` COLLATE utf8mb4_0900_ai_ci, ''), 'SIN ARMA') AS arma,
+            COALESCE(NULLIF(MOVILIDAD COLLATE utf8mb4_0900_ai_ci, ''), 'SIN MOVILIDAD') AS movilidad,
+            COUNT(*) AS value
+            FROM
+            denuncias_completas_v9_sin_relato
+            ${andWhere} ${like}
+            \`CLASIFICADA POR\` COLLATE utf8mb4_0900_ai_ci <> 2 AND FECHA_HECHO >= '2025-10-01' AND INTERES = 'SI'
+            GROUP BY
+            arma,
+            movilidad
+            ORDER BY
+            value DESC;
+            `,
+            deMovilidadALugar: `
+            SELECT
+            COALESCE(NULLIF(MOVILIDAD COLLATE utf8mb4_0900_ai_ci, ''), 'SIN MOVILIDAD') AS movilidad,
+            COALESCE(NULLIF(Lugar_del_Hecho COLLATE utf8mb4_0900_ai_ci, ''), 'LUGAR NO ESPECIFICADO') AS lugarDelHecho,
+            COUNT(*) AS value
+            FROM
+            denuncias_completas_v9_sin_relato
+            WHERE
+            \`CLASIFICADA POR\` COLLATE utf8mb4_0900_ai_ci <> 2 AND FECHA_HECHO >= '2025-10-01' AND INTERES = 'SI'
+            GROUP BY
+            movilidad,
+            lugarDelHecho
+            ORDER BY
+            value DESC;`
         }
 
         const [total, interes, noInteres, victima, robo, hurtos, roboArma, porFechas, porFechaYHora, porDelitos, porModalidad, porSubmodalidad, porElementosSustraidos, porVictimario] = await Promise.all([
