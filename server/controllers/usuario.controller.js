@@ -692,6 +692,7 @@ const getVistaSinRelatoStaging = async (req, res) => {
         const andWhere = where ? `${where} AND` : 'WHERE';
 
         const queries = {
+            total: `SELECT COUNT(*) AS total FROM denuncias_completas_v9_sin_relato ${where} ${like}`,
             interes: `SELECT COUNT(*) AS interes FROM denuncias_completas_v9_sin_relato ${where} ${like} AND INTERES = CONVERT('SI' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
             noInteres: `SELECT COUNT(*) AS noInteres FROM denuncias_completas_v9_sin_relato ${where} ${like} AND INTERES = CONVERT('NO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
             victima: `SELECT COUNT(*) AS victima FROM denuncias_completas_v9_sin_relato ${where} ${like} AND VICTIMA = CONVERT('CON RIESGO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
