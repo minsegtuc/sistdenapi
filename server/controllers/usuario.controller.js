@@ -779,13 +779,13 @@ const getVistaSinRelatoStaging = async (req, res) => {
             `,
             deArmasAMovilidad: `
             SELECT
-            COALESCE(NULLIF(\`ARMA UTILIZADA\` COLLATE utf8mb4_0900_ai_ci, ''), 'SIN ARMA') AS arma,
-            COALESCE(NULLIF(MOVILIDAD COLLATE utf8mb4_0900_ai_ci, ''), 'SIN MOVILIDAD') AS movilidad,
+            COALESCE(NULLIF(\`ARMA UTILIZADA\`, ''), 'SIN ARMA') AS arma,
+            COALESCE(NULLIF(MOVILIDAD, ''), 'SIN MOVILIDAD') AS movilidad,
             COUNT(*) AS value
             FROM
             denuncias_completas_v9_sin_relato
             ${andWhere} ${like}
-            \`CLASIFICADA POR\` COLLATE utf8mb4_0900_ai_ci <> 2 AND FECHA_HECHO >= '2025-10-01' AND INTERES = 'SI'
+            \`CLASIFICADA POR\` <> 2 AND FECHA_HECHO >= '2025-10-01' AND INTERES = 'SI'
             GROUP BY
             arma,
             movilidad
@@ -794,13 +794,13 @@ const getVistaSinRelatoStaging = async (req, res) => {
             `,
             deMovilidadALugar: `
             SELECT
-            COALESCE(NULLIF(MOVILIDAD COLLATE utf8mb4_0900_ai_ci, ''), 'SIN MOVILIDAD') AS movilidad,
-            COALESCE(NULLIF(Lugar_del_Hecho COLLATE utf8mb4_0900_ai_ci, ''), 'LUGAR NO ESPECIFICADO') AS lugarDelHecho,
+            COALESCE(NULLIF(MOVILIDAD, ''), 'SIN MOVILIDAD') AS movilidad,
+            COALESCE(NULLIF(Lugar_del_Hecho, ''), 'LUGAR NO ESPECIFICADO') AS lugarDelHecho,
             COUNT(*) AS value
             FROM
             denuncias_completas_v9_sin_relato
             WHERE
-            \`CLASIFICADA POR\` COLLATE utf8mb4_0900_ai_ci <> 2 AND FECHA_HECHO >= '2025-10-01' AND INTERES = 'SI'
+            \`CLASIFICADA POR\` <> 2 AND FECHA_HECHO >= '2025-10-01' AND INTERES = 'SI'
             GROUP BY
             movilidad,
             lugarDelHecho
