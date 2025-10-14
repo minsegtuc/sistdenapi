@@ -579,7 +579,7 @@ const getVistaSinRelato = async (req, res) => {
 
         res.status(200).json(result);
     } catch (error) {
-        console.error('Error en getVista:', error);
+        console.error('Error en getVistaSinRelato:', error);
         res.status(500).json({ message: error.message });
     }
 }
@@ -588,7 +588,23 @@ const getVistaSinRelatoStaging = async (req, res) => {
     await sequelize.query("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;");
     await sequelize.query("SET collation_connection = 'utf8mb4_unicode_ci';");
 
-    const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, seguro, riesgo, lugar_del_hecho, comisaria, unidadRegional, localidad, modalidad, elementosSustraidos, victimario } = req.body;
+    const { 
+        fechaInicio, 
+        fechaFin, 
+        delito = '', 
+        submodalidad = '', 
+        interes = '', 
+        arma = '', 
+        seguro = '', 
+        riesgo = '', 
+        lugar_del_hecho = '', 
+        comisaria = '', 
+        unidadRegional = '', 
+        localidad = '', 
+        modalidad = '', 
+        elementosSustraidos = '', 
+        victimario = '' 
+    } = req.body || {};
 
     console.log(req.body)
 
@@ -604,69 +620,69 @@ const getVistaSinRelatoStaging = async (req, res) => {
         replacements.fechaFin = fechaFin
     }
 
-    if (delito && delito.trim() !== '') {
+    if (delito?.trim()) {
         whereClause.push(`DELITO COLLATE utf8mb4_0900_ai_ci = :delito`);
-        replacements.delito = delito;
+        replacements.delito = delito.trim();
     }
 
-    if (submodalidad && submodalidad.trim() !== '') {
+    if (submodalidad?.trim()) {
         whereClause.push(`SUBMODALIDAD COLLATE utf8mb4_0900_ai_ci = :submodalidad`);
-        replacements.submodalidad = submodalidad;
+        replacements.submodalidad = submodalidad.trim();
     }
 
-    if (arma && arma.trim() !== '') {
+    if (arma?.trim()) {
         whereClause.push(`\`ARMA UTILIZADA\` COLLATE utf8mb4_0900_ai_ci = :arma`);
-        replacements.arma = arma;
+        replacements.arma = arma.trim();
     }
 
-    if (interes !== undefined && interes !== '') {
+    if (interes?.trim()) {
         whereClause.push(`INTERES COLLATE utf8mb4_0900_ai_ci = :interes`);
-        replacements.interes = interes;
+        replacements.interes = interes.trim();
     }
 
-    if (seguro && seguro.trim() !== '') {
+    if (seguro?.trim()) {
         whereClause.push(`\`PARA SEGURO\`COLLATE utf8mb4_0900_ai_ci = :seguro`);
-        replacements.seguro = seguro;
+        replacements.seguro = seguro.trim();
     }
 
-    if (riesgo && riesgo.trim() !== '') {
+    if (riesgo?.trim()) {
         whereClause.push(`VICTIMA COLLATE utf8mb4_0900_ai_ci = :riesgo`);
-        replacements.riesgo = riesgo;
+        replacements.riesgo = riesgo.trim();
     }
 
-    if (lugar_del_hecho && String(lugar_del_hecho).trim() !== '') {
+    if (String(lugar_del_hecho)?.trim()) {
         whereClause.push(`Lugar_del_Hecho COLLATE utf8mb4_0900_ai_ci = :lugar_del_hecho`);
         replacements.lugar_del_hecho = String(lugar_del_hecho).trim();
     }
 
-    if (comisaria && comisaria.trim() !== '') {
+    if (comisaria?.trim()) {
         whereClause.push(`COMISARIA COLLATE utf8mb4_0900_ai_ci = :comisaria`);
-        replacements.comisaria = comisaria;
+        replacements.comisaria = comisaria.trim();
     }
 
-    if (unidadRegional && unidadRegional.trim() !== '') {
+    if (unidadRegional?.trim()) {
         whereClause.push(`\`UNIDAD REGIONAL\` COLLATE utf8mb4_0900_ai_ci = :unidadRegional`);
-        replacements.unidadRegional = unidadRegional;
+        replacements.unidadRegional = unidadRegional.rim();
     }
 
-    if (localidad && localidad.trim() !== '') {
+    if (localidad?.trim()) {
         whereClause.push(`LOCALIDAD COLLATE utf8mb4_0900_ai_ci = :localidad`);
-        replacements.localidad = localidad;
+        replacements.localidad = localidad.trim();
     }
 
-    if (modalidad && modalidad.trim() !== '') {
+    if (modalidad?.trim()) {
         whereClause.push(`MODALIDAD COLLATE utf8mb4_0900_ai_ci = :modalidad`);
-        replacements.modalidad = modalidad;
+        replacements.modalidad = modalidad.trim();
     }
 
-    if (elementosSustraidos && elementosSustraidos.trim() !== '') {
+    if (elementosSustraidos?.trim()) {
         likeClause.push(`\`ELEMENTOS SUSTRAIDOS\` COLLATE utf8mb4_0900_ai_ci LIKE :elementosSustraidos`);
-        replacements.elementosSustraidos = `%${elementosSustraidos}%`;
+        replacements.elementosSustraidos = `%${elementosSustraidos.trim()}%`;
     }
 
-    if (victimario && victimario.trim() !== '') {
+    if (victimario?.trim()) {
         likeClause.push(`VICTIMARIO COLLATE utf8mb4_0900_ai_ci LIKE :victimario`);
-        replacements.victimario = `%${victimario}%`;
+        replacements.victimario = `%${victimario.trim()}%`;
     }
 
     const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
@@ -797,7 +813,7 @@ const getVistaSinRelatoStaging = async (req, res) => {
             porVictimario
         });
     } catch (error) {
-        console.error('Error en getVista:', error);
+        console.error('Error en getVistaSinRelatoStaging:', error);
         res.status(500).json({ message: error.message });
     }
 }
