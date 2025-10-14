@@ -501,6 +501,9 @@ const getVistaSinRelato = async (req, res) => {
 }
 
 const getVistaSinRelatoStaging = async (req, res) => {
+    await sequelize.query("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;");
+    await sequelize.query("SET collation_connection = 'utf8mb4_unicode_ci';");
+
     const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, especialidad, seguro, riesgo, lugar_del_hecho, comisaria, unidadRegional, localidad, modalidad, elementosSustraidos, victimario } = req.body;
 
     console.log(req.body)
