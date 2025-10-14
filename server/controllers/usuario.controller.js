@@ -734,7 +734,27 @@ const getVistaSinRelatoStaging = async (req, res) => {
                 GROUP BY SUBMODALIDAD
                 ORDER BY cantidad DESC
             `,
-            porElementosSustraidos: `SELECT COUNT(*) AS porElementosSustraidos FROM denuncias_completas_v9_sin_relato ${where} ${like}`,
+            porElementosSustraidos: `
+            SELECT
+            TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(t.'ELEMENTOS SUSTRAIDOS', ',', n.n), ',', -1)) AS elemento_individual,
+            COUNT(*) AS cantidad
+            FROM
+            denuncias_completas_v9_sin_relato t
+            INNER JOIN
+                (
+                    SELECT a.N + b.N*10 + 1 AS n
+                    FROM
+                    (SELECT 0 AS N UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) a
+                    CROSS JOIN
+                    (SELECT 0 AS N UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) b
+                ) n
+                ON CHAR_LENGTH(t.'ELEMENTOS SUSTRAIDOS') - CHAR_LENGTH(REPLACE(t.'ELEMENTOS SUSTRAIDOS', ',', '')) >= n.n - 1
+            ${andWhere} ${like} t.'ELEMENTOS SUSTRAIDOS' IS NOT NULL AND TRIM(t.'ELEMENTOS SUSTRAIDOS') <> ''
+            AND t.'ELEMENTOS SUSTRAIDOS' NOT LIKE '[]'
+            GROUP BY
+            elemento_individual
+            ORDER BY
+            cantidad DESC;`,
             porVictimario: `
             SELECT
             TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(t.victimario, ',', n.n), ',', -1)) AS nombre_individual,
