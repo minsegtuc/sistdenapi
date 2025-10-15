@@ -687,7 +687,7 @@ const getVistaSinRelatoStaging = async (req, res) => {
 
     const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
     const like = likeClause.length > 0 ? (where ? ` AND ${likeClause.join(' AND ')}` : `WHERE ${likeClause.join(' AND ')}`) : '';
-    
+
     try {
         const andWhere = where ? `${where} AND` : 'WHERE';
 
@@ -771,21 +771,21 @@ const getVistaSinRelatoStaging = async (req, res) => {
             `,
             porElementosSustraidos: `
             SELECT
-            TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(t.\`ELEMENTOS SUSTRAIDOS\`, ',', n.n), ',', -1)) AS elemento_individual,
+            TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(t.elementoSustraido, ',', n.n), ',', -1)) AS elemento_individual,
             COUNT(*) AS cantidad
             FROM
-            denuncias_completas_v9_sin_relato t
+            denuncia t
             INNER JOIN
-                (
-                    SELECT a.N + b.N*10 + 1 AS n
-                    FROM
-                    (SELECT 0 AS N UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) a
-                    CROSS JOIN
-                    (SELECT 0 AS N UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) b
-                ) n
-                ON CHAR_LENGTH(t.\`ELEMENTOS SUSTRAIDOS\`) - CHAR_LENGTH(REPLACE(t.\`ELEMENTOS SUSTRAIDOS\`, ',', '')) >= n.n - 1
-            ${andWhere} ${like} t.\`ELEMENTOS SUSTRAIDOS\` IS NOT NULL AND TRIM(t.\`ELEMENTOS SUSTRAIDOS\`) <> ''
-            AND t.\`ELEMENTOS SUSTRAIDOS\` NOT LIKE '[]'
+            (
+            SELECT a.N + b.N*10 + 1 AS n
+            FROM
+            (SELECT 0 AS N UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) a
+            CROSS JOIN
+            (SELECT 0 AS N UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) b
+            ) n
+            ON CHAR_LENGTH(t.elementoSustraido) - CHAR_LENGTH(REPLACE(t.elementoSustraido, ',', '')) >= n.n - 1
+            ${andWhere} ${like} t.elementoSustraido IS NOT NULL AND TRIM(t.elementoSustraido) <> ''
+            AND t.elementoSustraido NOT LIKE '[]' and t.isClassificated <> 2
             GROUP BY
             elemento_individual
             ORDER BY
@@ -795,7 +795,7 @@ const getVistaSinRelatoStaging = async (req, res) => {
             TRIM(SUBSTRING_INDEX(SUBSTRING_INDEX(t.victimario, ',', n.n), ',', -1)) AS nombre_individual,
             COUNT(*) AS cantidad
             FROM
-            denuncias_completas_v9_sin_relato t
+            denuncia t
             INNER JOIN
                 (
                     SELECT a.N + b.N*10 + 1 AS n
@@ -805,7 +805,7 @@ const getVistaSinRelatoStaging = async (req, res) => {
                     (SELECT 0 AS N UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) b
                 ) n
                 ON CHAR_LENGTH(t.victimario) - CHAR_LENGTH(REPLACE(t.victimario, ',', '')) >= n.n - 1
-            ${andWhere} ${like} t.victimario IS NOT NULL AND TRIM(t.victimario) <> ''
+            ${andWhere} ${like} t.victimario IS NOT NULL AND TRIM(t.victimario) <> '' AND t.isClassificated <> 2
             AND t.victimario NOT LIKE '[]'
             GROUP BY
             nombre_individual
@@ -829,16 +829,16 @@ const getVistaSinRelatoStaging = async (req, res) => {
             `,
             deMovilidadALugar: `
             SELECT
-            COALESCE(NULLIF(MOVILIDAD, ''), 'SIN MOVILIDAD') AS movilidad,
-            COALESCE(NULLIF(Lugar_del_Hecho, ''), 'LUGAR NO ESPECIFICADO') AS lugarDelHecho,
+            COALESCE(NULLIF(m.descripcion, ''), 'SIN MOVILIDAD') AS movilidad,
+            COALESCE(NULLIF(d.lugar_del_hecho, ''), 'LUGAR NO ESPECIFICADO') AS lugarDelHecho,
             COUNT(*) AS value
             FROM
-            denuncias_completas_v9_sin_relato
+            denuncia d
+            LEFT JOIN movilidad m ON d.movilidadId = m.idMovilidad
             ${andWhere} ${like}
-            \`CLASIFICADA POR\` <> 2
+            d.isClassificated <> 2
             GROUP BY
-            movilidad,
-            lugarDelHecho
+            movilidad, lugarDelHecho
             ORDER BY
             value DESC;`
         }
@@ -989,824 +989,824 @@ const getVistaSinRelatoStagingReducida = async (req, res) => {
 
     whereClause.push(`\`CLASIFICADA POR\` COLLATE utf8mb4_0900_ai_ci <> 2`);
 
-    if (fechaInicio && fechaFin) {
-        whereClause.push(`FECHA_HECHO BETWEEN :fechaInicio AND :fechaFin`)
-        replacements.fechaInicio = fechaInicio
-        replacements.fechaFin = fechaFin
-    }
+        if (fechaInicio && fechaFin) {
+            whereClause.push(`FECHA_HECHO BETWEEN :fechaInicio AND :fechaFin`)
+            replacements.fechaInicio = fechaInicio
+            replacements.fechaFin = fechaFin
+        }
 
-    if (delito?.trim()) {
-        whereClause.push(`DELITO COLLATE utf8mb4_0900_ai_ci = :delito`);
-        replacements.delito = delito.trim();
-    }
+        if (delito?.trim()) {
+            whereClause.push(`DELITO COLLATE utf8mb4_0900_ai_ci = :delito`);
+            replacements.delito = delito.trim();
+        }
 
-    if (submodalidad?.trim()) {
-        whereClause.push(`SUBMODALIDAD COLLATE utf8mb4_0900_ai_ci = :submodalidad`);
-        replacements.submodalidad = submodalidad.trim();
-    }
+        if (submodalidad?.trim()) {
+            whereClause.push(`SUBMODALIDAD COLLATE utf8mb4_0900_ai_ci = :submodalidad`);
+            replacements.submodalidad = submodalidad.trim();
+        }
 
-    if (arma?.trim()) {
-        whereClause.push(`\`ARMA UTILIZADA\` COLLATE utf8mb4_0900_ai_ci = :arma`);
-        replacements.arma = arma.trim();
-    }
+        if (arma?.trim()) {
+            whereClause.push(`\`ARMA UTILIZADA\` COLLATE utf8mb4_0900_ai_ci = :arma`);
+            replacements.arma = arma.trim();
+        }
 
-    if (interes?.trim()) {
-        whereClause.push(`INTERES COLLATE utf8mb4_0900_ai_ci = :interes`);
-        replacements.interes = interes.trim();
-    }
+        if (interes?.trim()) {
+            whereClause.push(`INTERES COLLATE utf8mb4_0900_ai_ci = :interes`);
+            replacements.interes = interes.trim();
+        }
 
-    if (seguro?.trim()) {
-        whereClause.push(`\`PARA SEGURO\`COLLATE utf8mb4_0900_ai_ci = :seguro`);
-        replacements.seguro = seguro.trim();
-    }
+        if (seguro?.trim()) {
+            whereClause.push(`\`PARA SEGURO\`COLLATE utf8mb4_0900_ai_ci = :seguro`);
+            replacements.seguro = seguro.trim();
+        }
 
-    if (riesgo?.trim()) {
-        whereClause.push(`VICTIMA COLLATE utf8mb4_0900_ai_ci = :riesgo`);
-        replacements.riesgo = riesgo.trim();
-    }
+        if (riesgo?.trim()) {
+            whereClause.push(`VICTIMA COLLATE utf8mb4_0900_ai_ci = :riesgo`);
+            replacements.riesgo = riesgo.trim();
+        }
 
-    if (String(lugar_del_hecho)?.trim()) {
-        whereClause.push(`Lugar_del_Hecho COLLATE utf8mb4_0900_ai_ci = :lugar_del_hecho`);
-        replacements.lugar_del_hecho = String(lugar_del_hecho).trim();
-    }
+        if (String(lugar_del_hecho)?.trim()) {
+            whereClause.push(`Lugar_del_Hecho COLLATE utf8mb4_0900_ai_ci = :lugar_del_hecho`);
+            replacements.lugar_del_hecho = String(lugar_del_hecho).trim();
+        }
 
-    if (comisaria?.trim()) {
-        whereClause.push(`COMISARIA COLLATE utf8mb4_0900_ai_ci = :comisaria`);
-        replacements.comisaria = comisaria.trim();
-    }
+        if (comisaria?.trim()) {
+            whereClause.push(`COMISARIA COLLATE utf8mb4_0900_ai_ci = :comisaria`);
+            replacements.comisaria = comisaria.trim();
+        }
 
-    if (unidadRegional?.trim()) {
-        whereClause.push(`\`UNIDAD REGIONAL\` COLLATE utf8mb4_0900_ai_ci = :unidadRegional`);
-        replacements.unidadRegional = unidadRegional.trim();
-    }
+        if (unidadRegional?.trim()) {
+            whereClause.push(`\`UNIDAD REGIONAL\` COLLATE utf8mb4_0900_ai_ci = :unidadRegional`);
+            replacements.unidadRegional = unidadRegional.trim();
+        }
 
-    if (localidad?.trim()) {
-        whereClause.push(`LOCALIDAD COLLATE utf8mb4_0900_ai_ci = :localidad`);
-        replacements.localidad = localidad.trim();
-    }
+        if (localidad?.trim()) {
+            whereClause.push(`LOCALIDAD COLLATE utf8mb4_0900_ai_ci = :localidad`);
+            replacements.localidad = localidad.trim();
+        }
 
-    if (modalidad?.trim()) {
-        whereClause.push(`MODALIDAD COLLATE utf8mb4_0900_ai_ci = :modalidad`);
-        replacements.modalidad = modalidad.trim();
-    }
+        if (modalidad?.trim()) {
+            whereClause.push(`MODALIDAD COLLATE utf8mb4_0900_ai_ci = :modalidad`);
+            replacements.modalidad = modalidad.trim();
+        }
 
-    if (elementosSustraidos?.trim()) {
-        likeClause.push(`\`ELEMENTOS SUSTRAIDOS\` COLLATE utf8mb4_0900_ai_ci LIKE :elementosSustraidos`);
-        replacements.elementosSustraidos = `%${elementosSustraidos.trim()}%`;
-    }
+        if (elementosSustraidos?.trim()) {
+            likeClause.push(`\`ELEMENTOS SUSTRAIDOS\` COLLATE utf8mb4_0900_ai_ci LIKE :elementosSustraidos`);
+            replacements.elementosSustraidos = `%${elementosSustraidos.trim()}%`;
+        }
 
-    if (victimario?.trim()) {
-        likeClause.push(`VICTIMARIO COLLATE utf8mb4_0900_ai_ci LIKE :victimario`);
-        replacements.victimario = `%${victimario.trim()}%`;
-    }
+        if (victimario?.trim()) {
+            likeClause.push(`VICTIMARIO COLLATE utf8mb4_0900_ai_ci LIKE :victimario`);
+            replacements.victimario = `%${victimario.trim()}%`;
+        }
 
-    const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
-    const like = likeClause.length > 0 ? (where ? ` AND ${likeClause.join(' AND ')}` : `WHERE ${likeClause.join(' AND ')}`) : '';
+        const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
+        const like = likeClause.length > 0 ? (where ? ` AND ${likeClause.join(' AND ')}` : `WHERE ${likeClause.join(' AND ')}`) : '';
 
-    try {
-        const andWhere = where ? `${where} AND` : 'WHERE';
+        try {
+            const andWhere = where ? `${where} AND` : 'WHERE';
 
-        const queries = {
-            total: `SELECT COUNT(*) AS total FROM denuncias_completas_v9_sin_relato ${where} ${like}`,
-            interes: `SELECT COUNT(*) AS interes FROM denuncias_completas_v9_sin_relato ${where} ${like} AND INTERES = CONVERT('SI' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
-            noInteres: `SELECT COUNT(*) AS noInteres FROM denuncias_completas_v9_sin_relato ${where} ${like} AND INTERES = CONVERT('NO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
-            victima: `SELECT COUNT(*) AS victima FROM denuncias_completas_v9_sin_relato ${where} ${like} AND VICTIMA = CONVERT('CON RIESGO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
-            robo: `SELECT COUNT(*) AS robo FROM denuncias_completas_v9_sin_relato ${where} ${like} AND (DELITO = CONVERT('ROBO' USING utf8mb4) OR DELITO = CONVERT('TENTATIVA DE ROBOS' USING utf8mb4)) COLLATE utf8mb4_unicode_ci`,
-            hurtos: `SELECT COUNT(*) AS hurtos FROM denuncias_completas_v9_sin_relato ${where} ${like} AND (DELITO = CONVERT('HURTOS' USING utf8mb4) OR DELITO = CONVERT('TENTATIVA DE HURTOS' USING utf8mb4)) COLLATE utf8mb4_unicode_ci`,
-            roboArma: `SELECT COUNT(*) AS roboArma FROM denuncias_completas_v9_sin_relato ${where} ${like} AND DELITO = CONVERT('ROBO CON ARMA DE FUEGO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
-            porFechas: `
+            const queries = {
+                total: `SELECT COUNT(*) AS total FROM denuncias_completas_v9_sin_relato ${where} ${like}`,
+                interes: `SELECT COUNT(*) AS interes FROM denuncias_completas_v9_sin_relato ${where} ${like} AND INTERES = CONVERT('SI' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
+                noInteres: `SELECT COUNT(*) AS noInteres FROM denuncias_completas_v9_sin_relato ${where} ${like} AND INTERES = CONVERT('NO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
+                victima: `SELECT COUNT(*) AS victima FROM denuncias_completas_v9_sin_relato ${where} ${like} AND VICTIMA = CONVERT('CON RIESGO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
+                robo: `SELECT COUNT(*) AS robo FROM denuncias_completas_v9_sin_relato ${where} ${like} AND (DELITO = CONVERT('ROBO' USING utf8mb4) OR DELITO = CONVERT('TENTATIVA DE ROBOS' USING utf8mb4)) COLLATE utf8mb4_unicode_ci`,
+                hurtos: `SELECT COUNT(*) AS hurtos FROM denuncias_completas_v9_sin_relato ${where} ${like} AND (DELITO = CONVERT('HURTOS' USING utf8mb4) OR DELITO = CONVERT('TENTATIVA DE HURTOS' USING utf8mb4)) COLLATE utf8mb4_unicode_ci`,
+                roboArma: `SELECT COUNT(*) AS roboArma FROM denuncias_completas_v9_sin_relato ${where} ${like} AND DELITO = CONVERT('ROBO CON ARMA DE FUEGO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
+                porFechas: `
                 SELECT DATE(FECHA_HECHO) AS fecha, COUNT(*) AS cantidad
                 FROM denuncias_completas_v9_sin_relato
                 ${where} ${like}
                 GROUP BY DATE(FECHA_HECHO)
                 ORDER BY fecha
             `,
-            aprehendido: `
+                aprehendido: `
                 SELECT COUNT(*) AS aprehendido
                 FROM denuncias_completas_v9_sin_relato ${where} ${like} AND APREHENDIDO = CONVERT('SI' USING utf8mb4) COLLATE utf8mb4_unicode_ci`
+            }
+
+            const [total, interes, noInteres, victima, robo, hurtos, roboArma, porFechas, aprehendido] = await Promise.all([
+                sequelize.query(queries.total, {
+                    type: Sequelize.QueryTypes.SELECT,
+                    replacements
+                }),
+                sequelize.query(queries.interes, {
+                    type: Sequelize.QueryTypes.SELECT,
+                    replacements
+                }),
+                sequelize.query(queries.noInteres, {
+                    type: Sequelize.QueryTypes.SELECT,
+                    replacements
+                }),
+                sequelize.query(queries.victima, {
+                    type: Sequelize.QueryTypes.SELECT,
+                    replacements
+                }),
+                sequelize.query(queries.robo, {
+                    type: Sequelize.QueryTypes.SELECT,
+                    replacements
+                }),
+                sequelize.query(queries.hurtos, {
+                    type: Sequelize.QueryTypes.SELECT,
+                    replacements
+                }),
+                sequelize.query(queries.roboArma, {
+                    type: Sequelize.QueryTypes.SELECT,
+                    replacements
+                }),
+                sequelize.query(queries.porFechas, {
+                    type: Sequelize.QueryTypes.SELECT,
+                    replacements
+                }),
+                sequelize.query(queries.aprehendido, {
+                    type: Sequelize.QueryTypes.SELECT,
+                    replacements
+                }),
+            ]);
+
+            res.status(200).json({
+                total,
+                interes,
+                noInteres,
+                victima,
+                robo,
+                hurtos,
+                roboArma,
+                porFechas,
+                aprehendido
+            });
+        } catch (error) {
+            console.error('Error en getVistaSinRelatoStaging:', error);
+            res.status(500).json({ message: error.message });
         }
-
-        const [total, interes, noInteres, victima, robo, hurtos, roboArma, porFechas, aprehendido] = await Promise.all([
-            sequelize.query(queries.total, {
-                type: Sequelize.QueryTypes.SELECT,
-                replacements
-            }),
-            sequelize.query(queries.interes, {
-                type: Sequelize.QueryTypes.SELECT,
-                replacements
-            }),
-            sequelize.query(queries.noInteres, {
-                type: Sequelize.QueryTypes.SELECT,
-                replacements
-            }),
-            sequelize.query(queries.victima, {
-                type: Sequelize.QueryTypes.SELECT,
-                replacements
-            }),
-            sequelize.query(queries.robo, {
-                type: Sequelize.QueryTypes.SELECT,
-                replacements
-            }),
-            sequelize.query(queries.hurtos, {
-                type: Sequelize.QueryTypes.SELECT,
-                replacements
-            }),
-            sequelize.query(queries.roboArma, {
-                type: Sequelize.QueryTypes.SELECT,
-                replacements
-            }),
-            sequelize.query(queries.porFechas, {
-                type: Sequelize.QueryTypes.SELECT,
-                replacements
-            }),
-            sequelize.query(queries.aprehendido, {
-                type: Sequelize.QueryTypes.SELECT,
-                replacements
-            }),
-        ]);
-
-        res.status(200).json({
-            total,
-            interes,
-            noInteres,
-            victima,
-            robo,
-            hurtos,
-            roboArma,
-            porFechas,
-            aprehendido
-        });
-    } catch (error) {
-        console.error('Error en getVistaSinRelatoStaging:', error);
-        res.status(500).json({ message: error.message });
     }
-}
 
 const getVistaMapa = async (req, res) => {
-    const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, especialidad, seguro, riesgo, lugar_del_hecho, comisaria } = req.body;
+        const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, especialidad, seguro, riesgo, lugar_del_hecho, comisaria } = req.body;
 
-    console.log(req.body)
+        console.log(req.body)
 
-    let whereClause = []
-    let replacements = {}
+        let whereClause = []
+        let replacements = {}
 
-    if (fechaInicio && fechaFin) {
-        whereClause.push(`FECHA_HECHO BETWEEN :fechaInicio AND :fechaFin`)
-        replacements.fechaInicio = fechaInicio
-        replacements.fechaFin = fechaFin
-    }
+        if (fechaInicio && fechaFin) {
+            whereClause.push(`FECHA_HECHO BETWEEN :fechaInicio AND :fechaFin`)
+            replacements.fechaInicio = fechaInicio
+            replacements.fechaFin = fechaFin
+        }
 
-    if (delito && delito.trim() !== '') {
-        whereClause.push(`DELITO COLLATE utf8mb4_unicode_ci = :delito`);
-        replacements.delito = delito;
-    }
+        if (delito && delito.trim() !== '') {
+            whereClause.push(`DELITO COLLATE utf8mb4_unicode_ci = :delito`);
+            replacements.delito = delito;
+        }
 
-    if (submodalidad && submodalidad.trim() !== '') {
-        whereClause.push(`SUBMODALIDAD COLLATE utf8mb4_unicode_ci = :submodalidad`);
-        replacements.submodalidad = submodalidad;
-    }
+        if (submodalidad && submodalidad.trim() !== '') {
+            whereClause.push(`SUBMODALIDAD COLLATE utf8mb4_unicode_ci = :submodalidad`);
+            replacements.submodalidad = submodalidad;
+        }
 
-    if (arma && arma.trim() !== '') {
-        whereClause.push(`\`ARMA UTILIZADA\` COLLATE utf8mb4_unicode_ci = :arma`);
-        replacements.arma = arma;
-    }
+        if (arma && arma.trim() !== '') {
+            whereClause.push(`\`ARMA UTILIZADA\` COLLATE utf8mb4_unicode_ci = :arma`);
+            replacements.arma = arma;
+        }
 
-    if (interes !== undefined && interes !== '') {
-        whereClause.push(`INTERES COLLATE utf8mb4_unicode_ci = :interes`);
-        replacements.interes = interes;
-    }
+        if (interes !== undefined && interes !== '') {
+            whereClause.push(`INTERES COLLATE utf8mb4_unicode_ci = :interes`);
+            replacements.interes = interes;
+        }
 
-    if (especialidad && especialidad.trim() !== '') {
-        whereClause.push(`ESPECIALIZACION COLLATE utf8mb4_unicode_ci = :especializacion`);
-        replacements.especializacion = especializacion;
-    }
+        if (especialidad && especialidad.trim() !== '') {
+            whereClause.push(`ESPECIALIZACION COLLATE utf8mb4_unicode_ci = :especializacion`);
+            replacements.especializacion = especializacion;
+        }
 
-    if (seguro && seguro.trim() !== '') {
-        whereClause.push(`\`PARA SEGURO\`COLLATE utf8mb4_unicode_ci = :seguro`);
-        replacements.seguro = seguro;
-    }
+        if (seguro && seguro.trim() !== '') {
+            whereClause.push(`\`PARA SEGURO\`COLLATE utf8mb4_unicode_ci = :seguro`);
+            replacements.seguro = seguro;
+        }
 
-    if (riesgo && riesgo.trim() !== '') {
-        whereClause.push(`VICTIMA COLLATE utf8mb4_unicode_ci = :riesgo`);
-        replacements.riesgo = riesgo;
-    }
+        if (riesgo && riesgo.trim() !== '') {
+            whereClause.push(`VICTIMA COLLATE utf8mb4_unicode_ci = :riesgo`);
+            replacements.riesgo = riesgo;
+        }
 
-    if (lugar_del_hecho && String(lugar_del_hecho).trim() !== '') {
-        whereClause.push(`Lugar_del_Hecho COLLATE utf8mb4_unicode_ci = :lugar_del_hecho`);
-        replacements.lugar_del_hecho = String(lugar_del_hecho).trim();
-    }
+        if (lugar_del_hecho && String(lugar_del_hecho).trim() !== '') {
+            whereClause.push(`Lugar_del_Hecho COLLATE utf8mb4_unicode_ci = :lugar_del_hecho`);
+            replacements.lugar_del_hecho = String(lugar_del_hecho).trim();
+        }
 
-    if (comisaria && comisaria.trim() !== '') {
-        whereClause.push(`COMISARIA COLLATE utf8mb4_unicode_ci = :comisaria`);
-        replacements.comisaria = comisaria;
-    }
+        if (comisaria && comisaria.trim() !== '') {
+            whereClause.push(`COMISARIA COLLATE utf8mb4_unicode_ci = :comisaria`);
+            replacements.comisaria = comisaria;
+        }
 
-    const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
+        const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
 
-    try {
-        const query = `
+        try {
+            const query = `
             SELECT *
             FROM denuncias_mapa
             ${where};
         `;
 
-        const result = await sequelize.query(query, {
-            type: Sequelize.QueryTypes.SELECT,
-            replacements
-        });
-
-        res.status(200).json(result);
-    } catch (error) {
-        console.error('Error en getVista:', error);
-        res.status(500).json({ message: error.message });
-    }
-}
-
-const getVistaEstadisticas = async (req, res) => {
-    const { fechaInicio, fechaFin } = req.body;
-    const meses = [
-        "enero", "febrero", "marzo", "abril", "mayo", "junio",
-        "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
-    ];
-
-    let whereClause = []
-    let replacements = {}
-
-    whereClause.push(`\`CLASIFICADA POR\` COLLATE utf8mb4_unicode_ci <> 2`);
-
-    if (fechaInicio && fechaFin) {
-        whereClause.push(`FECHA_HECHO BETWEEN :fechaInicio AND :fechaFin`)
-        replacements.fechaInicio = fechaInicio
-        replacements.fechaFin = fechaFin
-    }
-
-    const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
-
-    try {
-        const query = `
-            SELECT *
-            FROM denuncias_completas_v9
-            ${where};
-        `;
-
-        const result = await sequelize.query(query, {
-            type: Sequelize.QueryTypes.SELECT,
-            replacements
-        });
-
-        const denuncias = result.filter((denuncia) => (denuncia['CLASIFICADA POR'] === 0 || denuncia['CLASIFICADA POR'] === 1));
-        const denunciaSinInteres = denuncias.filter((denuncia) => (denuncia.INTERES === 'NO'));
-        const denunciasInteres = denuncias.filter((denuncia) => (denuncia.INTERES === 'SI'));
-        const habitantes = 1703186;
-
-        const totalDenuncias = denuncias.length;
-        const totalDenunciasInteres = denunciasInteres.length;
-        const totalDenunciasSinInteres = denunciaSinInteres.length;
-
-        const denunciasPorMes = denuncias.reduce((acc, denuncia) => {
-            const fecha = new Date(denuncia.FECHA_HECHO);
-            const anio = fecha.getUTCFullYear();
-            const mesNombre = meses[fecha.getUTCMonth()];
-            const clave = `${mesNombre} ${anio}`;
-
-            if (!acc[clave]) {
-                acc[clave] = 0;
-            }
-            acc[clave] += 1;
-            return acc;
-        }, {});
-
-        const denunciasPorMesInteres = denunciasInteres.reduce((acc, denuncia) => {
-            const fecha = new Date(denuncia.FECHA_HECHO);
-            const anio = fecha.getUTCFullYear();
-            const mesNombre = meses[fecha.getUTCMonth()];
-            const clave = `${mesNombre} ${anio}`;
-
-            if (!acc[clave]) {
-                acc[clave] = 0;
-            }
-            acc[clave] += 1;
-            return acc;
-        }, {});
-
-        const denunciasPorMesSinInteres = denunciaSinInteres.reduce((acc, denuncia) => {
-            const fecha = new Date(denuncia.FECHA_HECHO);
-            const anio = fecha.getUTCFullYear();
-            const mesNombre = meses[fecha.getUTCMonth()];
-            const clave = `${mesNombre} ${anio}`;
-
-            if (!acc[clave]) {
-                acc[clave] = 0;
-            }
-            acc[clave] += 1;
-            return acc;
-        }, {});
-
-        const robosPorMes = denunciasInteres.reduce((acc, denuncia) => {
-            if (denuncia.DELITO === 'ROBO') {
-                const fecha = new Date(denuncia.FECHA_HECHO);
-                const anio = fecha.getUTCFullYear();
-                const mesNombre = meses[fecha.getUTCMonth()]; // getUTCMonth() devuelve 0 a 11
-                const clave = `${mesNombre} ${anio}`;
-
-                if (!acc[clave]) {
-                    acc[clave] = 0;
-                }
-                acc[clave] += 1;
-            }
-            return acc;
-        }, {});
-
-        const hurtosPorMes = denunciasInteres.reduce((acc, denuncia) => {
-            if (denuncia.DELITO === 'HURTOS') {
-                const fecha = new Date(denuncia.FECHA_HECHO);
-                const anio = fecha.getUTCFullYear();
-                const mesNombre = meses[fecha.getUTCMonth()]; // getUTCMonth() devuelve 0 a 11
-                const clave = `${mesNombre} ${anio}`;
-
-                if (!acc[clave]) {
-                    acc[clave] = 0;
-                }
-                acc[clave] += 1;
-            }
-            return acc;
-        }, {});
-
-        const robosArmaPorMes = denunciasInteres.reduce((acc, denuncia) => {
-            if (denuncia.DELITO === 'ROBO CON ARMA DE FUEGO') {
-                const fecha = new Date(denuncia.FECHA_HECHO);
-                const anio = fecha.getUTCFullYear();
-                const mesNombre = meses[fecha.getUTCMonth()]; // getUTCMonth() devuelve 0 a 11
-                const clave = `${mesNombre} ${anio}`;
-
-                if (!acc[clave]) {
-                    acc[clave] = 0;
-                }
-                acc[clave] += 1;
-            }
-            return acc;
-        }, {});
-
-        res.status(200).json({
-            totalDenuncias,
-            totalDenunciasInteres,
-            totalDenunciasSinInteres,
-            denunciasPorMes: ordenarPorFecha(denunciasPorMes),
-            denunciasPorMesInteres: ordenarPorFecha(denunciasPorMesInteres),
-            denunciasPorMesSinInteres: ordenarPorFecha(denunciasPorMesSinInteres),
-            robosPorMes: ordenarPorFecha(robosPorMes),
-            hurtosPorMes: ordenarPorFecha(hurtosPorMes),
-            robosArmaPorMes: ordenarPorFecha(robosArmaPorMes),
-            habitantes
-        });
-    } catch (error) {
-        console.error('Error en getVista:', error);
-        res.status(500).json({ message: error.message });
-    }
-}
-
-const getVistaTablaIzq = async (req, res) => {
-    const { mes, anio } = req.body;
-
-    let whereClause = []
-    let replacements = {}
-
-    whereClause.push(`\`CLASIFICADA POR\` COLLATE utf8mb4_unicode_ci <> 2`);
-
-    const meses = [
-        "enero", "febrero", "marzo", "abril", "mayo", "junio",
-        "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
-    ];
-
-    // const mesAnterior = mes ? (parseInt(mes) - 1) : null;
-    const anioAnterior = anio ? (parseInt(anio) - 1) : null;
-
-    console.log(mes, anio, anioAnterior)
-
-    if (mes && anioAnterior && anio) {
-        whereClause.push(`
-            ((YEAR(FECHA_HECHO) = :anio AND MONTH(FECHA_HECHO) = :mes) OR (YEAR(FECHA_HECHO) = :anioAnterior AND MONTH(FECHA_HECHO) = :mes))`);
-        replacements.anio = anio
-        replacements.mes = mes
-        replacements.anioAnterior = anioAnterior
-    }
-
-    const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
-
-    try {
-        const query = `
-            SELECT *
-            FROM denuncias_completas_v9
-            ${where};
-        `;
-
-        const result = await sequelize.query(query, {
-            type: Sequelize.QueryTypes.SELECT,
-            replacements
-        });
-
-        const denunciasInteres = result.filter((denuncia) => (denuncia.INTERES === 'SI'));
-
-        const totalPorMesHurto = denunciasInteres.reduce((acc, denuncia) => {
-            if (denuncia.DELITO === 'HURTOS') {
-                const fecha = new Date(denuncia.FECHA_HECHO);
-                const anio = fecha.getUTCFullYear();
-                const mesNombre = meses[fecha.getUTCMonth()];
-                const clave = `${mesNombre} ${anio}`;
-
-                if (!acc[clave]) {
-                    acc[clave] = 0;
-                }
-                acc[clave] += 1;
-            }
-            return acc;
-        }, {});
-
-        const totalPorMesRobo = denunciasInteres.reduce((acc, denuncia) => {
-            if (denuncia.DELITO === 'ROBO') {
-                const fecha = new Date(denuncia.FECHA_HECHO);
-                const anio = fecha.getUTCFullYear();
-                const mesNombre = meses[fecha.getUTCMonth()];;
-                const clave = `${mesNombre} ${anio}`;
-
-                if (!acc[clave]) {
-                    acc[clave] = 0;
-                }
-                acc[clave] += 1;
-            }
-            return acc;
-        }, {});
-
-        const totalPorMesRoboArma = denunciasInteres.reduce((acc, denuncia) => {
-            if (denuncia.DELITO === 'ROBO CON ARMA DE FUEGO') {
-                const fecha = new Date(denuncia.FECHA_HECHO);
-                const anio = fecha.getUTCFullYear();
-                const mesNombre = meses[fecha.getUTCMonth()];;
-                const clave = `${mesNombre} ${anio}`;
-
-                if (!acc[clave]) {
-                    acc[clave] = 0;
-                }
-                acc[clave] += 1;
-            }
-            return acc;
-        }, {});
-
-        res.status(200).json({
-            denunciasInteres,
-            totalPorMesHurto: ordenarPorFecha(totalPorMesHurto),
-            totalPorMesRobo: ordenarPorFecha(totalPorMesRobo),
-            totalPorMesRoboArma: ordenarPorFecha(totalPorMesRoboArma)
-        });
-    } catch (error) {
-        console.error('Error en getVista:', error);
-        res.status(500).json({ message: error.message });
-    }
-}
-
-const getVistaTablaDer = async (req, res) => {
-    const { mes, anio } = req.body;
-
-    let whereClause = []
-    let replacements = {}
-
-    whereClause.push(`\`CLASIFICADA POR\` COLLATE utf8mb4_unicode_ci <> 2`);
-
-    const meses = [
-        "enero", "febrero", "marzo", "abril", "mayo", "junio",
-        "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
-    ];
-
-    const mesAnterior = mes ? (parseInt(mes) - 1) : null;
-    //const anioAnterior = anio ? (parseInt(anio) - 1) : null;
-
-    console.log(mes, anio, mesAnterior)
-
-    if (mes && mesAnterior && anio) {
-        whereClause.push(`
-            ((YEAR(FECHA_HECHO) = :anio AND MONTH(FECHA_HECHO) = :mes) OR (YEAR(FECHA_HECHO) = :anio AND MONTH(FECHA_HECHO) = :mesAnterior))`);
-        replacements.anio = anio
-        replacements.mes = mes
-        replacements.mesAnterior = mesAnterior
-    }
-
-    const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
-
-    try {
-        const query = `
-            SELECT *
-            FROM denuncias_completas_v9
-            ${where};
-        `;
-
-        const result = await sequelize.query(query, {
-            type: Sequelize.QueryTypes.SELECT,
-            replacements
-        });
-
-        const denunciasInteres = result.filter((denuncia) => (denuncia.INTERES === 'SI'));
-
-        const totalPorMesHurto = denunciasInteres.reduce((acc, denuncia) => {
-            if (denuncia.DELITO === 'HURTOS') {
-                const fecha = new Date(denuncia.FECHA_HECHO);
-                const anio = fecha.getUTCFullYear();
-                const mesNombre = meses[fecha.getUTCMonth()];
-                const clave = `${mesNombre} ${anio}`;
-
-                if (!acc[clave]) {
-                    acc[clave] = 0;
-                }
-                acc[clave] += 1;
-            }
-            return acc;
-        }, {});
-
-        const totalPorMesRobo = denunciasInteres.reduce((acc, denuncia) => {
-            if (denuncia.DELITO === 'ROBO') {
-                const fecha = new Date(denuncia.FECHA_HECHO);
-                const anio = fecha.getUTCFullYear();
-                const mesNombre = meses[fecha.getUTCMonth()];;
-                const clave = `${mesNombre} ${anio}`;
-
-                if (!acc[clave]) {
-                    acc[clave] = 0;
-                }
-                acc[clave] += 1;
-            }
-            return acc;
-        }, {});
-
-        const totalPorMesRoboArma = denunciasInteres.reduce((acc, denuncia) => {
-            if (denuncia.DELITO === 'ROBO CON ARMA DE FUEGO') {
-                const fecha = new Date(denuncia.FECHA_HECHO);
-                const anio = fecha.getUTCFullYear();
-                const mesNombre = meses[fecha.getUTCMonth()];;
-                const clave = `${mesNombre} ${anio}`;
-
-                if (!acc[clave]) {
-                    acc[clave] = 0;
-                }
-                acc[clave] += 1;
-            }
-            return acc;
-        }, {});
-
-        res.status(200).json({
-            denunciasInteres,
-            totalPorMesHurto: ordenarPorFecha(totalPorMesHurto),
-            totalPorMesRobo: ordenarPorFecha(totalPorMesRobo),
-            totalPorMesRoboArma: ordenarPorFecha(totalPorMesRoboArma)
-        });
-    } catch (error) {
-        console.error('Error en getVista:', error);
-        res.status(500).json({ message: error.message });
-    }
-}
-
-const prueba = (req, res) => {
-    res.status(200).json({
-        message: "Hola mundo desde el controlador de usuario"
-    });
-};
-
-const getManifest = (req, res) => {
-    try {
-        // Forzar el tipo correcto
-        res.setHeader("Content-Type", "application/manifest+json");
-
-        // Obtener referer de forma segura
-        const referer = req.get('referer') || '';
-        console.log("=== Manifest Request ===");
-        console.log("Headers recibidos:", req.headers);
-        console.log("Referer:", referer);
-
-        // Elegir manifest según referer
-        if (referer.includes('/sgd')) {
-            console.log("Se sirve manifest para SGD");
-            res.json({
-                name: "Sistema de Gestión de Denuncias",
-                short_name: "SGD",
-                start_url: "/sgd",
-                display: "standalone",
-                background_color: "#ffffff",
-                theme_color: "#ff6600",
-                icons: [
-                    { src: "/img_logo.png", sizes: "192x192", type: "image/png" },
-                    { src: "/img_logo.png", sizes: "512x512", type: "image/png" }
-                ]
+            const result = await sequelize.query(query, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
             });
-        } else {
-            console.log("Se sirve manifest por defecto SCG");
-            res.json({
-                name: "Sistema de Control de Gestión",
-                short_name: "SCG",
-                start_url: "/",
-                display: "standalone",
-                background_color: "#000000",
-                theme_color: "#005CA2",
-                icons: [
-                    { src: "/img_logo.png", sizes: "192x192", type: "image/png" },
-                    { src: "/img_logo.png", sizes: "512x512", type: "image/png" }
-                ]
-            });
+
+            res.status(200).json(result);
+        } catch (error) {
+            console.error('Error en getVista:', error);
+            res.status(500).json({ message: error.message });
         }
-    } catch (err) {
-        console.error("Error en getManifest:", err);
-        res.status(500).send("Error interno en el manifest");
     }
-};
 
+    const getVistaEstadisticas = async (req, res) => {
+        const { fechaInicio, fechaFin } = req.body;
+        const meses = [
+            "enero", "febrero", "marzo", "abril", "mayo", "junio",
+            "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+        ];
 
-const login = async (req, res) => {
-    const { email, contraseña } = req.body;
-    try {
-        const usuario = await Usuario.findOne({
-            where: {
-                email: email
-            }
-        });
-        if (usuario) {
-            const match = bcrypt.compareSync(contraseña, usuario.contraseña);
-            if (match) {
-                const token = jwt.sign({
-                    id: usuario.dni,
-                    nombre: usuario.nombre,
-                    apellido: usuario.apellido,
-                    rol: usuario.rolId,
-                    foto: usuario.userFoto
-                }, process.env.JWT_SECRET, {
-                    expiresIn: '5h'
-                });
+        let whereClause = []
+        let replacements = {}
 
-                res.cookie('token', token, {
-                    secure: process.env.NODE_ENV === 'production',
-                    sameSite: 'Strict',
-                    maxAge: 18000000
-                })
+        whereClause.push(`\`CLASIFICADA POR\` COLLATE utf8mb4_unicode_ci <> 2`);
 
-                const log = {
-                    accion: "Login",
-                    descripcion: `El usuario ${usuario.nombre} ${usuario.apellido} ha iniciado sesión`,
-                    dniId: usuario.dni
+        if (fechaInicio && fechaFin) {
+            whereClause.push(`FECHA_HECHO BETWEEN :fechaInicio AND :fechaFin`)
+            replacements.fechaInicio = fechaInicio
+            replacements.fechaFin = fechaFin
+        }
+
+        const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
+
+        try {
+            const query = `
+            SELECT *
+            FROM denuncias_completas_v9
+            ${where};
+        `;
+
+            const result = await sequelize.query(query, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            });
+
+            const denuncias = result.filter((denuncia) => (denuncia['CLASIFICADA POR'] === 0 || denuncia['CLASIFICADA POR'] === 1));
+            const denunciaSinInteres = denuncias.filter((denuncia) => (denuncia.INTERES === 'NO'));
+            const denunciasInteres = denuncias.filter((denuncia) => (denuncia.INTERES === 'SI'));
+            const habitantes = 1703186;
+
+            const totalDenuncias = denuncias.length;
+            const totalDenunciasInteres = denunciasInteres.length;
+            const totalDenunciasSinInteres = denunciaSinInteres.length;
+
+            const denunciasPorMes = denuncias.reduce((acc, denuncia) => {
+                const fecha = new Date(denuncia.FECHA_HECHO);
+                const anio = fecha.getUTCFullYear();
+                const mesNombre = meses[fecha.getUTCMonth()];
+                const clave = `${mesNombre} ${anio}`;
+
+                if (!acc[clave]) {
+                    acc[clave] = 0;
                 }
+                acc[clave] += 1;
+                return acc;
+            }, {});
 
-                await registrarLog(log.accion, log.descripcion, log.dniId);
+            const denunciasPorMesInteres = denunciasInteres.reduce((acc, denuncia) => {
+                const fecha = new Date(denuncia.FECHA_HECHO);
+                const anio = fecha.getUTCFullYear();
+                const mesNombre = meses[fecha.getUTCMonth()];
+                const clave = `${mesNombre} ${anio}`;
 
-                res.status(200).json({
-                    token: token,
-                    message: "Usuario logueado correctamente"
+                if (!acc[clave]) {
+                    acc[clave] = 0;
+                }
+                acc[clave] += 1;
+                return acc;
+            }, {});
+
+            const denunciasPorMesSinInteres = denunciaSinInteres.reduce((acc, denuncia) => {
+                const fecha = new Date(denuncia.FECHA_HECHO);
+                const anio = fecha.getUTCFullYear();
+                const mesNombre = meses[fecha.getUTCMonth()];
+                const clave = `${mesNombre} ${anio}`;
+
+                if (!acc[clave]) {
+                    acc[clave] = 0;
+                }
+                acc[clave] += 1;
+                return acc;
+            }, {});
+
+            const robosPorMes = denunciasInteres.reduce((acc, denuncia) => {
+                if (denuncia.DELITO === 'ROBO') {
+                    const fecha = new Date(denuncia.FECHA_HECHO);
+                    const anio = fecha.getUTCFullYear();
+                    const mesNombre = meses[fecha.getUTCMonth()]; // getUTCMonth() devuelve 0 a 11
+                    const clave = `${mesNombre} ${anio}`;
+
+                    if (!acc[clave]) {
+                        acc[clave] = 0;
+                    }
+                    acc[clave] += 1;
+                }
+                return acc;
+            }, {});
+
+            const hurtosPorMes = denunciasInteres.reduce((acc, denuncia) => {
+                if (denuncia.DELITO === 'HURTOS') {
+                    const fecha = new Date(denuncia.FECHA_HECHO);
+                    const anio = fecha.getUTCFullYear();
+                    const mesNombre = meses[fecha.getUTCMonth()]; // getUTCMonth() devuelve 0 a 11
+                    const clave = `${mesNombre} ${anio}`;
+
+                    if (!acc[clave]) {
+                        acc[clave] = 0;
+                    }
+                    acc[clave] += 1;
+                }
+                return acc;
+            }, {});
+
+            const robosArmaPorMes = denunciasInteres.reduce((acc, denuncia) => {
+                if (denuncia.DELITO === 'ROBO CON ARMA DE FUEGO') {
+                    const fecha = new Date(denuncia.FECHA_HECHO);
+                    const anio = fecha.getUTCFullYear();
+                    const mesNombre = meses[fecha.getUTCMonth()]; // getUTCMonth() devuelve 0 a 11
+                    const clave = `${mesNombre} ${anio}`;
+
+                    if (!acc[clave]) {
+                        acc[clave] = 0;
+                    }
+                    acc[clave] += 1;
+                }
+                return acc;
+            }, {});
+
+            res.status(200).json({
+                totalDenuncias,
+                totalDenunciasInteres,
+                totalDenunciasSinInteres,
+                denunciasPorMes: ordenarPorFecha(denunciasPorMes),
+                denunciasPorMesInteres: ordenarPorFecha(denunciasPorMesInteres),
+                denunciasPorMesSinInteres: ordenarPorFecha(denunciasPorMesSinInteres),
+                robosPorMes: ordenarPorFecha(robosPorMes),
+                hurtosPorMes: ordenarPorFecha(hurtosPorMes),
+                robosArmaPorMes: ordenarPorFecha(robosArmaPorMes),
+                habitantes
+            });
+        } catch (error) {
+            console.error('Error en getVista:', error);
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    const getVistaTablaIzq = async (req, res) => {
+        const { mes, anio } = req.body;
+
+        let whereClause = []
+        let replacements = {}
+
+        whereClause.push(`\`CLASIFICADA POR\` COLLATE utf8mb4_unicode_ci <> 2`);
+
+        const meses = [
+            "enero", "febrero", "marzo", "abril", "mayo", "junio",
+            "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+        ];
+
+        // const mesAnterior = mes ? (parseInt(mes) - 1) : null;
+        const anioAnterior = anio ? (parseInt(anio) - 1) : null;
+
+        console.log(mes, anio, anioAnterior)
+
+        if (mes && anioAnterior && anio) {
+            whereClause.push(`
+            ((YEAR(FECHA_HECHO) = :anio AND MONTH(FECHA_HECHO) = :mes) OR (YEAR(FECHA_HECHO) = :anioAnterior AND MONTH(FECHA_HECHO) = :mes))`);
+            replacements.anio = anio
+            replacements.mes = mes
+            replacements.anioAnterior = anioAnterior
+        }
+
+        const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
+
+        try {
+            const query = `
+            SELECT *
+            FROM denuncias_completas_v9
+            ${where};
+        `;
+
+            const result = await sequelize.query(query, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            });
+
+            const denunciasInteres = result.filter((denuncia) => (denuncia.INTERES === 'SI'));
+
+            const totalPorMesHurto = denunciasInteres.reduce((acc, denuncia) => {
+                if (denuncia.DELITO === 'HURTOS') {
+                    const fecha = new Date(denuncia.FECHA_HECHO);
+                    const anio = fecha.getUTCFullYear();
+                    const mesNombre = meses[fecha.getUTCMonth()];
+                    const clave = `${mesNombre} ${anio}`;
+
+                    if (!acc[clave]) {
+                        acc[clave] = 0;
+                    }
+                    acc[clave] += 1;
+                }
+                return acc;
+            }, {});
+
+            const totalPorMesRobo = denunciasInteres.reduce((acc, denuncia) => {
+                if (denuncia.DELITO === 'ROBO') {
+                    const fecha = new Date(denuncia.FECHA_HECHO);
+                    const anio = fecha.getUTCFullYear();
+                    const mesNombre = meses[fecha.getUTCMonth()];;
+                    const clave = `${mesNombre} ${anio}`;
+
+                    if (!acc[clave]) {
+                        acc[clave] = 0;
+                    }
+                    acc[clave] += 1;
+                }
+                return acc;
+            }, {});
+
+            const totalPorMesRoboArma = denunciasInteres.reduce((acc, denuncia) => {
+                if (denuncia.DELITO === 'ROBO CON ARMA DE FUEGO') {
+                    const fecha = new Date(denuncia.FECHA_HECHO);
+                    const anio = fecha.getUTCFullYear();
+                    const mesNombre = meses[fecha.getUTCMonth()];;
+                    const clave = `${mesNombre} ${anio}`;
+
+                    if (!acc[clave]) {
+                        acc[clave] = 0;
+                    }
+                    acc[clave] += 1;
+                }
+                return acc;
+            }, {});
+
+            res.status(200).json({
+                denunciasInteres,
+                totalPorMesHurto: ordenarPorFecha(totalPorMesHurto),
+                totalPorMesRobo: ordenarPorFecha(totalPorMesRobo),
+                totalPorMesRoboArma: ordenarPorFecha(totalPorMesRoboArma)
+            });
+        } catch (error) {
+            console.error('Error en getVista:', error);
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    const getVistaTablaDer = async (req, res) => {
+        const { mes, anio } = req.body;
+
+        let whereClause = []
+        let replacements = {}
+
+        whereClause.push(`\`CLASIFICADA POR\` COLLATE utf8mb4_unicode_ci <> 2`);
+
+        const meses = [
+            "enero", "febrero", "marzo", "abril", "mayo", "junio",
+            "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+        ];
+
+        const mesAnterior = mes ? (parseInt(mes) - 1) : null;
+        //const anioAnterior = anio ? (parseInt(anio) - 1) : null;
+
+        console.log(mes, anio, mesAnterior)
+
+        if (mes && mesAnterior && anio) {
+            whereClause.push(`
+            ((YEAR(FECHA_HECHO) = :anio AND MONTH(FECHA_HECHO) = :mes) OR (YEAR(FECHA_HECHO) = :anio AND MONTH(FECHA_HECHO) = :mesAnterior))`);
+            replacements.anio = anio
+            replacements.mes = mes
+            replacements.mesAnterior = mesAnterior
+        }
+
+        const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
+
+        try {
+            const query = `
+            SELECT *
+            FROM denuncias_completas_v9
+            ${where};
+        `;
+
+            const result = await sequelize.query(query, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            });
+
+            const denunciasInteres = result.filter((denuncia) => (denuncia.INTERES === 'SI'));
+
+            const totalPorMesHurto = denunciasInteres.reduce((acc, denuncia) => {
+                if (denuncia.DELITO === 'HURTOS') {
+                    const fecha = new Date(denuncia.FECHA_HECHO);
+                    const anio = fecha.getUTCFullYear();
+                    const mesNombre = meses[fecha.getUTCMonth()];
+                    const clave = `${mesNombre} ${anio}`;
+
+                    if (!acc[clave]) {
+                        acc[clave] = 0;
+                    }
+                    acc[clave] += 1;
+                }
+                return acc;
+            }, {});
+
+            const totalPorMesRobo = denunciasInteres.reduce((acc, denuncia) => {
+                if (denuncia.DELITO === 'ROBO') {
+                    const fecha = new Date(denuncia.FECHA_HECHO);
+                    const anio = fecha.getUTCFullYear();
+                    const mesNombre = meses[fecha.getUTCMonth()];;
+                    const clave = `${mesNombre} ${anio}`;
+
+                    if (!acc[clave]) {
+                        acc[clave] = 0;
+                    }
+                    acc[clave] += 1;
+                }
+                return acc;
+            }, {});
+
+            const totalPorMesRoboArma = denunciasInteres.reduce((acc, denuncia) => {
+                if (denuncia.DELITO === 'ROBO CON ARMA DE FUEGO') {
+                    const fecha = new Date(denuncia.FECHA_HECHO);
+                    const anio = fecha.getUTCFullYear();
+                    const mesNombre = meses[fecha.getUTCMonth()];;
+                    const clave = `${mesNombre} ${anio}`;
+
+                    if (!acc[clave]) {
+                        acc[clave] = 0;
+                    }
+                    acc[clave] += 1;
+                }
+                return acc;
+            }, {});
+
+            res.status(200).json({
+                denunciasInteres,
+                totalPorMesHurto: ordenarPorFecha(totalPorMesHurto),
+                totalPorMesRobo: ordenarPorFecha(totalPorMesRobo),
+                totalPorMesRoboArma: ordenarPorFecha(totalPorMesRoboArma)
+            });
+        } catch (error) {
+            console.error('Error en getVista:', error);
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    const prueba = (req, res) => {
+        res.status(200).json({
+            message: "Hola mundo desde el controlador de usuario"
+        });
+    };
+
+    const getManifest = (req, res) => {
+        try {
+            // Forzar el tipo correcto
+            res.setHeader("Content-Type", "application/manifest+json");
+
+            // Obtener referer de forma segura
+            const referer = req.get('referer') || '';
+            console.log("=== Manifest Request ===");
+            console.log("Headers recibidos:", req.headers);
+            console.log("Referer:", referer);
+
+            // Elegir manifest según referer
+            if (referer.includes('/sgd')) {
+                console.log("Se sirve manifest para SGD");
+                res.json({
+                    name: "Sistema de Gestión de Denuncias",
+                    short_name: "SGD",
+                    start_url: "/sgd",
+                    display: "standalone",
+                    background_color: "#ffffff",
+                    theme_color: "#ff6600",
+                    icons: [
+                        { src: "/img_logo.png", sizes: "192x192", type: "image/png" },
+                        { src: "/img_logo.png", sizes: "512x512", type: "image/png" }
+                    ]
                 });
+            } else {
+                console.log("Se sirve manifest por defecto SCG");
+                res.json({
+                    name: "Sistema de Control de Gestión",
+                    short_name: "SCG",
+                    start_url: "/",
+                    display: "standalone",
+                    background_color: "#000000",
+                    theme_color: "#005CA2",
+                    icons: [
+                        { src: "/img_logo.png", sizes: "192x192", type: "image/png" },
+                        { src: "/img_logo.png", sizes: "512x512", type: "image/png" }
+                    ]
+                });
+            }
+        } catch (err) {
+            console.error("Error en getManifest:", err);
+            res.status(500).send("Error interno en el manifest");
+        }
+    };
+
+
+    const login = async (req, res) => {
+        const { email, contraseña } = req.body;
+        try {
+            const usuario = await Usuario.findOne({
+                where: {
+                    email: email
+                }
+            });
+            if (usuario) {
+                const match = bcrypt.compareSync(contraseña, usuario.contraseña);
+                if (match) {
+                    const token = jwt.sign({
+                        id: usuario.dni,
+                        nombre: usuario.nombre,
+                        apellido: usuario.apellido,
+                        rol: usuario.rolId,
+                        foto: usuario.userFoto
+                    }, process.env.JWT_SECRET, {
+                        expiresIn: '5h'
+                    });
+
+                    res.cookie('token', token, {
+                        secure: process.env.NODE_ENV === 'production',
+                        sameSite: 'Strict',
+                        maxAge: 18000000
+                    })
+
+                    const log = {
+                        accion: "Login",
+                        descripcion: `El usuario ${usuario.nombre} ${usuario.apellido} ha iniciado sesión`,
+                        dniId: usuario.dni
+                    }
+
+                    await registrarLog(log.accion, log.descripcion, log.dniId);
+
+                    res.status(200).json({
+                        token: token,
+                        message: "Usuario logueado correctamente"
+                    });
+                } else {
+                    res.status(400).json({
+                        message: "Usuario o contraseña incorrectos"
+                    });
+                }
             } else {
                 res.status(400).json({
                     message: "Usuario o contraseña incorrectos"
                 });
             }
-        } else {
-            res.status(400).json({
-                message: "Usuario o contraseña incorrectos"
+        } catch (error) {
+            res.status(500).json({
+                message: error.message
             });
         }
-    } catch (error) {
-        res.status(500).json({
-            message: error.message
-        });
     }
-}
 
-const logout = async (req, res) => {
-    try {
-        res.clearCookie('token');
-        res.status(200).json({
-            message: "Usuario deslogueado correctamente"
-        });
-    } catch (error) {
-        res.status(500).json({
-            message: error.message
-        });
-    }
-}
-
-const getAllUsers = async (req, res) => {
-    try {
-        const usuarios = await Usuario.findAll();
-
-        await registrarLog("Listar", "Se han listado todos los usuarios", req.userId);
-
-        res.status(200).json(usuarios);
-    } catch (error) {
-        res.status(500).json({
-            message: error.message
-        });
-    }
-};
-
-const getUserById = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const usuario = await Usuario.findByPk(id);
-        await registrarLog("Listar", `Se ha listado el usuario ${usuario.nombre} ${usuario.apellido}`, req.userId);
-        res.status(200).json(usuario);
-    } catch (error) {
-        res.status(500).json({
-            message: error.message
-        });
-    }
-};
-
-const createUser = async (req, res) => {
-    try {
-        const usuario = await Usuario.create({
-            dni: req.body.dni,
-            nombre: req.body.nombre,
-            apellido: req.body.apellido,
-            email: req.body.email,
-            contraseña: req.body.contraseña,
-            telefono: req.body.telefono,
-            puesto: req.body.puesto,
-            rolId: req.body.rolId,
-            userFoto: req.body.userFoto
-        });
-
-        const log = {
-            accion: "Crear",
-            descripcion: `El usuario ${usuario.nombre} ${usuario.apellido} ha sido creado`
+    const logout = async (req, res) => {
+        try {
+            res.clearCookie('token');
+            res.status(200).json({
+                message: "Usuario deslogueado correctamente"
+            });
+        } catch (error) {
+            res.status(500).json({
+                message: error.message
+            });
         }
-
-        await registrarLog(log.accion, log.descripcion, req.userId);
-
-
-        res.status(201).json(usuario)
-    } catch (error) {
-        console.error('Error al crear el usuario: ', error.errors)
-        res.status(500).json({
-            message: error.message,
-            stack: error.stack,
-            detail: error.errors || null
-        })
     }
-};
 
-const updateUser = async (req, res) => {
-    const { id } = req.params;
-    if (req.body.contraseña) {
-        req.body.contraseña = bcrypt.hashSync(req.body.contraseña, 10);
-    }
-    try {
-        const usuario = await Usuario.update({
-            dni: req.body.dni,
-            nombre: req.body.nombre,
-            apellido: req.body.apellido,
-            email: req.body.email,
-            contraseña: req.body.contraseña,
-            telefono: req.body.telefono,
-            puesto: req.body.puesto,
-            rolId: req.body.rolId,
-            userFoto: req.body.userFoto
-        }, {
-            where: {
-                dni: id
+    const getAllUsers = async (req, res) => {
+        try {
+            const usuarios = await Usuario.findAll();
+
+            await registrarLog("Listar", "Se han listado todos los usuarios", req.userId);
+
+            res.status(200).json(usuarios);
+        } catch (error) {
+            res.status(500).json({
+                message: error.message
+            });
+        }
+    };
+
+    const getUserById = async (req, res) => {
+        const { id } = req.params;
+        try {
+            const usuario = await Usuario.findByPk(id);
+            await registrarLog("Listar", `Se ha listado el usuario ${usuario.nombre} ${usuario.apellido}`, req.userId);
+            res.status(200).json(usuario);
+        } catch (error) {
+            res.status(500).json({
+                message: error.message
+            });
+        }
+    };
+
+    const createUser = async (req, res) => {
+        try {
+            const usuario = await Usuario.create({
+                dni: req.body.dni,
+                nombre: req.body.nombre,
+                apellido: req.body.apellido,
+                email: req.body.email,
+                contraseña: req.body.contraseña,
+                telefono: req.body.telefono,
+                puesto: req.body.puesto,
+                rolId: req.body.rolId,
+                userFoto: req.body.userFoto
+            });
+
+            const log = {
+                accion: "Crear",
+                descripcion: `El usuario ${usuario.nombre} ${usuario.apellido} ha sido creado`
             }
-        });
 
-        const log = {
-            accion: "Actualizar",
-            descripcion: `El usuario ${req.body.nombre} ${req.body.apellido} ha sido actualizado`
+            await registrarLog(log.accion, log.descripcion, req.userId);
+
+
+            res.status(201).json(usuario)
+        } catch (error) {
+            console.error('Error al crear el usuario: ', error.errors)
+            res.status(500).json({
+                message: error.message,
+                stack: error.stack,
+                detail: error.errors || null
+            })
         }
+    };
 
-        await registrarLog(log.accion, log.descripcion, req.userId);
+    const updateUser = async (req, res) => {
+        const { id } = req.params;
+        if (req.body.contraseña) {
+            req.body.contraseña = bcrypt.hashSync(req.body.contraseña, 10);
+        }
+        try {
+            const usuario = await Usuario.update({
+                dni: req.body.dni,
+                nombre: req.body.nombre,
+                apellido: req.body.apellido,
+                email: req.body.email,
+                contraseña: req.body.contraseña,
+                telefono: req.body.telefono,
+                puesto: req.body.puesto,
+                rolId: req.body.rolId,
+                userFoto: req.body.userFoto
+            }, {
+                where: {
+                    dni: id
+                }
+            });
 
-        res.status(200).json(usuario);
-    } catch (error) {
-        res.status(500).json({
-            message: error.message
-        });
-    }
-};
-
-const deleteUser = async (req, res) => {
-    const { id } = req.params;
-    try {
-        await Usuario.destroy({
-            where: {
-                dni: id
+            const log = {
+                accion: "Actualizar",
+                descripcion: `El usuario ${req.body.nombre} ${req.body.apellido} ha sido actualizado`
             }
-        });
 
-        const log = {
-            accion: "Eliminar",
-            descripcion: `El usuario con el id ${id} ha sido eliminado`
+            await registrarLog(log.accion, log.descripcion, req.userId);
+
+            res.status(200).json(usuario);
+        } catch (error) {
+            res.status(500).json({
+                message: error.message
+            });
         }
+    };
 
-        await registrarLog(log.accion, log.descripcion, req.userId);
+    const deleteUser = async (req, res) => {
+        const { id } = req.params;
+        try {
+            await Usuario.destroy({
+                where: {
+                    dni: id
+                }
+            });
 
-        res.status(200).json({
-            message: "Usuario eliminado correctamente"
-        });
-    } catch (error) {
-        res.status(500).json({
-            message: error.message
-        });
-    }
-};
+            const log = {
+                accion: "Eliminar",
+                descripcion: `El usuario con el id ${id} ha sido eliminado`
+            }
 
-export { getVistaSinRelatoStagingReducida, getVistaSinRelatoStaging, getRankingObservada, getVistaMapa, prueba, login, getAllUsers, getUserById, createUser, updateUser, deleteUser, logout, getVista, getVistaFiltros, getVistaEstadisticas, getRanking, getVistaTablaIzq, getVistaTablaDer, getVistaSinRelato, getRankingDiario, getManifest };
+            await registrarLog(log.accion, log.descripcion, req.userId);
+
+            res.status(200).json({
+                message: "Usuario eliminado correctamente"
+            });
+        } catch (error) {
+            res.status(500).json({
+                message: error.message
+            });
+        }
+    };
+
+    export { getVistaSinRelatoStagingReducida, getVistaSinRelatoStaging, getRankingObservada, getVistaMapa, prueba, login, getAllUsers, getUserById, createUser, updateUser, deleteUser, logout, getVista, getVistaFiltros, getVistaEstadisticas, getRanking, getVistaTablaIzq, getVistaTablaDer, getVistaSinRelato, getRankingDiario, getManifest };
