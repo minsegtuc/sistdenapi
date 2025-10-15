@@ -899,6 +899,181 @@ const getVistaSinRelatoStaging = async (req, res) => {
     }
 }
 
+const getVistaSinRelatoStagingReducida = async (req, res) => {
+    await sequelize.query("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci;");
+    await sequelize.query("SET collation_connection = 'utf8mb4_unicode_ci';");
+
+    const {
+        fechaInicio,
+        fechaFin,
+        delito = '',
+        submodalidad = '',
+        interes = '',
+        arma = '',
+        seguro = '',
+        riesgo = '',
+        lugar_del_hecho = '',
+        comisaria = '',
+        unidadRegional = '',
+        localidad = '',
+        modalidad = '',
+        elementosSustraidos = '',
+        victimario = ''
+    } = req.body || {};
+
+    console.log(req.body)
+
+    let whereClause = []
+    let likeClause = []
+    let replacements = {}
+
+    whereClause.push(`\`CLASIFICADA POR\` COLLATE utf8mb4_0900_ai_ci <> 2`);
+
+    if (fechaInicio && fechaFin) {
+        whereClause.push(`FECHA_HECHO BETWEEN :fechaInicio AND :fechaFin`)
+        replacements.fechaInicio = fechaInicio
+        replacements.fechaFin = fechaFin
+    }
+
+    if (delito?.trim()) {
+        whereClause.push(`DELITO COLLATE utf8mb4_0900_ai_ci = :delito`);
+        replacements.delito = delito.trim();
+    }
+
+    if (submodalidad?.trim()) {
+        whereClause.push(`SUBMODALIDAD COLLATE utf8mb4_0900_ai_ci = :submodalidad`);
+        replacements.submodalidad = submodalidad.trim();
+    }
+
+    if (arma?.trim()) {
+        whereClause.push(`\`ARMA UTILIZADA\` COLLATE utf8mb4_0900_ai_ci = :arma`);
+        replacements.arma = arma.trim();
+    }
+
+    if (interes?.trim()) {
+        whereClause.push(`INTERES COLLATE utf8mb4_0900_ai_ci = :interes`);
+        replacements.interes = interes.trim();
+    }
+
+    if (seguro?.trim()) {
+        whereClause.push(`\`PARA SEGURO\`COLLATE utf8mb4_0900_ai_ci = :seguro`);
+        replacements.seguro = seguro.trim();
+    }
+
+    if (riesgo?.trim()) {
+        whereClause.push(`VICTIMA COLLATE utf8mb4_0900_ai_ci = :riesgo`);
+        replacements.riesgo = riesgo.trim();
+    }
+
+    if (String(lugar_del_hecho)?.trim()) {
+        whereClause.push(`Lugar_del_Hecho COLLATE utf8mb4_0900_ai_ci = :lugar_del_hecho`);
+        replacements.lugar_del_hecho = String(lugar_del_hecho).trim();
+    }
+
+    if (comisaria?.trim()) {
+        whereClause.push(`COMISARIA COLLATE utf8mb4_0900_ai_ci = :comisaria`);
+        replacements.comisaria = comisaria.trim();
+    }
+
+    if (unidadRegional?.trim()) {
+        whereClause.push(`\`UNIDAD REGIONAL\` COLLATE utf8mb4_0900_ai_ci = :unidadRegional`);
+        replacements.unidadRegional = unidadRegional.trim();
+    }
+
+    if (localidad?.trim()) {
+        whereClause.push(`LOCALIDAD COLLATE utf8mb4_0900_ai_ci = :localidad`);
+        replacements.localidad = localidad.trim();
+    }
+
+    if (modalidad?.trim()) {
+        whereClause.push(`MODALIDAD COLLATE utf8mb4_0900_ai_ci = :modalidad`);
+        replacements.modalidad = modalidad.trim();
+    }
+
+    if (elementosSustraidos?.trim()) {
+        likeClause.push(`\`ELEMENTOS SUSTRAIDOS\` COLLATE utf8mb4_0900_ai_ci LIKE :elementosSustraidos`);
+        replacements.elementosSustraidos = `%${elementosSustraidos.trim()}%`;
+    }
+
+    if (victimario?.trim()) {
+        likeClause.push(`VICTIMARIO COLLATE utf8mb4_0900_ai_ci LIKE :victimario`);
+        replacements.victimario = `%${victimario.trim()}%`;
+    }
+
+    const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
+    const like = likeClause.length > 0 ? (where ? ` AND ${likeClause.join(' AND ')}` : `WHERE ${likeClause.join(' AND ')}`) : '';
+
+    try {
+        const andWhere = where ? `${where} AND` : 'WHERE';
+
+        const queries = {
+            total: `SELECT COUNT(*) AS total FROM denuncias_completas_v9_sin_relato ${where} ${like}`,
+            interes: `SELECT COUNT(*) AS interes FROM denuncias_completas_v9_sin_relato ${where} ${like} AND INTERES = CONVERT('SI' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
+            noInteres: `SELECT COUNT(*) AS noInteres FROM denuncias_completas_v9_sin_relato ${where} ${like} AND INTERES = CONVERT('NO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
+            victima: `SELECT COUNT(*) AS victima FROM denuncias_completas_v9_sin_relato ${where} ${like} AND VICTIMA = CONVERT('CON RIESGO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
+            robo: `SELECT COUNT(*) AS robo FROM denuncias_completas_v9_sin_relato ${where} ${like} AND DELITO = CONVERT('ROBO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
+            hurtos: `SELECT COUNT(*) AS hurtos FROM denuncias_completas_v9_sin_relato ${where} ${like} AND DELITO = CONVERT('HURTOS' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
+            roboArma: `SELECT COUNT(*) AS roboArma FROM denuncias_completas_v9_sin_relato ${where} ${like} AND DELITO = CONVERT('ROBO CON ARMA DE FUEGO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
+            porFechas: `
+                SELECT DATE(FECHA_HECHO) AS fecha, COUNT(*) AS cantidad
+                FROM denuncias_completas_v9_sin_relato
+                ${where} ${like}
+                GROUP BY DATE(FECHA_HECHO)
+                ORDER BY fecha
+            `,
+        }
+
+        const [total, interes, noInteres, victima, robo, hurtos, roboArma, porFechas] = await Promise.all([
+            sequelize.query(queries.total, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
+            sequelize.query(queries.interes, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
+            sequelize.query(queries.noInteres, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
+            sequelize.query(queries.victima, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
+            sequelize.query(queries.robo, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
+            sequelize.query(queries.hurtos, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
+            sequelize.query(queries.roboArma, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
+            sequelize.query(queries.porFechas, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            })
+        ]);
+
+        res.status(200).json({
+            total,
+            interes,
+            noInteres,
+            victima,
+            robo,
+            hurtos,
+            roboArma,
+            porFechas,
+        });
+    } catch (error) {
+        console.error('Error en getVistaSinRelatoStaging:', error);
+        res.status(500).json({ message: error.message });
+    }
+}
+
 const getVistaMapa = async (req, res) => {
     const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, especialidad, seguro, riesgo, lugar_del_hecho, comisaria } = req.body;
 
@@ -1566,4 +1741,4 @@ const deleteUser = async (req, res) => {
     }
 };
 
-export { getVistaSinRelatoStaging, getRankingObservada, getVistaMapa, prueba, login, getAllUsers, getUserById, createUser, updateUser, deleteUser, logout, getVista, getVistaFiltros, getVistaEstadisticas, getRanking, getVistaTablaIzq, getVistaTablaDer, getVistaSinRelato, getRankingDiario, getManifest };
+export { getVistaSinRelatoStagingReducida, getVistaSinRelatoStaging, getRankingObservada, getVistaMapa, prueba, login, getAllUsers, getUserById, createUser, updateUser, deleteUser, logout, getVista, getVistaFiltros, getVistaEstadisticas, getRanking, getVistaTablaIzq, getVistaTablaDer, getVistaSinRelato, getRankingDiario, getManifest };

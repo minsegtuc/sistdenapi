@@ -1,5 +1,5 @@
 import express from 'express';
-import { getVistaSinRelatoStaging, getRankingObservada, getVistaMapa, prueba, getAllUsers, getUserById, createUser, updateUser, deleteUser, login, logout, getVista, getVistaFiltros, getRanking, getVistaEstadisticas, getVistaTablaIzq, getVistaTablaDer, getVistaSinRelato, getRankingDiario, getManifest } from '../controllers/usuario.controller.js';
+import { getVistaSinRelatoStagingReducida, getVistaSinRelatoStaging, getRankingObservada, getVistaMapa, prueba, getAllUsers, getUserById, createUser, updateUser, deleteUser, login, logout, getVista, getVistaFiltros, getRanking, getVistaEstadisticas, getVistaTablaIzq, getVistaTablaDer, getVistaSinRelato, getRankingDiario, getManifest } from '../controllers/usuario.controller.js';
 import verifyToken from '../middleware/jwt.js';
 
 const router = express.Router();
@@ -16,6 +16,7 @@ router.get('/rankingObservadas', verifyToken, getRankingObservada)
 router.post('/vista', verifyToken, getVista)
 router.post('/vistaSinRelato', verifyToken, getVistaSinRelato)
 router.post('/vistaSinRelatoStaging', verifyToken, getVistaSinRelatoStaging)
+router.post('/vistaSinRelatoStagingReducida', verifyToken, getVistaSinRelatoStagingReducida)
 router.post('/vistaMapa', verifyToken, getVistaMapa)
 router.post('/filtros', verifyToken, getVistaFiltros)
 router.post('/estadisticas', verifyToken, getVistaEstadisticas)
