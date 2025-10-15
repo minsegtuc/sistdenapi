@@ -687,7 +687,7 @@ const getVistaSinRelatoStaging = async (req, res) => {
 
     const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
     const like = likeClause.length > 0 ? (where ? ` AND ${likeClause.join(' AND ')}` : `WHERE ${likeClause.join(' AND ')}`) : '';
-
+    
     try {
         const andWhere = where ? `${where} AND` : 'WHERE';
 
@@ -696,8 +696,8 @@ const getVistaSinRelatoStaging = async (req, res) => {
             interes: `SELECT COUNT(*) AS interes FROM denuncias_completas_v9_sin_relato ${where} ${like} AND INTERES = CONVERT('SI' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
             noInteres: `SELECT COUNT(*) AS noInteres FROM denuncias_completas_v9_sin_relato ${where} ${like} AND INTERES = CONVERT('NO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
             victima: `SELECT COUNT(*) AS victima FROM denuncias_completas_v9_sin_relato ${where} ${like} AND VICTIMA = CONVERT('CON RIESGO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
-            robo: `SELECT COUNT(*) AS robo FROM denuncias_completas_v9_sin_relato ${where} ${like} AND DELITO = CONVERT('ROBO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
-            hurtos: `SELECT COUNT(*) AS hurtos FROM denuncias_completas_v9_sin_relato ${where} ${like} AND DELITO = CONVERT('HURTOS' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
+            robo: `SELECT COUNT(*) AS robo FROM denuncias_completas_v9_sin_relato ${where} ${like} AND (DELITO = CONVERT('ROBO' USING utf8mb4) OR DELITO = CONVERT('TENTATIVA DE ROBOS' USING utf8mb4)) COLLATE utf8mb4_unicode_ci`,
+            hurtos: `SELECT COUNT(*) AS hurtos FROM denuncias_completas_v9_sin_relato ${where} ${like} AND (DELITO = CONVERT('HURTOS' USING utf8mb4) OR DELITO = CONVERT('TENTATIVA DE HURTOS' USING utf8mb4)) COLLATE utf8mb4_unicode_ci`,
             roboArma: `SELECT COUNT(*) AS roboArma FROM denuncias_completas_v9_sin_relato ${where} ${like} AND DELITO = CONVERT('ROBO CON ARMA DE FUEGO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
             porFechas: `
                 SELECT DATE(FECHA_HECHO) AS fecha, COUNT(*) AS cantidad
@@ -733,6 +733,20 @@ const getVistaSinRelatoStaging = async (req, res) => {
                 ${andWhere} ${like} SUBMODALIDAD IS NOT NULL AND SUBMODALIDAD COLLATE utf8mb4_0900_ai_ci <> ''
                 GROUP BY SUBMODALIDAD
                 ORDER BY cantidad DESC
+            `,
+            porRegional: `
+                SELECT \`UNIDAD REGIONAL\` AS regional, count(*) AS cantidad
+                FROM denuncias_completas_v9_sin_relato
+                ${andWhere} ${like} \`UNIDAD REGIONAL\` IS NOT NULL AND \`UNIDAD REGIONAL\` COLLATE utf8mb4_0900_ai_ci <> ''
+                GROUP BY \`UNIDAD REGIONAL\`
+                ORDER BY cantidad DESC;
+            `,
+            porLocalidad: `
+                SELECT LOCALIDAD AS localidad, count(*) AS cantidad
+                FROM denuncias_completas_v9_sin_relato
+                ${andWhere} ${like} LOCALIDAD IS NOT NULL AND LOCALIDAD COLLATE utf8mb4_0900_ai_ci <> ''
+                GROUP BY LOCALIDAD
+                ORDER BY cantidad DESC;
             `,
             porElementosSustraidos: `
             SELECT
@@ -808,7 +822,7 @@ const getVistaSinRelatoStaging = async (req, res) => {
             value DESC;`
         }
 
-        const [total, interes, noInteres, victima, robo, hurtos, roboArma, porFechas, porFechaYHora, porDelitos, porModalidad, porSubmodalidad, porElementosSustraidos, porVictimario, deArmasAMovilidad, deMovilidadALugar] = await Promise.all([
+        const [total, interes, noInteres, victima, robo, hurtos, roboArma, porFechas, porFechaYHora, porDelitos, porModalidad, porSubmodalidad, porRegional, porLocalidad, porElementosSustraidos, porVictimario, deArmasAMovilidad, deMovilidadALugar] = await Promise.all([
             sequelize.query(queries.total, {
                 type: Sequelize.QueryTypes.SELECT,
                 replacements
@@ -857,6 +871,14 @@ const getVistaSinRelatoStaging = async (req, res) => {
                 type: Sequelize.QueryTypes.SELECT,
                 replacements
             }),
+            sequelize.query(queries.porRegional, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
+            sequelize.query(queries.porLocalidad, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
             sequelize.query(queries.porElementosSustraidos, {
                 type: Sequelize.QueryTypes.SELECT,
                 replacements
@@ -888,6 +910,8 @@ const getVistaSinRelatoStaging = async (req, res) => {
             porDelitos,
             porModalidad,
             porSubmodalidad,
+            porRegional,
+            porLocalidad,
             porElementosSustraidos,
             porVictimario,
             deArmasAMovilidad,
@@ -1011,8 +1035,8 @@ const getVistaSinRelatoStagingReducida = async (req, res) => {
             interes: `SELECT COUNT(*) AS interes FROM denuncias_completas_v9_sin_relato ${where} ${like} AND INTERES = CONVERT('SI' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
             noInteres: `SELECT COUNT(*) AS noInteres FROM denuncias_completas_v9_sin_relato ${where} ${like} AND INTERES = CONVERT('NO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
             victima: `SELECT COUNT(*) AS victima FROM denuncias_completas_v9_sin_relato ${where} ${like} AND VICTIMA = CONVERT('CON RIESGO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
-            robo: `SELECT COUNT(*) AS robo FROM denuncias_completas_v9_sin_relato ${where} ${like} AND DELITO = CONVERT('ROBO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
-            hurtos: `SELECT COUNT(*) AS hurtos FROM denuncias_completas_v9_sin_relato ${where} ${like} AND DELITO = CONVERT('HURTOS' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
+            robo: `SELECT COUNT(*) AS robo FROM denuncias_completas_v9_sin_relato ${where} ${like} AND (DELITO = CONVERT('ROBO' USING utf8mb4) OR DELITO = CONVERT('TENTATIVA DE ROBOS' USING utf8mb4)) COLLATE utf8mb4_unicode_ci`,
+            hurtos: `SELECT COUNT(*) AS hurtos FROM denuncias_completas_v9_sin_relato ${where} ${like} AND (DELITO = CONVERT('HURTOS' USING utf8mb4) OR DELITO = CONVERT('TENTATIVA DE HURTOS' USING utf8mb4)) COLLATE utf8mb4_unicode_ci`,
             roboArma: `SELECT COUNT(*) AS roboArma FROM denuncias_completas_v9_sin_relato ${where} ${like} AND DELITO = CONVERT('ROBO CON ARMA DE FUEGO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
             porFechas: `
                 SELECT DATE(FECHA_HECHO) AS fecha, COUNT(*) AS cantidad
