@@ -1021,9 +1021,12 @@ const getVistaSinRelatoStagingReducida = async (req, res) => {
                 GROUP BY DATE(FECHA_HECHO)
                 ORDER BY fecha
             `,
+            aprehendido: `
+                SELECT COUNT(*) AS aprehendido
+                FROM denuncias_completas_v9_sin_relato ${where} ${like} AND APREHENDIDO = CONVERT('SI' USING utf8mb4) COLLATE utf8mb4_unicode_ci`
         }
 
-        const [total, interes, noInteres, victima, robo, hurtos, roboArma, porFechas] = await Promise.all([
+        const [total, interes, noInteres, victima, robo, hurtos, roboArma, porFechas, aprehendido] = await Promise.all([
             sequelize.query(queries.total, {
                 type: Sequelize.QueryTypes.SELECT,
                 replacements
@@ -1055,7 +1058,11 @@ const getVistaSinRelatoStagingReducida = async (req, res) => {
             sequelize.query(queries.porFechas, {
                 type: Sequelize.QueryTypes.SELECT,
                 replacements
-            })
+            }),
+            sequelize.query(queries.aprehendido, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
         ]);
 
         res.status(200).json({
@@ -1067,6 +1074,7 @@ const getVistaSinRelatoStagingReducida = async (req, res) => {
             hurtos,
             roboArma,
             porFechas,
+            aprehendido
         });
     } catch (error) {
         console.error('Error en getVistaSinRelatoStaging:', error);
