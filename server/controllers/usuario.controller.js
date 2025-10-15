@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import sequelize from "../config/db.js";
-import { Op, fn, col, literal, Sequelize, or } from "sequelize";
+import { Op, fn, col, literal, Sequelize, or, and } from "sequelize";
 import { registrarLog } from "../helpers/logHelpers.js";
 
 dotenv.config();
@@ -799,7 +799,7 @@ const getVistaSinRelatoStaging = async (req, res) => {
             COUNT(*) AS value
             FROM
             denuncias_completas_v9_sin_relato
-            WHERE
+            ${andWhere} ${like}
             \`CLASIFICADA POR\` <> 2
             GROUP BY
             movilidad,
