@@ -696,6 +696,27 @@ const getVistaSinRelatoStaging = async (req, res) => {
             interes: `SELECT COUNT(*) AS interes FROM denuncias_completas_v9_sin_relato ${where} ${like} AND INTERES = CONVERT('SI' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
             noInteres: `SELECT COUNT(*) AS noInteres FROM denuncias_completas_v9_sin_relato ${where} ${like} AND INTERES = CONVERT('NO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
             victima: `SELECT COUNT(*) AS victima FROM denuncias_completas_v9_sin_relato ${where} ${like} AND VICTIMA = CONVERT('CON RIESGO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
+            porArmas: `
+                SELECT \`ARMA UTILIZADA\` AS arma, count(*) AS cantidad
+                FROM denuncias_completas_v9_sin_relato
+                ${andWhere} ${like} \`ARMA UTILIZADA\` IS NOT NULL AND \`ARMA UTILIZADA\` COLLATE utf8mb4_0900_ai_ci <> ''
+                GROUP BY \`ARMA UTILIZADA\`
+                ORDER BY cantidad DESC;
+            `,
+            porLugarDelHecho: `
+                SELECT Lugar_del_Hecho AS lugar, COUNT(*) AS cantidad
+                FROM denuncias_completas_v9_sin_relato
+                ${andWhere} ${like} Lugar_del_Hecho IS NOT NULL AND Lugar_del_Hecho COLLATE utf8mb4_0900_ai_ci <> ''
+                GROUP BY Lugar_del_Hecho
+                ORDER BY cantidad DESC
+            `,
+            porComisaria: `
+                SELECT COMISARIA AS comisaria, COUNT(*) AS cantidad
+                FROM denuncias_completas_v9_sin_relato
+                ${andWhere} ${like} COMISARIA IS NOT NULL AND COMISARIA COLLATE utf8mb4_0900_ai_ci <> ''
+                GROUP BY COMISARIA
+                ORDER BY cantidad DESC
+            `,
             robo: `SELECT COUNT(*) AS robo FROM denuncias_completas_v9_sin_relato ${where} ${like} AND (DELITO = CONVERT('ROBO' USING utf8mb4) OR DELITO = CONVERT('TENTATIVA DE ROBOS' USING utf8mb4)) COLLATE utf8mb4_unicode_ci`,
             hurtos: `SELECT COUNT(*) AS hurtos FROM denuncias_completas_v9_sin_relato ${where} ${like} AND (DELITO = CONVERT('HURTOS' USING utf8mb4) OR DELITO = CONVERT('TENTATIVA DE HURTOS' USING utf8mb4)) COLLATE utf8mb4_unicode_ci`,
             roboArma: `SELECT COUNT(*) AS roboArma FROM denuncias_completas_v9_sin_relato ${where} ${like} AND DELITO = CONVERT('ROBO CON ARMA DE FUEGO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
@@ -822,7 +843,7 @@ const getVistaSinRelatoStaging = async (req, res) => {
             value DESC;`
         }
 
-        const [total, interes, noInteres, victima, robo, hurtos, roboArma, porFechas, porFechaYHora, porDelitos, porModalidad, porSubmodalidad, porRegional, porLocalidad, porElementosSustraidos, porVictimario, deArmasAMovilidad, deMovilidadALugar] = await Promise.all([
+        const [total, interes, noInteres, victima, porArmas, porLugarDelHecho, porComisaria, robo, hurtos, roboArma, porFechas, porFechaYHora, porDelitos, porModalidad, porSubmodalidad, porRegional, porLocalidad, porElementosSustraidos, porVictimario, deArmasAMovilidad, deMovilidadALugar] = await Promise.all([
             sequelize.query(queries.total, {
                 type: Sequelize.QueryTypes.SELECT,
                 replacements
@@ -836,6 +857,18 @@ const getVistaSinRelatoStaging = async (req, res) => {
                 replacements
             }),
             sequelize.query(queries.victima, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
+            sequelize.query(queries.porArmas, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
+            sequelize.query(queries.porLugarDelHecho, {
+                type: Sequelize.QueryTypes.SELECT,
+                replacements
+            }),
+            sequelize.query(queries.porComisaria, {
                 type: Sequelize.QueryTypes.SELECT,
                 replacements
             }),
@@ -902,6 +935,9 @@ const getVistaSinRelatoStaging = async (req, res) => {
             interes,
             noInteres,
             victima,
+            porArmas,
+            porLugarDelHecho,
+            porComisaria,
             robo,
             hurtos,
             roboArma,
