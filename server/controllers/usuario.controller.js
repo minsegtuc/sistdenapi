@@ -612,7 +612,7 @@ const getVistaSinRelatoStaging = async (req, res) => {
     let likeClause = []
     let replacements = {}
 
-    whereClause.push(`\`CLASIFICADA POR\` COLLATE utf8mb4_0900_ai_ci <> 2`);
+    // whereClause.push(`\`CLASIFICADA POR\` COLLATE utf8mb4_0900_ai_ci <> 2`);
 
     if (fechaInicio && fechaFin) {
         whereClause.push(`FECHA_HECHO BETWEEN :fechaInicio AND :fechaFin`)
