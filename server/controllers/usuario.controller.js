@@ -56,7 +56,7 @@ const getRanking = async (req, res) => {
             type: Sequelize.QueryTypes.SELECT
         });
 
-        console.log("Ranking: ", ranking)
+        //console.log("Ranking: ", ranking)
 
         const usuariosPromises = ranking.map(async r => {
             const response = await fetch(`http://127.0.0.1:3008/auth/usuario/dni/${r.dniId}`, {
@@ -117,7 +117,7 @@ const getRankingObservada = async (req, res) => {
             type: Sequelize.QueryTypes.SELECT
         });
 
-        console.log("Ranking: ", ranking)
+        //console.log("Ranking: ", ranking)
 
         const usuariosPromises = ranking.map(async r => {
             const response = await fetch(`http://127.0.0.1:3008/auth/usuario/dni/${r.dniId}`, {
@@ -323,7 +323,7 @@ const getVistaFiltros = async (req, res) => {
             filtros[result.key] = result.values;
         });
 
-        console.log("Filtros: ", filtros);
+        //console.log("Filtros: ", filtros);
         await registrarLog("Consulta", "Se han obtenido los filtros para la vista", req.user?.id);
         res.status(200).json(filtros);
 
@@ -414,7 +414,7 @@ const getVistaFiltros = async (req, res) => {
 // }
 
 const getVista = async (req, res) => {
-    console.log(req.user?.id);
+    //console.log(req.user?.id);
 
     const {
         fechaInicio,
@@ -505,7 +505,7 @@ const getVista = async (req, res) => {
 const getVistaSinRelato = async (req, res) => {
     const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, especialidad, seguro, riesgo, lugar_del_hecho, comisaria } = req.body;
 
-    console.log(req.body)
+    //console.log(req.body)
 
     let whereClause = []
     let replacements = {}
@@ -606,7 +606,7 @@ const getVistaSinRelatoStaging = async (req, res) => {
         victimario = ''
     } = req.body || {};
 
-    console.log(req.body)
+    //console.log(req.body)
 
     let whereClause = []
     let likeClause = []
@@ -981,7 +981,7 @@ const getVistaSinRelatoStagingReducida = async (req, res) => {
         victimario = ''
     } = req.body || {};
 
-    console.log(req.body)
+    //console.log(req.body)
 
     let whereClause = []
     let likeClause = []
@@ -1145,7 +1145,7 @@ const getVistaSinRelatoStagingReducida = async (req, res) => {
 const getVistaMapa = async (req, res) => {
     const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, especialidad, seguro, riesgo, lugar_del_hecho, comisaria } = req.body;
 
-    console.log(req.body)
+    //console.log(req.body)
 
     let whereClause = []
     let replacements = {}
@@ -1381,7 +1381,7 @@ const getVistaTablaIzq = async (req, res) => {
     // const mesAnterior = mes ? (parseInt(mes) - 1) : null;
     const anioAnterior = anio ? (parseInt(anio) - 1) : null;
 
-    console.log(mes, anio, anioAnterior)
+    //console.log(mes, anio, anioAnterior)
 
     if (mes && anioAnterior && anio) {
         whereClause.push(`
@@ -1480,7 +1480,7 @@ const getVistaTablaDer = async (req, res) => {
     const mesAnterior = mes ? (parseInt(mes) - 1) : null;
     //const anioAnterior = anio ? (parseInt(anio) - 1) : null;
 
-    console.log(mes, anio, mesAnterior)
+    //console.log(mes, anio, mesAnterior)
 
     if (mes && mesAnterior && anio) {
         whereClause.push(`
@@ -1576,13 +1576,13 @@ const getManifest = (req, res) => {
 
         // Obtener referer de forma segura
         const referer = req.get('referer') || '';
-        console.log("=== Manifest Request ===");
-        console.log("Headers recibidos:", req.headers);
-        console.log("Referer:", referer);
+        // console.log("=== Manifest Request ===");
+        // console.log("Headers recibidos:", req.headers);
+        // console.log("Referer:", referer);
 
         // Elegir manifest según referer
         if (referer.includes('/sgd')) {
-            console.log("Se sirve manifest para SGD");
+           //console.log("Se sirve manifest para SGD");
             res.json({
                 name: "Sistema de Gestión de Denuncias",
                 short_name: "SGD",
@@ -1596,7 +1596,7 @@ const getManifest = (req, res) => {
                 ]
             });
         } else {
-            console.log("Se sirve manifest por defecto SCG");
+            //console.log("Se sirve manifest por defecto SCG");
             res.json({
                 name: "Sistema de Control de Gestión",
                 short_name: "SCG",

@@ -18,7 +18,7 @@ import { wss } from "../sockets/socketConfig.js";
 
 const getAllDenuncias = async (req, res) => {
     const { clasificada } = req.params
-    console.log(clasificada)
+    //console.log(clasificada)
     try {
         const denuncias = await Denuncia.findAll({
             include: [
@@ -48,7 +48,7 @@ const getAllDenuncias = async (req, res) => {
 }
 
 const getDenunciaById = async (req, res) => {
-    console.log("Denuncia desde controlador: ", req.params.id)
+    //console.log("Denuncia desde controlador: ", req.params.id)
     const { id } = req.params;
     try {
         const denuncia = await Denuncia.findByPk(id, {
@@ -101,7 +101,7 @@ const getDenunciaById = async (req, res) => {
 const getDenunciaByIdVista = async (req, res) => {
     const { denuncia } = req.body;
     const denunciaDecodedId = decodeURIComponent(denuncia);
-    console.log(req.body);
+    //console.log(req.body);
 
     try {
         const query = `SELECT * FROM denuncias_completas_v9 WHERE NRO_DENUNCIA = "${denunciaDecodedId}"`;
@@ -675,7 +675,7 @@ const updateDenuncia = async (req, res) => {
 
     try {
         for (const denunciaData of denuncias) {
-            console.log("DenunciaData: ", denunciaData);
+            //console.log("DenunciaData: ", denunciaData);
             let denuncia;
             try {
                 denuncia = await Denuncia.findByPk(denunciaData.idDenuncia, { transaction: transaccion });
@@ -685,7 +685,7 @@ const updateDenuncia = async (req, res) => {
                 }
 
                 const idUbicacion = denuncia.ubicacionId;
-                console.log("idUbicacion: ", idUbicacion)
+                //console.log("idUbicacion: ", idUbicacion)
 
                 if (!idUbicacion) {
                     throw new Error(`La denuncia con ID ${denunciaData.idDenuncia} no tiene una ubicación asociada`);
@@ -727,7 +727,7 @@ const updateDenuncia = async (req, res) => {
                     transaction: transaccion
                 });
 
-                console.log("El deni es: " , req.user?.id)
+                //console.log("El deni es: " , req.user?.id)
                 await registrarLog('UPDATE', `DENUNCIA ${denuncia.idDenuncia} ACTUALIZADA`, req.user?.id);
                 denunciasActualizadas += 1;
             } catch (error) {
@@ -773,7 +773,7 @@ const updateDenuncia = async (req, res) => {
 
 const updateClasificacion = async (req, res) => {
     const { idDenuncia, detalle } = req.body;
-    console.log("Denuncia y detalle: ", idDenuncia, detalle)
+    //console.log("Denuncia y detalle: ", idDenuncia, detalle)
     const errores = [];
 
     let denunciasActualizadas = 0;

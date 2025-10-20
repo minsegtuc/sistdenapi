@@ -22,7 +22,7 @@ const getObjetoIAById = async (req, res) => {
 const createObjetoIA = async (req, res) => {
     const { objetoIA } = req.body;
     const errores = []
-    console.log(objetoIA)
+    //console.log(objetoIA)
 
     try {
         const resObjetoIA = await ObjetoIA.create({
