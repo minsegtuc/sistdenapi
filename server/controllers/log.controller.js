@@ -14,12 +14,17 @@ const getAllLogs = async (req, res) => {
         // Normalizar filtros desde el frontend
         const userFilter = (req.query.user || req.query.usuario || '').trim();
         const actionFilter = (req.query.action || req.query.accion || '').trim();
+        const descriptionFilter = (req.query.description || req.query.descripcion || '').trim();
 
         // where de la tabla Log
         const where = {};
         if (actionFilter) {
             // Postgres: Op.iLike; para MySQL/MariaDB usa Op.like
             where.accion = { [Op.like]: `%${actionFilter}%` };
+        }
+
+        if (descriptionFilter) {
+            where.descripcion = { [Op.like]: `%${descriptionFilter}%` };
         }
 
         // include para filtrar por usuario relacionado
@@ -30,21 +35,7 @@ const getAllLogs = async (req, res) => {
             if (isNumeric) {
                 // Filtrar por DNI directo en Log
                 where.dniId = { [Op.like]: `%${userFilter}%` };
-            } else {
-                include.push({
-                    model: models.Usuario,
-                    as: 'usuario',
-                    attributes: ['dni', 'username', 'nombre', 'apellido'], // ajusta a tus columnas
-                    where: {
-                        [Op.or]: [
-                            { username: { [Op.iLike]: `%${userFilter}%` } },
-                            { nombre: { [Op.iLike]: `%${userFilter}%` } },
-                            { apellido: { [Op.iLike]: `%${userFilter}%` } },
-                        ],
-                    },
-                    required: true, // INNER JOIN para aplicar el filtro
-                });
-            }
+            } 
         }
 
         const { count, rows } = await Log.findAndCountAll({
@@ -59,8 +50,69 @@ const getAllLogs = async (req, res) => {
         const totalLogs = typeof count === 'number' ? count : 0;
         const totalPages = Math.max(1, Math.ceil(totalLogs / pageSize));
 
+        // Enriquecer logs con nombre y apellido desde servicio externo por DNI
+        const userCache = new Map();
+        const getUserByDni = async (dniId) => {
+            if (!dniId) return null;
+            if (userCache.has(dniId)) return userCache.get(dniId);
+
+            try {
+                console.log(`Buscando usuario con DNI: ${dniId}`);
+                console.log(`Token: ${process.env.INTERNAL_API_TOKEN ? 'Presente' : 'Ausente'}`);
+                
+                const response = await fetch(`http://127.0.0.1:3008/auth/usuario/dni/${dniId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${process.env.INTERNAL_API_TOKEN}`
+                    }
+                });
+                
+                console.log(`Response status: ${response.status}`);
+                console.log(`Response ok: ${response.ok}`);
+                
+                if (!response.ok) {
+                    console.log(`Error en respuesta para DNI ${dniId}: ${response.status}`);
+                    const fallback = { nombre: 'Desconocido', apellido: '', dni: dniId };
+                    userCache.set(dniId, fallback);
+                    return fallback;
+                }
+                
+                const data = await response.json();
+                console.log(`Datos recibidos para DNI ${dniId}:`, data);
+                
+                // Normalizar estructura esperada
+                const normalized = {
+                    nombre: data?.nombre ?? 'Desconocido',
+                    apellido: data?.apellido ?? '',
+                    dni: data?.dni ?? dniId
+                };
+                console.log(`Datos normalizados para DNI ${dniId}:`, normalized);
+                
+                userCache.set(dniId, normalized);
+                return normalized;
+            } catch (e) {
+                console.log(`Error en fetch para DNI ${dniId}:`, e.message);
+                const fallback = { nombre: 'Desconocido', apellido: '', dni: dniId };
+                userCache.set(dniId, fallback);
+                return fallback;
+            }
+        };
+
+        // Resolver usuarios en paralelo (con cache para evitar duplicados)
+        const enrichedLogsPromises = rows.map(async (log) => {
+            const plainLog = typeof log?.get === 'function' ? log.get({ plain: true }) : log;
+            const user = await getUserByDni(plainLog.dniId);
+            return {
+                ...plainLog,
+                nombre: user?.nombre,
+                apellido: user?.apellido
+            };
+        });
+        const enrichedLogs = await Promise.all(enrichedLogsPromises);
+
         return res.status(200).json({
-            logs: rows,
+            logs: enrichedLogs,
             totalLogs,
             currentPage: page,
             totalPages,
