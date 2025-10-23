@@ -333,86 +333,6 @@ const getVistaFiltros = async (req, res) => {
     }
 };
 
-// const getVista = async (req, res) => {
-//     console.log(req.user?.id)
-//     const { fechaInicio, fechaFin, delito, submodalidad, interes, arma, seguro, riesgo, lugar_del_hecho, comisaria } = req.body;
-
-//     console.log(req.body)
-
-//     let whereClause = []
-//     let replacements = {}
-
-//     // whereClause.push(`\`CLASIFICADA POR\` COLLATE utf8mb4_unicode_ci <> 2`);
-
-//     if (fechaInicio && fechaFin) {
-//         whereClause.push(`FECHA_HECHO BETWEEN :fechaInicio AND :fechaFin`)
-//         replacements.fechaInicio = fechaInicio
-//         replacements.fechaFin = fechaFin
-//     }
-
-//     if (delito && delito.trim() !== '') {
-//         whereClause.push(`DELITO COLLATE utf8mb4_unicode_ci = :delito`);
-//         replacements.delito = delito;
-//     }
-
-//     if (submodalidad && submodalidad.trim() !== '') {
-//         whereClause.push(`SUBMODALIDAD COLLATE utf8mb4_unicode_ci = :submodalidad`);
-//         replacements.submodalidad = submodalidad;
-//     }
-
-//     if (arma && arma.trim() !== '') {
-//         whereClause.push(`\`ARMA UTILIZADA\` COLLATE utf8mb4_unicode_ci = :arma`);
-//         replacements.arma = arma;
-//     }
-
-//     if (interes !== undefined && interes !== '') {
-//         whereClause.push(`INTERES COLLATE utf8mb4_unicode_ci = :interes`);
-//         replacements.interes = interes;
-//     }
-
-//     if (seguro && seguro.trim() !== '') {
-//         whereClause.push(`\`PARA SEGURO\`COLLATE utf8mb4_unicode_ci = :seguro`);
-//         replacements.seguro = seguro;
-//     }
-
-//     if (riesgo && riesgo.trim() !== '') {
-//         whereClause.push(`VICTIMA COLLATE utf8mb4_unicode_ci = :riesgo`);
-//         replacements.riesgo = riesgo;
-//     }
-
-//     if (lugar_del_hecho && String(lugar_del_hecho).trim() !== '') {
-//         whereClause.push(`Lugar_del_Hecho COLLATE utf8mb4_unicode_ci = :lugar_del_hecho`);
-//         replacements.lugar_del_hecho = String(lugar_del_hecho).trim();
-//     }
-
-//     if (comisaria && comisaria.trim() !== '') {
-//         whereClause.push(`COMISARIA COLLATE utf8mb4_unicode_ci = :comisaria`);
-//         replacements.comisaria = comisaria;
-//     }
-
-//     const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
-
-//     try {
-//         const query = `
-//             SELECT *
-//             FROM denuncias_completas_v9
-//             ${where};
-//         `;
-
-//         const result = await sequelize.query(query, {
-//             type: Sequelize.QueryTypes.SELECT,
-//             replacements
-//         });
-
-//         await registrarLog("Consulta", "Se ha realizado una consulta con filtros", req.userId);
-
-//         res.status(200).json(result);
-//     } catch (error) {
-//         console.error('Error en getVista:', error);
-//         res.status(500).json({ message: error.message });
-//     }
-// }
-
 const getVista = async (req, res) => {
     //console.log(req.user?.id);
 
@@ -612,7 +532,7 @@ const getVistaSinRelatoStaging = async (req, res) => {
     let likeClause = []
     let replacements = {}
 
-    whereClause.push(`\`CLASIFICADA POR\` COLLATE utf8mb4_0900_ai_ci <> 2`);
+    //whereClause.push(`\`CLASIFICADA POR\` COLLATE utf8mb4_0900_ai_ci <> 2`);
 
     if (fechaInicio && fechaFin) {
         whereClause.push(`FECHA_HECHO BETWEEN :fechaInicio AND :fechaFin`)
@@ -688,84 +608,87 @@ const getVistaSinRelatoStaging = async (req, res) => {
     const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
     const like = likeClause.length > 0 ? (where ? ` AND ${likeClause.join(' AND ')}` : `WHERE ${likeClause.join(' AND ')}`) : '';
     
+    const mainFilters = `${where} ${like}`;
+    const appendCondition = (where || like) ? 'AND' : 'WHERE';
+
     try {
-        const andWhere = where ? `${where} AND` : 'WHERE';
+        //const andWhere = where ? `${where} AND` : 'WHERE';
 
         const queries = {
-            total: `SELECT COUNT(*) AS total FROM denuncias_completas_v9_sin_relato ${where} ${like}`,
-            interes: `SELECT COUNT(*) AS interes FROM denuncias_completas_v9_sin_relato ${where} ${like} AND INTERES = CONVERT('SI' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
-            noInteres: `SELECT COUNT(*) AS noInteres FROM denuncias_completas_v9_sin_relato ${where} ${like} AND INTERES = CONVERT('NO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
-            victima: `SELECT COUNT(*) AS victima FROM denuncias_completas_v9_sin_relato ${where} ${like} AND VICTIMA = CONVERT('CON RIESGO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
+            total: `SELECT COUNT(*) AS total FROM denuncias_completas_v9_sin_relato ${mainFilters}`,
+            interes: `SELECT COUNT(*) AS interes FROM denuncias_completas_v9_sin_relato ${mainFilters} ${appendCondition} INTERES = CONVERT('SI' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
+            noInteres: `SELECT COUNT(*) AS noInteres FROM denuncias_completas_v9_sin_relato ${mainFilters} ${appendCondition} INTERES = CONVERT('NO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
+            victima: `SELECT COUNT(*) AS victima FROM denuncias_completas_v9_sin_relato ${mainFilters} ${appendCondition} VICTIMA = CONVERT('CON RIESGO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
             porArmas: `
                 SELECT \`ARMA UTILIZADA\` AS arma, count(*) AS cantidad
                 FROM denuncias_completas_v9_sin_relato
-                ${andWhere} ${like} \`ARMA UTILIZADA\` IS NOT NULL AND \`ARMA UTILIZADA\` COLLATE utf8mb4_0900_ai_ci <> ''
+                ${mainFilters} ${appendCondition} \`ARMA UTILIZADA\` IS NOT NULL AND \`ARMA UTILIZADA\` COLLATE utf8mb4_0900_ai_ci <> ''
                 GROUP BY \`ARMA UTILIZADA\`
                 ORDER BY cantidad DESC;
             `,
             porLugarDelHecho: `
                 SELECT Lugar_del_Hecho AS lugar, COUNT(*) AS cantidad
                 FROM denuncias_completas_v9_sin_relato
-                ${andWhere} ${like} Lugar_del_Hecho IS NOT NULL AND Lugar_del_Hecho COLLATE utf8mb4_0900_ai_ci <> ''
+                ${mainFilters} ${appendCondition} Lugar_del_Hecho IS NOT NULL AND Lugar_del_Hecho COLLATE utf8mb4_0900_ai_ci <> ''
                 GROUP BY Lugar_del_Hecho
                 ORDER BY cantidad DESC
             `,
             porComisaria: `
                 SELECT COMISARIA AS comisaria, COUNT(*) AS cantidad
                 FROM denuncias_completas_v9_sin_relato
-                ${andWhere} ${like} COMISARIA IS NOT NULL AND COMISARIA COLLATE utf8mb4_0900_ai_ci <> ''
+                ${mainFilters} ${appendCondition} COMISARIA IS NOT NULL AND COMISARIA COLLATE utf8mb4_0900_ai_ci <> ''
                 GROUP BY COMISARIA
                 ORDER BY cantidad DESC
             `,
-            robo: `SELECT COUNT(*) AS robo FROM denuncias_completas_v9_sin_relato ${where} ${like} AND (DELITO = CONVERT('ROBO' USING utf8mb4) OR DELITO = CONVERT('TENTATIVA DE ROBOS' USING utf8mb4)) COLLATE utf8mb4_unicode_ci`,
-            hurtos: `SELECT COUNT(*) AS hurtos FROM denuncias_completas_v9_sin_relato ${where} ${like} AND (DELITO = CONVERT('HURTOS' USING utf8mb4) OR DELITO = CONVERT('TENTATIVA DE HURTOS' USING utf8mb4)) COLLATE utf8mb4_unicode_ci`,
-            roboArma: `SELECT COUNT(*) AS roboArma FROM denuncias_completas_v9_sin_relato ${where} ${like} AND DELITO = CONVERT('ROBO CON ARMA DE FUEGO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
+            robo: `SELECT COUNT(*) AS robo FROM denuncias_completas_v9_sin_relato ${mainFilters} ${appendCondition} (DELITO = CONVERT('ROBO' USING utf8mb4) OR DELITO = CONVERT('TENTATIVA DE ROBOS' USING utf8mb4)) COLLATE utf8mb4_unicode_ci`,
+            hurtos: `SELECT COUNT(*) AS hurtos FROM denuncias_completas_v9_sin_relato ${mainFilters} ${appendCondition} (DELITO = CONVERT('HURTOS' USING utf8mb4) OR DELITO = CONVERT('TENTATIVA DE HURTOS' USING utf8mb4)) COLLATE utf8mb4_unicode_ci`,
+            roboArma: `SELECT COUNT(*) AS roboArma FROM denuncias_completas_v9_sin_relato ${mainFilters} ${appendCondition} DELITO = CONVERT('ROBO CON ARMA DE FUEGO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
             porFechas: `
                 SELECT DATE(FECHA_HECHO) AS fecha, COUNT(*) AS cantidad
                 FROM denuncias_completas_v9_sin_relato
-                ${where} ${like}
+                ${mainFilters}
                 GROUP BY DATE(FECHA_HECHO)
                 ORDER BY fecha
             `,
             porFechaYHora: `
                 SELECT DATE(FECHA_HECHO) AS fecha, HOUR(HORA) AS hora, COUNT(*) AS cantidad
                 FROM denuncias_completas_v9_sin_relato
-                ${where} ${like}
+                ${mainFilters}
                 GROUP BY DATE(FECHA_HECHO), HOUR(HORA)
                 ORDER BY fecha, hora
             `,
             porDelitos: `
                 SELECT DELITO AS delito, COUNT(*) AS cantidad
                 FROM denuncias_completas_v9_sin_relato
-                ${andWhere} ${like} DELITO IS NOT NULL AND DELITO COLLATE utf8mb4_0900_ai_ci <> ''
+                ${mainFilters} ${appendCondition} DELITO IS NOT NULL AND DELITO COLLATE utf8mb4_0900_ai_ci <> ''
                 GROUP BY DELITO
                 ORDER BY cantidad DESC
             `,
             porModalidad: `
                 SELECT MODALIDAD AS modalidad, COUNT(*) AS cantidad
                 FROM denuncias_completas_v9_sin_relato
-                ${andWhere} ${like} MODALIDAD IS NOT NULL AND MODALIDAD COLLATE utf8mb4_0900_ai_ci <> ''
+                ${mainFilters} ${appendCondition} MODALIDAD IS NOT NULL AND MODALIDAD COLLATE utf8mb4_0900_ai_ci <> ''
                 GROUP BY MODALIDAD
                 ORDER BY cantidad DESC
             `,
             porSubmodalidad: `
                 SELECT SUBMODALIDAD AS submodalidad, COUNT(*) AS cantidad
                 FROM denuncias_completas_v9_sin_relato
-                ${andWhere} ${like} SUBMODALIDAD IS NOT NULL AND SUBMODALIDAD COLLATE utf8mb4_0900_ai_ci <> ''
+                ${mainFilters} ${appendCondition} SUBMODALIDAD IS NOT NULL AND SUBMODALIDAD COLLATE utf8mb4_0900_ai_ci <> ''
                 GROUP BY SUBMODALIDAD
                 ORDER BY cantidad DESC
             `,
             porRegional: `
                 SELECT \`UNIDAD REGIONAL\` AS regional, count(*) AS cantidad
                 FROM denuncias_completas_v9_sin_relato
-                ${andWhere} ${like} \`UNIDAD REGIONAL\` IS NOT NULL AND \`UNIDAD REGIONAL\` COLLATE utf8mb4_0900_ai_ci <> ''
+                ${mainFilters} ${appendCondition} \`UNIDAD REGIONAL\` IS NOT NULL AND \`UNIDAD REGIONAL\` COLLATE utf8mb4_0900_ai_ci <> ''
                 GROUP BY \`UNIDAD REGIONAL\`
                 ORDER BY cantidad DESC;
             `,
             porLocalidad: `
                 SELECT LOCALIDAD AS localidad, count(*) AS cantidad
                 FROM denuncias_completas_v9_sin_relato
-                ${andWhere} ${like} LOCALIDAD IS NOT NULL AND LOCALIDAD COLLATE utf8mb4_0900_ai_ci <> ''
+                ${mainFilters} ${appendCondition} LOCALIDAD IS NOT NULL AND LOCALIDAD COLLATE utf8mb4_0900_ai_ci <> ''
                 GROUP BY LOCALIDAD
                 ORDER BY cantidad DESC;
             `,
@@ -784,7 +707,7 @@ const getVistaSinRelatoStaging = async (req, res) => {
                     (SELECT 0 AS N UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) b
                 ) n
                 ON CHAR_LENGTH(t.\`ELEMENTOS SUSTRAIDOS\`) - CHAR_LENGTH(REPLACE(t.\`ELEMENTOS SUSTRAIDOS\`, ',', '')) >= n.n - 1
-            ${andWhere} ${like} t.\`ELEMENTOS SUSTRAIDOS\` IS NOT NULL AND TRIM(t.\`ELEMENTOS SUSTRAIDOS\`) <> ''
+            ${mainFilters} ${appendCondition} t.\`ELEMENTOS SUSTRAIDOS\` IS NOT NULL AND TRIM(t.\`ELEMENTOS SUSTRAIDOS\`) <> ''
             AND t.\`ELEMENTOS SUSTRAIDOS\` NOT LIKE '[]'
             GROUP BY
             elemento_individual
@@ -805,7 +728,7 @@ const getVistaSinRelatoStaging = async (req, res) => {
                     (SELECT 0 AS N UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6 UNION ALL SELECT 7 UNION ALL SELECT 8 UNION ALL SELECT 9) b
                 ) n
                 ON CHAR_LENGTH(t.victimario) - CHAR_LENGTH(REPLACE(t.victimario, ',', '')) >= n.n - 1
-            ${andWhere} ${like} t.victimario IS NOT NULL AND TRIM(t.victimario) <> ''
+            ${mainFilters} ${appendCondition} t.victimario IS NOT NULL AND TRIM(t.victimario) <> ''
             AND t.victimario NOT LIKE '[]'
             GROUP BY
             nombre_individual
@@ -819,7 +742,7 @@ const getVistaSinRelatoStaging = async (req, res) => {
             COUNT(*) AS value
             FROM
             denuncias_completas_v9_sin_relato
-            ${andWhere} ${like}
+            ${mainFilters} ${appendCondition}
             \`CLASIFICADA POR\` <> 2
             GROUP BY
             arma,
@@ -834,7 +757,7 @@ const getVistaSinRelatoStaging = async (req, res) => {
             COUNT(*) AS value
             FROM
             denuncias_completas_v9_sin_relato
-            ${andWhere} ${like}
+            ${mainFilters} ${appendCondition}
             \`CLASIFICADA POR\` <> 2
             GROUP BY
             movilidad,
@@ -987,7 +910,7 @@ const getVistaSinRelatoStagingReducida = async (req, res) => {
     let likeClause = []
     let replacements = {}
 
-    whereClause.push(`\`CLASIFICADA POR\` COLLATE utf8mb4_0900_ai_ci <> 2`);
+    //whereClause.push(`\`CLASIFICADA POR\` COLLATE utf8mb4_0900_ai_ci <> 2`);
 
     if (fechaInicio && fechaFin) {
         whereClause.push(`FECHA_HECHO BETWEEN :fechaInicio AND :fechaFin`)
@@ -1063,27 +986,30 @@ const getVistaSinRelatoStagingReducida = async (req, res) => {
     const where = whereClause.length > 0 ? `WHERE ${whereClause.join(' AND ')}` : '';
     const like = likeClause.length > 0 ? (where ? ` AND ${likeClause.join(' AND ')}` : `WHERE ${likeClause.join(' AND ')}`) : '';
 
+    const mainFilters = `${where} ${like}`;
+    const appendCondition = (where || like) ? 'AND' : 'WHERE';
+
     try {
-        const andWhere = where ? `${where} AND` : 'WHERE';
+        //const andWhere = where ? `${where} AND` : 'WHERE';
 
         const queries = {
-            total: `SELECT COUNT(*) AS total FROM denuncias_completas_v9_sin_relato ${where} ${like}`,
-            interes: `SELECT COUNT(*) AS interes FROM denuncias_completas_v9_sin_relato ${where} ${like} AND INTERES = CONVERT('SI' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
-            noInteres: `SELECT COUNT(*) AS noInteres FROM denuncias_completas_v9_sin_relato ${where} ${like} AND INTERES = CONVERT('NO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
-            victima: `SELECT COUNT(*) AS victima FROM denuncias_completas_v9_sin_relato ${where} ${like} AND VICTIMA = CONVERT('CON RIESGO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
-            robo: `SELECT COUNT(*) AS robo FROM denuncias_completas_v9_sin_relato ${where} ${like} AND (DELITO = CONVERT('ROBO' USING utf8mb4) OR DELITO = CONVERT('TENTATIVA DE ROBOS' USING utf8mb4)) COLLATE utf8mb4_unicode_ci`,
-            hurtos: `SELECT COUNT(*) AS hurtos FROM denuncias_completas_v9_sin_relato ${where} ${like} AND (DELITO = CONVERT('HURTOS' USING utf8mb4) OR DELITO = CONVERT('TENTATIVA DE HURTOS' USING utf8mb4)) COLLATE utf8mb4_unicode_ci`,
-            roboArma: `SELECT COUNT(*) AS roboArma FROM denuncias_completas_v9_sin_relato ${where} ${like} AND DELITO = CONVERT('ROBO CON ARMA DE FUEGO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
+            total: `SELECT COUNT(*) AS total FROM denuncias_completas_v9_sin_relato ${mainFilters}`,
+            interes: `SELECT COUNT(*) AS interes FROM denuncias_completas_v9_sin_relato ${mainFilters} ${appendCondition} INTERES = CONVERT('SI' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
+            noInteres: `SELECT COUNT(*) AS noInteres FROM denuncias_completas_v9_sin_relato ${mainFilters} ${appendCondition} INTERES = CONVERT('NO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
+            victima: `SELECT COUNT(*) AS victima FROM denuncias_completas_v9_sin_relato ${mainFilters} ${appendCondition} VICTIMA = CONVERT('CON RIESGO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
+            robo: `SELECT COUNT(*) AS robo FROM denuncias_completas_v9_sin_relato ${mainFilters} ${appendCondition} (DELITO = CONVERT('ROBO' USING utf8mb4) OR DELITO = CONVERT('TENTATIVA DE ROBOS' USING utf8mb4)) COLLATE utf8mb4_unicode_ci`,
+            hurtos: `SELECT COUNT(*) AS hurtos FROM denuncias_completas_v9_sin_relato ${mainFilters} ${appendCondition} (DELITO = CONVERT('HURTOS' USING utf8mb4) OR DELITO = CONVERT('TENTATIVA DE HURTOS' USING utf8mb4)) COLLATE utf8mb4_unicode_ci`,
+            roboArma: `SELECT COUNT(*) AS roboArma FROM denuncias_completas_v9_sin_relato ${mainFilters} ${appendCondition} DELITO = CONVERT('ROBO CON ARMA DE FUEGO' USING utf8mb4) COLLATE utf8mb4_unicode_ci`,
             porFechas: `
                 SELECT DATE(FECHA_HECHO) AS fecha, COUNT(*) AS cantidad
                 FROM denuncias_completas_v9_sin_relato
-                ${where} ${like}
+                ${mainFilters}
                 GROUP BY DATE(FECHA_HECHO)
                 ORDER BY fecha
             `,
             aprehendido: `
                 SELECT COUNT(*) AS aprehendido
-                FROM denuncias_completas_v9_sin_relato ${where} ${like} AND APREHENDIDO = CONVERT('SI' USING utf8mb4) COLLATE utf8mb4_unicode_ci`
+                FROM denuncias_completas_v9_sin_relato ${mainFilters} ${appendCondition} APREHENDIDO = CONVERT('SI' USING utf8mb4) COLLATE utf8mb4_unicode_ci`
         }
 
         const [total, interes, noInteres, victima, robo, hurtos, roboArma, porFechas, aprehendido] = await Promise.all([
